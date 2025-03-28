@@ -6,14 +6,15 @@ void Control(void *argument)
     {
         switch (state)
         {
-        case IDLE:
-        {
-            VESC_SendCmd(&hfdcan2, 1, VESC_SET_CURR, &HOBBYWING_V9626_KV160);
-            break;
-        }
+        case BACK:
         case INIT:
         {
             VESC_SendCmd(&hfdcan2, 1, VESC_SET_SPD, &HOBBYWING_V9626_KV160);
+            break;
+        }
+        case IDLE:
+        {
+            VESC_SendCmd(&hfdcan2, 1, VESC_SET_CURR, &HOBBYWING_V9626_KV160);
             break;
         }
         case SHOT:
@@ -28,12 +29,8 @@ void Control(void *argument)
         }
         }
 
-        HighTorque_SetMixParam_f(&hfdcan1, 1);
+        HighTorque_SetMixParam_f(&hfdcan1, 2);
 
-        if (!CAN_fault.M2006 && C610[1 - 1].ctrl.pos)
-            C610_SetPos(&hfdcan2, C610_ID1);
-        else
-            C610_SetTrq(&hfdcan2, C610_ID1);
         osDelay(1);
     }
 }
