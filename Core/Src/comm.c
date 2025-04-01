@@ -10,6 +10,7 @@ void Comm(void *argument)
     }
 }
 
+float test;
 void FDCAN3_IT0_IRQHandler(void)
 {
     if (FDCAN3->IR & 0x1)
@@ -30,12 +31,14 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0xB:
         {
-            state_W.aim_R2 = 0; // switch target
+            R2_info.dist_cm_fltr.len = R2_info.yaw_fltr.len = 0;
+            state_W.aim_R2 = 0; // switch target to basket
             break;
         }
         case 0xC:
         {
-            state_W.aim_R2 = 1; // switch target
+            basket_info.dist_cm_fltr.len = basket_info.yaw_fltr.len = 0;
+            state_W.aim_R2 = 1; // switch target to R2
             break;
         }
         case 0xE:
@@ -48,27 +51,44 @@ void FDCAN3_IT0_IRQHandler(void)
             state_W.ball = 1;
             break;
         }
-        // case 0x11: // dist and yaw of R2
-        // {
-        //     CAN_fault.R2_info = 0; // clear CAN fault flag
-
-        //     R2_info.dist_cm = MovAvgFltr(&R2_info.dist_cm_fltr, *(float *)&RxData[8]) / 10;
-        //     R2_info.yaw = MovAvgFltr(&R2_info.yaw_fltr, *(float *)&RxData[12]);
-        //     break;
-        // }
         case 0x14:
         {
             if (state == IDLE)
                 state = INIT;
             break;
         }
-        case 0x105: // dist and yaw of basket from pos
+        case 0x104:
+        {
+            break;
+        }
+        case 0x105: // dist and yaw of basket
         {
             CAN_fault.basket_info = 0; // clear CAN fault flag
 
             basket_info.dist_cm = MovAvgFltr(&basket_info.dist_cm_fltr, *(float *)RxData) * 100;
             basket_info.yaw = MovAvgFltr(&basket_info.yaw_fltr, *(float *)&RxData[4]);
-            basket_info.height_cm = MovAvgFltr(&basket_info.height_cm_fltr, *(float *)&RxData[8]) * 100;
+            break;
+        }
+        case 0x106: // dist and yaw of R2
+        {
+            CAN_fault.R2_info = 0; // clear CAN fault flag
+
+            float dist_x = *(float *)RxData - *(float *)&RxData[12],
+                  dist_y = *(float *)&RxData[4] - *(float *)&RxData[16],
+                  dist = sqrt(pow(dist_x, 2) + pow(dist_y, 2)),
+                  angle = atan(dist_y / dist_x) - *(float *)&RxData[20];
+
+            // dist exception
+            if (dist > 0 && dist <= 15)
+                R2_info.dist_cm = MovAvgFltr(&R2_info.dist_cm_fltr, dist) * 100;
+
+            // mini angle
+            if (angle > PI)
+                angle = 2 * PI - angle;
+            else if (angle < -PI)
+                angle = 2 * PI + angle;
+
+            R2_info.yaw = MovAvgFltr(&R2_info.yaw_fltr, angle) * R2D;
             break;
         }
         }

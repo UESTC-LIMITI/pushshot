@@ -1,5 +1,7 @@
 #include "user.h"
 
+// call each function under corresponding init function created by CubeMX
+
 void FDCAN1_Init(void)
 {
     FDCAN_FilterTypeDef FDCAN_Filter;
@@ -66,6 +68,12 @@ void FDCAN3_Init(void)
     FDCAN_Filter.FilterIndex = 2;
     FDCAN_Filter.FilterID1 = 0x14;
     FDCAN_Filter.FilterID2 = 0x105;
+    HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
+
+    FDCAN_Filter.FilterIndex = 3;
+    FDCAN_Filter.FilterType = FDCAN_FILTER_MASK;
+    FDCAN_Filter.FilterID1 = 0x106;
+    FDCAN_Filter.FilterID2 = 0x104;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
     FDCAN3->GFC = 0x3F;

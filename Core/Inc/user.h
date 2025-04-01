@@ -10,11 +10,18 @@
 
 #define DATA_OUTPUT
 
+// all the following file can be found at https://github.com/Chosen-Zeng/lib
+
+// from hw
 #include "TIM.h"
 #include "USART.h"
 #include "CAN.h"
+
+// from algorithm
 #include "algorithm.h"
 #include "fltr.h"
+
+// from periph
 
 #define VESC_NUM 1
 #define VESC_ID_OFFSET 1
@@ -23,9 +30,6 @@
 #define HIGHTORQUE_NUM 1
 #define HIGHTORQUE_ID_OFFSET 2
 #include "HighTorque.h"
-
-#define CH395_NUM 1
-#include "CH395.h"
 
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;
@@ -68,15 +72,12 @@ extern struct CAN_FAULT CAN_fault;
 
 struct target_info
 {
-    float dist_cm, yaw, height_cm;
-    MovAvgFltr_t dist_cm_fltr, yaw_fltr, height_cm_fltr;
+    float dist_cm, yaw;
+    MovAvgFltr_t dist_cm_fltr, yaw_fltr;
 };
 extern struct target_info basket_info, R2_info;
 
 extern timer_t runtime;
-
-#define GIMBAL_GAIN .98f
-#define Gimbal_GR (11 * GIMBAL_GAIN)
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);

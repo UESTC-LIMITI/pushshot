@@ -3,8 +3,7 @@
 #include <stdio.h>
 
 USART_info_t UART7_info = {.USART_handle = UART7},
-             UART5_info = {.USART_handle = UART5},
-             USART3_info = {.USART_handle = USART3};
+             UART5_info = {.USART_handle = UART5};
 
 enum STATE state = IDLE;
 struct STATE_R state_R;
@@ -21,26 +20,27 @@ struct
 } VESC_param = {
     .back_spd = -100,
     .init_spd = 250,
-    .shot_curr_pct = 0.12,
-    .shot_spd = 1000,
-    .spd_ctrl_pct = 0.92,
+    .shot_curr_pct = 0.108,
+    .shot_spd = 900,
+    .spd_ctrl_pct = 0.93,
     .brake_curr_pct = 0.05};
 
 struct
 {
-    float pos_0, pos_target;
+    float pos_0, pos_target, gain;
 } HighTorque_param = {
-    .pos_0 = 10};
+    .pos_0 = -1,
+    .gain = 0};
 
 // gimbal limit
-#define YAW_MIN -168
-#define YAW_MAX 172
+#define YAW_MIN -175
+#define YAW_MAX 167
 
-struct target_info basket_info = {.yaw_fltr.len = 10},
-                   R2_info = {.yaw_fltr.len = 10};
+#define Gimbal_GR (11 * HighTorque_param.gain)
+
+struct target_info basket_info = {.dist_cm_fltr.len = 10, .yaw_fltr.len = 10},
+                   R2_info = {.dist_cm_fltr.len = 10, .yaw_fltr.len = 10};
 timer_t HighTorque_time;
-
-float test_curr;
 
 float Fitting_Calc_Basket(void)
 {
@@ -106,13 +106,14 @@ void State(void *argument)
             if (state_W.fitting &&
                 !VESC[1 - VESC_ID_OFFSET].ctrl.spd) // spd not set
             {
-                VESC_param.shot_spd = state_W.aim_R2 ? Fitting_Calc_R2()      // fit for pass ball
-                                                     : Fitting_Calc_Basket(); // fit for shoot ball
+                VESC_param.shot_spd = state_W.aim_R2 ? Fitting_Calc_R2()      // fitting for pass ball
+                                                     : Fitting_Calc_Basket(); // fitting for shoot ball
             }
 
             VESC[1 - VESC_ID_OFFSET].ctrl.curr = VESC_param.shot_spd * (state_R.brake ? VESC_param.brake_curr_pct  // curr for brake
                                                                                       : VESC_param.shot_curr_pct); // curr for acceleration
-            LIMIT(VESC[1 - VESC_ID_OFFSET].ctrl.curr, 120);                                                        // ESC curr limit
+
+            LIMIT_RANGE(VESC[1 - VESC_ID_OFFSET].ctrl.curr, 120, 70); // ESC curr limit
 
             VESC[1 - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot_spd; // target spd
 
@@ -122,7 +123,7 @@ void State(void *argument)
 
             if (Timer_CheckTimeout(&runtime, 0.5)) // shot duration
             {
-                state_R.brake = 1;
+                state_R.brake = 1; // timeout protection
 
                 if (runtime.intvl >= 0.7) // total duration
                 {
@@ -138,13 +139,12 @@ void State(void *argument)
 
         // delay after shot
         if (Timer_CheckTimeout(&HighTorque_time, 0.1))
-            HighTorque[2 - HIGHTORQUE_ID_OFFSET]
-                .ctrl.pos = HighTorque_param.pos_0 + (state_W.ball ||            // auto init
-                                                              state_R.shot_ready // manual init
-                                                          ? (state_W.aim_R2 ? R2_info.yaw
-                                                                            : basket_info.yaw) *
-                                                                Gimbal_GR // aim at target
-                                                          : 0);           // stay mid
+            HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0 + (state_W.ball ||                            // auto init
+                                                                                              state_R.shot_ready                 // manual init
+                                                                                          ? (state_W.aim_R2 ? R2_info.yaw        // aim at R2
+                                                                                                            : basket_info.yaw) * // aim at basket
+                                                                                                Gimbal_GR
+                                                                                          : 0); // stay mid
 
         LIMIT_RANGE(HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos, YAW_MAX, YAW_MIN); // gimbal limit
 

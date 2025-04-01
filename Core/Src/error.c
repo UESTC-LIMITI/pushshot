@@ -10,7 +10,7 @@ void Error(void *argument)
 {
     while (1)
     {
-        // reset fault flag
+        // set fault flag
         state_R.CAN_fault = CAN_fault.VESC |
                             CAN_fault.HighTorque |
                             CAN_fault.basket_info |
