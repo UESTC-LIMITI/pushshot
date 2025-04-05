@@ -16,21 +16,22 @@ unsigned char VOFA[32];
 #endif
 struct
 {
-    float back_spd, init_spd, shot_curr_pct, shot_spd, spd_ctrl_pct, brake_curr_pct;
+    float back_spd, back_time, init_spd, shot_curr_pct, shot_spd, spd_ctrl_pct, brake_curr_pct;
 } VESC_param = {
     .back_spd = -100,
-    .init_spd = 250,
-    .shot_curr_pct = 0.108,
-    .shot_spd = 900,
-    .spd_ctrl_pct = 0.93,
+    .back_time = 0.4,
+    .init_spd = 200,
+    .shot_curr_pct = 0.1,
+    .shot_spd = 855,
+    .spd_ctrl_pct = 0.9,
     .brake_curr_pct = 0.05};
 
 struct
 {
     float pos_0, pos_target, gain;
 } HighTorque_param = {
-    .pos_0 = -1,
-    .gain = 0};
+    .pos_0 = 0,
+    .gain = 1};
 
 // gimbal limit
 #define YAW_MIN -175
@@ -62,32 +63,66 @@ void State(void *argument)
     while (1)
     {
 #ifdef DATA_OUTPUT
-        if (VESC[1 - VESC_ID_OFFSET].fdbk.spd > VESC_param.init_spd + 5 && !state_R.brake)
+        if (VESC[1 - VESC_ID_OFFSET].fdbk.spd > VESC_param.init_spd + 20 && !state_R.brake)
         {
             sprintf(VOFA, "T:%.2f,%d\n", VESC[1 - VESC_ID_OFFSET].fdbk.spd, state_R.spd_ctrl ? 1000 : 0);
-            UART_SendArray(&UART5_info, VOFA, 16);
+            UART_SendArray(&UART7_info, VOFA, 16);
         }
 #endif
         switch (state)
         {
-        case BACK:
+        // spin to rst pos
+        case RST:
         {
-            VESC[1 - VESC_ID_OFFSET].ctrl.spd = VESC_param.back_spd; // spin to init pos
+            VESC[1 - VESC_ID_OFFSET].ctrl.spd = -VESC_param.back_spd;
 
-            // down to pos
-            if (GPIOE->IDR & 0x4)
-                state = INIT;
+            if (Timer_CheckTimeout(&runtime, VESC_param.back_time * 2))
+            {
+                Timer_Clear(&runtime);
+                state = IDLE;
+            }
             break;
         }
+        // spin back some distance
+        case BACK:
+        {
+            VESC[1 - VESC_ID_OFFSET].ctrl.spd = VESC_param.back_spd;
+
+            if (Timer_CheckTimeout(&runtime, VESC_param.back_time))
+            {
+                Timer_Clear(&runtime);
+                state = IDLE;
+            }
+            break;
+        }
+        // spin to init pos
         case INIT:
         {
-            VESC[1 - VESC_ID_OFFSET].ctrl.spd = VESC_param.init_spd; // spin to init pos
+            VESC[1 - VESC_ID_OFFSET].ctrl.spd = VESC_param.init_spd;
+
+            // timeout exception
+            if (Timer_CheckTimeout(&runtime, 5))
+            {
+                Timer_Clear(&runtime);
+                state_W.ball = 0;
+                state = IDLE;
+            }
 
             // up to pos
             if (!(GPIOE->IDR & 0x4))
             {
-                state_R.shot_ready = 1;
-                state = IDLE;
+                if (state_W.RST)
+                {
+                    Timer_Clear(&runtime);
+                    state_W.RST = 0;
+                    state = RST;
+                }
+                else
+                {
+                    Timer_Clear(&runtime);
+                    state_R.shot_ready = 1;
+                    state = IDLE;
+                }
             }
             break;
         }

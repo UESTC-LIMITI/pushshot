@@ -18,50 +18,65 @@ void FDCAN3_IT0_IRQHandler(void)
         FDCAN3->IR |= 0x1;
 
         FDCAN_RxHeaderTypeDef FDCAN_RxHeader;
-        uint8_t RxData[64];
+        unsigned char RxData[64];
         HAL_FDCAN_GetRxMessage(&hfdcan3, FDCAN_RX_FIFO0, &FDCAN_RxHeader, RxData);
 
         switch (FDCAN_RxHeader.Identifier)
         {
+        // shot
         case 0xA:
         {
-            if (state_R.shot_ready)
+            if (state_R.shot_ready && state == IDLE)
                 state = SHOT;
             break;
         }
+        // switch target to basket
         case 0xB:
         {
             R2_info.dist_cm_fltr.len = R2_info.yaw_fltr.len = 0;
-            state_W.aim_R2 = 0; // switch target to basket
+            state_W.aim_R2 = 0;
             break;
         }
+        // switch target to R2
         case 0xC:
         {
             basket_info.dist_cm_fltr.len = basket_info.yaw_fltr.len = 0;
-            state_W.aim_R2 = 1; // switch target to R2
+            state_W.aim_R2 = 1;
             break;
         }
-        case 0xE:
-        {
-            state = BACK;
-            break;
-        }
-        case 0xF:
-        {
-            state_W.ball = 1;
-            break;
-        }
-        case 0x14:
+        case 0xE:  // dribble done
+        case 0x12: // dribble start
         {
             if (state == IDLE)
+                state = BACK;
+            break;
+        }
+        case 0xF:  // ball passed
+        case 0x14: // manual init
+        {
+            state_W.ball = 1;
+            if (state == IDLE)
                 state = INIT;
+            break;
+        }
+        // rst
+        case 0xF6:
+        {
+            if (state == IDLE &&
+                GPIOE->IDR & 0x4)
+            {
+                state_R.shot_ready = state_W.ball = 0;
+                state_W.RST = 1;
+                state = INIT;
+            }
             break;
         }
         case 0x104:
         {
             break;
         }
-        case 0x105: // dist and yaw of basket
+        // dist and yaw of basket
+        case 0x105:
         {
             CAN_fault.basket_info = 0; // clear CAN fault flag
 
@@ -69,7 +84,8 @@ void FDCAN3_IT0_IRQHandler(void)
             basket_info.yaw = MovAvgFltr(&basket_info.yaw_fltr, *(float *)&RxData[4]);
             break;
         }
-        case 0x106: // dist and yaw of R2
+        // dist and yaw of R2
+        case 0x106:
         {
             CAN_fault.R2_info = 0; // clear CAN fault flag
 

@@ -37,6 +37,7 @@ extern FDCAN_HandleTypeDef hfdcan3;
 
 enum STATE
 {
+    RST,
     BACK,
     INIT,
     IDLE,
@@ -58,6 +59,7 @@ struct STATE_W
     unsigned char ball : 1;
     unsigned char fitting : 1;
     unsigned char aim_R2 : 1;
+    unsigned char RST : 1;
 };
 extern struct STATE_W state_W;
 

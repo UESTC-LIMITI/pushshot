@@ -6,6 +6,7 @@ void Control(void *argument)
     {
         switch (state)
         {
+        case RST:
         case BACK:
         case INIT:
         {
