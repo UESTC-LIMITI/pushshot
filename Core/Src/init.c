@@ -71,15 +71,14 @@ void FDCAN3_Init(void)
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
     FDCAN_Filter.FilterIndex = 3;
-    FDCAN_Filter.FilterType = FDCAN_FILTER_RANGE;
-    FDCAN_Filter.FilterID1 = 0x104;
-    FDCAN_Filter.FilterID2 = 0x106;
+    FDCAN_Filter.FilterID1 = 0xF6;
+    FDCAN_Filter.FilterID2 = 0x201;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
     FDCAN_Filter.FilterIndex = 4;
-    FDCAN_Filter.FilterType = FDCAN_FILTER_DUAL;
-    FDCAN_Filter.FilterID1 = 0xF6;
-    FDCAN_Filter.FilterID2 = 0;
+    FDCAN_Filter.FilterType = FDCAN_FILTER_RANGE;
+    FDCAN_Filter.FilterID1 = 0x104;
+    FDCAN_Filter.FilterID2 = 0x106;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
     FDCAN3->GFC = 0x3F;
@@ -100,4 +99,14 @@ void TIM16_Init(void)
     TIM16->EGR |= 0x1;
     TIM16->CCER |= 1;
     TIM16->CR1 |= 1;
+}
+
+void UART5_Init(void)
+{
+    UART5->CR3 |= 0x40;
+
+    DMA1_Stream0->NDTR = 12;
+    DMA1_Stream0->PAR = (unsigned)&UART5->RDR;
+    DMA1_Stream0->M0AR = (unsigned)RxData_D1S0;
+    DMA1_Stream0->CR |= 0x11;
 }

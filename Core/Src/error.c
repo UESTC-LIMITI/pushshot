@@ -1,22 +1,26 @@
 #include "user.h"
 
-struct CAN_FAULT CAN_fault = {
+struct ERR err = {
     .VESC = 1,
     .HighTorque = 1,
+    .pos_lidar = 1,
     .basket_info = 1,
-    .R2_info = 1};
+    .pos_chassis = 1,
+    .R2_pos = 1};
 
 void Error(void *argument)
 {
     while (1)
     {
-        // set fault flag
-        state_R.CAN_fault = CAN_fault.VESC |
-                            CAN_fault.HighTorque |
-                            CAN_fault.basket_info |
-                            CAN_fault.R2_info;
+        // set err flag
+        state_R.err = err.VESC |
+                      err.HighTorque |
+                      err.pos_lidar |
+                      err.basket_info |
+                      err.pos_chassis |
+                      err.R2_pos;
 
-        CAN_fault.VESC = CAN_fault.HighTorque = CAN_fault.basket_info = CAN_fault.R2_info = 1;
+        err.VESC = err.HighTorque = err.pos_lidar = err.basket_info = err.pos_chassis = err.R2_pos = 1;
 
         osDelay(100);
     }
