@@ -3,13 +3,17 @@
 #include <stdio.h>
 
 USART_info_t UART7_info = {.USART_handle = UART7},
-             UART5_info = {.USART_handle = UART5};
+             UART5_info = {.USART_handle = UART5, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream0, .DMA_ID = 0};
 
 enum STATE state = IDLE;
 struct STATE_R state_R = {
-    .fitting = 0};
+    .fitting = 1};
 struct STATE_W state_W;
 timer_t runtime;
+
+float basket_yaw_last;
+
+#define DATA_OUTPUT
 
 #ifdef DATA_OUTPUT
 unsigned char VOFA[32];
@@ -26,7 +30,7 @@ struct
     } back;
     struct
     {
-        float spd;
+        float spd, time;
     } init;
     struct
     {
@@ -35,22 +39,23 @@ struct
 } VESC_param = {
     .rst.time = 1,
 
-    .back.spd = -100,
+    .back.spd = -50,
     .back.time = 0.4,
 
     .init.spd = 100,
+    .init.time = 4,
 
     .shot.curr_pct = 0.1,
-    .shot.spd = 800,
+    .shot.spd = 810,
     .shot.spd_ctrl_pct = 0.9,
-    .shot.brake_curr_pct = 0.05};
+    .shot.brake_curr_pct = 0};
 
 struct
 {
     float pos_0, gain;
 } HighTorque_param = {
     .pos_0 = 0,
-    .gain = 0};
+    .gain = 1};
 
 // gimbal limit
 #define YAW_MIN -160
@@ -61,11 +66,11 @@ struct
 struct target_info basket_info = {.dist_cm_fltr.num = 10, .yaw_fltr.num = 10},
                    R2_info = {.dist_cm_fltr.num = 10, .yaw_fltr.num = 10};
 struct pos_info R1_pos_lidar, R1_pos_chassis, R2_pos;
-timer_t HighTorque_time;
+timer_t HighTorque_time, gimbal_time;
 
 float Fitting_Calc_Basket(void)
 {
-    return 0;
+    return 0.000004857241142074663 * pow(basket_info.dist_cm, 3) - 0.005351024620377842 * pow(basket_info.dist_cm, 2) + 2.6690857044586664 * (basket_info.dist_cm) + 319.8604968300233;
 }
 
 float Fitting_Calc_R2(void)
@@ -77,15 +82,15 @@ void State(void *argument)
 {
     // default param
     HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos = -HighTorque_param.pos_0;
-    HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.Kp = 5;
-    HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.Kd = 2;
+    HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.Kp = 2;
+    HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.Kd = 1;
 
     while (1)
     {
 #ifdef DATA_OUTPUT
         if (VESC[1 - VESC_ID_OFFSET].fdbk.spd > VESC_param.init.spd + 20 && !state_R.brake)
         {
-            sprintf(VOFA, "T:%.2f,%d\n", VESC[1 - VESC_ID_OFFSET].fdbk.spd, state_R.spd_ctrl ? 1000 : 0);
+            sprintf((char *)VOFA, "T:%.2f,%d\n", VESC[1 - VESC_ID_OFFSET].fdbk.spd, state_R.spd_ctrl ? 1000 : 0);
             UART_SendArray(&UART7_info, VOFA, 16);
         }
 #endif
@@ -121,7 +126,7 @@ void State(void *argument)
             VESC[1 - VESC_ID_OFFSET].ctrl.spd = VESC_param.init.spd;
 
             // timeout exception
-            if (Timer_CheckTimeout(&runtime, 5))
+            if (Timer_CheckTimeout(&runtime, VESC_param.init.time))
             {
                 Timer_Clear(&runtime);
                 state_W.ball = 0;
@@ -171,7 +176,7 @@ void State(void *argument)
             VESC[1 - VESC_ID_OFFSET].ctrl.curr = VESC_param.shot.spd * (state_R.brake ? VESC_param.shot.brake_curr_pct // curr for brake
                                                                                       : VESC_param.shot.curr_pct);     // curr for acceleration
 
-            LIMIT_RANGE(VESC[1 - VESC_ID_OFFSET].ctrl.curr, 200, 50); // ESC curr limit
+            LIMIT_RANGE(VESC[1 - VESC_ID_OFFSET].ctrl.curr, 120, 50); // ESC curr limit
 
             VESC[1 - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot.spd; // target spd
 
@@ -185,7 +190,7 @@ void State(void *argument)
 
                 if (runtime.intvl >= 0.7) // total duration
                 {
-                    state_R.shot_ready = state_W.ball = state_R.brake = state_R.spd_ctrl = 0;
+                    basket_info.yaw = state_R.shot_ready = state_W.ball = state_R.brake = state_R.spd_ctrl = 0;
                     Timer_Clear(&runtime);
                     Timer_Clear(&HighTorque_time);
                     state = IDLE;
@@ -197,10 +202,9 @@ void State(void *argument)
 
         // delay after shot
         if (Timer_CheckTimeout(&HighTorque_time, 0.1))
-            HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos = -HighTorque_param.pos_0 + (state_W.ball ||                                           // auto init
-                                                                                               state_R.shot_ready                                // manual init
-                                                                                           ? (state_W.aim_R2 && !err.R2_pos ? R2_info.yaw        // aim at R2 && R2 online
-                                                                                                                            : basket_info.yaw) * // aim at basket
+            HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos = -HighTorque_param.pos_0 - (state_W.ball || state_R.shot_ready                                                                                           // already init
+                                                                                           ? (state_W.aim_R2 ? R2_info.yaw                                                                                          // aim at R2
+                                                                                                             : basket_yaw_last + (basket_info.yaw - basket_yaw_last) * Timer_GetRatio(&gimbal_time, 1000 / 30.f)) * // aim at basket
                                                                                                  Gimbal_GR
                                                                                            : 0); // stay mid
 

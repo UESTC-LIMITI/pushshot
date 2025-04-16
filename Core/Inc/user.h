@@ -8,8 +8,6 @@
 #define TIMER TIM7
 #define FDCAN_SUPPORT
 
-#define DATA_OUTPUT
-
 // all the following file can be found at https://github.com/Chosen-Zeng/lib
 
 // from hw
@@ -66,9 +64,9 @@ struct ERR
     unsigned char VESC : 1,
         HighTorque : 1,
         pos_lidar : 1,
-        basket_info : 1,
         pos_chassis : 1,
-        R2_pos : 1;
+        R2_pos : 1,
+        basket_yaw : 1;
 };
 extern struct ERR err;
 
@@ -85,9 +83,9 @@ struct pos_info
 };
 extern struct pos_info R1_pos_lidar, R1_pos_chassis, R2_pos;
 
-extern timer_t runtime;
+extern USART_info_t UART7_info, UART5_info;
 
-extern unsigned char RxData_D1S0[12];
+extern timer_t runtime;
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);
@@ -95,5 +93,8 @@ void FDCAN3_Init(void);
 void TIM7_Init(void);
 void TIM16_Init(void);
 void UART5_Init(void);
+
+extern timer_t gimbal_time;
+extern float basket_yaw_last;
 
 #endif
