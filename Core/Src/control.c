@@ -6,16 +6,16 @@ void Control(void *argument)
     {
         switch (state)
         {
-        case RST:
-        case BACK:
-        case INIT:
-        {
-            VESC_SendCmd(&hfdcan2, 1, VESC_SET_SPD, &HOBBYWING_V9626_KV160);
-            break;
-        }
         case IDLE:
+        case LOCK:
         {
             VESC_SendCmd(&hfdcan2, 1, VESC_SET_CURR, &HOBBYWING_V9626_KV160);
+            break;
+        }
+        case INIT:
+        case BACK:
+        {
+            VESC_SendCmd(&hfdcan2, 1, VESC_SET_SPD, &HOBBYWING_V9626_KV160);
             break;
         }
         case SHOT:

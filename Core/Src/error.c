@@ -12,16 +12,20 @@ void Error(void *argument)
 {
     while (1)
     {
+        static struct ERR err_prev, err_curr;
+
+        *(unsigned char *)&err_prev = *(unsigned char *)&err_curr;
+        *(unsigned char *)&err_curr = *(unsigned char *)&err;
+        *(unsigned char *)&err &= *(unsigned char *)&err_prev;
+
+        FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 1);
+
         // set err flag
-        state_R.err = err.VESC |
-                      err.HighTorque |
-                      err.pos_lidar |
-                      err.pos_chassis |
-                      err.R2_pos |
-                      err.basket_yaw;
+        state_R.err = *(unsigned char *)&err ? true
+                                             : false;
 
-        err.VESC = err.HighTorque = err.pos_lidar = err.pos_chassis = err.R2_pos = err.basket_yaw = 1;
+        *(unsigned char *)&err = 0xFF;
 
-        osDelay(100);
+        osDelay(500);
     }
 }

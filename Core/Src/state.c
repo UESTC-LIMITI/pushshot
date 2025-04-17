@@ -11,43 +11,44 @@ struct STATE_R state_R = {
 struct STATE_W state_W;
 timer_t runtime;
 
-float basket_yaw_last;
+float basket_yaw_prev;
 
 #define DATA_OUTPUT
 
 #ifdef DATA_OUTPUT
 unsigned char VOFA[32];
 #endif
+
 struct
 {
     struct
     {
-        float time;
-    } rst;
-    struct
-    {
-        float spd, time;
-    } back;
-    struct
-    {
-        float spd, time;
+        float timeout, spd;
     } init;
+    struct
+    {
+        float curr;
+    } lock;
+    struct
+    {
+        float timeout, spd;
+    } back;
     struct
     {
         float curr_pct, spd, spd_ctrl_pct, brake_curr_pct;
     } shot;
 } VESC_param = {
-    .rst.time = 1,
+    .init.timeout = 3,
+    .init.spd = -200,
 
-    .back.spd = -50,
-    .back.time = 0.4,
+    .lock.curr = -5,
 
-    .init.spd = 100,
-    .init.time = 4,
+    .back.timeout = 2.5,
+    .back.spd = -100,
 
     .shot.curr_pct = 0.1,
     .shot.spd = 810,
-    .shot.spd_ctrl_pct = 0.9,
+    .shot.spd_ctrl_pct = 0.9, // 0.9375
     .shot.brake_curr_pct = 0};
 
 struct
@@ -63,14 +64,18 @@ struct
 
 #define Gimbal_GR (11 * HighTorque_param.gain)
 
-struct target_info basket_info = {.dist_cm_fltr.num = 10, .yaw_fltr.num = 10},
-                   R2_info = {.dist_cm_fltr.num = 10, .yaw_fltr.num = 10};
+struct target_info basket_info = {.dist_cm_fltr.size = 10, .yaw_fltr.size = 10},
+                   R2_info = {.dist_cm_fltr.size = 10, .yaw_fltr.size = 10};
 struct pos_info R1_pos_lidar, R1_pos_chassis, R2_pos;
 timer_t HighTorque_time, gimbal_time;
 
-float Fitting_Calc_Basket(void)
+float Fitting_Calc_Basket(float dist_cm)
 {
-    return 0.000004857241142074663 * pow(basket_info.dist_cm, 3) - 0.005351024620377842 * pow(basket_info.dist_cm, 2) + 2.6690857044586664 * (basket_info.dist_cm) + 319.8604968300233;
+    return -3.269900772135022e-10 * pow(dist_cm, 5) +
+           6.354993084822791e-7 * pow(dist_cm, 4) -
+           0.00047688496297837446 * pow(dist_cm, 3) +
+           0.17250630300259218 * pow(dist_cm, 2) -
+           29.232875826768577 * dist_cm + 2515.470017191885;
 }
 
 float Fitting_Calc_R2(void)
@@ -88,89 +93,89 @@ void State(void *argument)
     while (1)
     {
 #ifdef DATA_OUTPUT
-        if (VESC[1 - VESC_ID_OFFSET].fdbk.spd > VESC_param.init.spd + 20 && !state_R.brake)
+        if (VESC[1 - VESC_ID_OFFSET].fdbk.spd > 10 && !state_R.brake)
         {
-            sprintf((char *)VOFA, "T:%.2f,%d\n", VESC[1 - VESC_ID_OFFSET].fdbk.spd, state_R.spd_ctrl ? 1000 : 0);
+            sprintf((char *)VOFA, "T:%.2f\n", VESC[1 - VESC_ID_OFFSET].fdbk.spd);
             UART_SendArray(&UART7_info, VOFA, 16);
         }
 #endif
         switch (state)
         {
-        // spin to rst pos
-        case RST:
+        case IDLE:
         {
-            VESC[1 - VESC_ID_OFFSET].ctrl.spd = -VESC_param.back.spd;
-
-            if (Timer_CheckTimeout(&runtime, VESC_param.rst.time))
-            {
-                Timer_Clear(&runtime);
-                state = IDLE;
-            }
-            break;
-        }
-        // spin back some distance
-        case BACK:
-        {
-            VESC[1 - VESC_ID_OFFSET].ctrl.spd = VESC_param.back.spd;
-
-            if (Timer_CheckTimeout(&runtime, VESC_param.back.time))
-            {
-                Timer_Clear(&runtime);
-                state = IDLE;
-            }
+            VESC[1 - VESC_ID_OFFSET].ctrl.curr = 0;
             break;
         }
         // spin to init pos
         case INIT:
         {
-            VESC[1 - VESC_ID_OFFSET].ctrl.spd = VESC_param.init.spd;
-
-            // timeout exception
-            if (Timer_CheckTimeout(&runtime, VESC_param.init.time))
+            // timeout
+            if (Timer_CheckTimeout(&runtime, VESC_param.init.timeout))
             {
                 Timer_Clear(&runtime);
-                state_W.ball = 0;
+                state = IDLE;
+
+                break;
+            }
+
+            static MovAvgFltr_t VESC_fltr;
+
+            // ball plate detected
+            if (MovAvgFltr(&VESC_fltr, VESC[1 - VESC_ID_OFFSET].fdbk.curr <= 50 ? VESC[1 - VESC_ID_OFFSET].fdbk.curr : 0) >= 20 && // current large enough
+                runtime.intvl >= 0.125)                                                                                            // time long enough
+            {
+                MovAvgFltr_Clear(&VESC_fltr);
+                Timer_Clear(&runtime);
                 state = IDLE;
             }
-
-            // up to pos
-            if (!(GPIOE->IDR & 0x4))
+            // go down
+            else
             {
-                if (state_W.RST)
-                {
-                    Timer_Clear(&runtime);
-                    state_W.RST = 0;
-                    state = RST;
-                }
-                else
-                {
-                    Timer_Clear(&runtime);
-                    state_R.shot_ready = 1;
-                    state = IDLE;
-                }
+                VESC[1 - VESC_ID_OFFSET].ctrl.spd = VESC_param.init.spd;
             }
+
             break;
         }
-        case IDLE:
+        case BACK:
         {
-            VESC[1 - VESC_ID_OFFSET].ctrl.curr = 0;
-            VESC[1 - VESC_ID_OFFSET].ctrl.spd = 0;
+            if (Timer_CheckTimeout(&runtime, VESC_param.back.timeout))
+            {
+                Timer_Clear(&runtime);
+                state = IDLE;
 
-            // automatic init
-            if (state_W.ball && !state_R.shot_ready)
-                state = INIT;
+                break;
+            }
+
+            if (GPIOE->IDR & 0x4)
+            {
+                Timer_Clear(&runtime);
+                state = LOCK;
+            }
+            else
+                VESC[1 - VESC_ID_OFFSET].ctrl.spd = VESC_param.back.spd;
+
+            break;
+        }
+        // stay at pos
+        case LOCK:
+        {
+            // current control
+            VESC[1 - VESC_ID_OFFSET].ctrl.curr = VESC_param.lock.curr;
+
             break;
         }
         case SHOT:
         {
             if (!state_R.shot_ready)
-                state = INIT;
-
-            if (state_R.fitting &&
-                !VESC[1 - VESC_ID_OFFSET].ctrl.spd) // spd not set
             {
-                VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2()      // fitting for pass ball
-                                                     : Fitting_Calc_Basket(); // fitting for shoot ball
+                state = LOCK;
+                break;
+            }
+
+            if (state_R.fitting)
+            {
+                VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2()                             // fitting for pass ball
+                                                     : Fitting_Calc_Basket(basket_info.dist_cm - 6); // fitting for shoot ball
             }
 
             VESC[1 - VESC_ID_OFFSET].ctrl.curr = VESC_param.shot.spd * (state_R.brake ? VESC_param.shot.brake_curr_pct // curr for brake
@@ -198,17 +203,30 @@ void State(void *argument)
             }
             break;
         }
+        // test only
+        case READY:
+        {
+            state_W.ball = 1;
+            state = BACK;
+            break;
+        }
         }
 
         // delay after shot
         if (Timer_CheckTimeout(&HighTorque_time, 0.1))
-            HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos = -HighTorque_param.pos_0 - (state_W.ball || state_R.shot_ready                                                                                           // already init
+            HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos = -HighTorque_param.pos_0 - (state_W.ball                                                                                                                 // already init
                                                                                            ? (state_W.aim_R2 ? R2_info.yaw                                                                                          // aim at R2
-                                                                                                             : basket_yaw_last + (basket_info.yaw - basket_yaw_last) * Timer_GetRatio(&gimbal_time, 1000 / 30.f)) * // aim at basket
+                                                                                                             : basket_yaw_prev + (basket_info.yaw - basket_yaw_prev) * Timer_GetRatio(&gimbal_time, 1000 / 30.f)) * // aim at basket
                                                                                                  Gimbal_GR
                                                                                            : 0); // stay mid
 
         LIMIT_RANGE(HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos, YAW_MAX, YAW_MIN); // gimbal limit
+
+        static MovAvgFltr_t HighTorque_fltr;
+        if (state_W.ball && MovAvgFltr_GetTargetStatus(&HighTorque_fltr, HighTorque[2 - HIGHTORQUE_ID_OFFSET].fdbk.spd, 0, 2))
+            state_R.shot_ready = 1;
+        else if (state != SHOT)
+            state_R.shot_ready = 0;
 
         osDelay(1);
     }

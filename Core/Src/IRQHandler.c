@@ -49,6 +49,7 @@ void FDCAN2_IT0_IRQHandler(void)
             err.VESC = 0; // clear err flag
 
             VESC[1 - VESC_ID_OFFSET].fdbk.spd = (float)(RxData[0] << 24 | RxData[1] << 16 | RxData[2] << 8 | RxData[3]) / HOBBYWING_V9626_KV160.PP;
+            VESC[1 - VESC_ID_OFFSET].fdbk.curr = (float)(RxData[4] << 8 | RxData[5]) / VESC_fCURR_R;
             break;
         }
         }

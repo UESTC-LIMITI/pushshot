@@ -33,11 +33,12 @@ extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 
 enum STATE
 {
-    RST,
-    BACK,
-    INIT,
     IDLE,
-    SHOT
+    INIT,
+    BACK,
+    LOCK,
+    SHOT,
+    READY
 };
 extern enum STATE state;
 
@@ -54,8 +55,7 @@ extern struct STATE_R state_R;
 struct STATE_W
 {
     unsigned char ball : 1,
-        aim_R2 : 1,
-        RST : 1;
+        aim_R2 : 1;
 };
 extern struct STATE_W state_W;
 
@@ -95,6 +95,6 @@ void TIM16_Init(void);
 void UART5_Init(void);
 
 extern timer_t gimbal_time;
-extern float basket_yaw_last;
+extern float basket_yaw_prev;
 
 #endif

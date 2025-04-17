@@ -1,23 +1,18 @@
 #include "user.h"
 
 // basket pos
-#define BASKET_X 13.9f
-#define BASKET_Y -4.03f
+#define BASKET_X 14.05f
+#define BASKET_Y -3.99f
 
 #define CENTRE_OFFSET 0.2f
 
-float camera_Kp = 0.02, camera_Ki = 0.005, camera_Kd = 0;
+float camera_Kp = 0.02, // 0.016
+    camera_Ki = 0.002;
 
 void Comm(void *argument)
 {
     while (1)
     {
-        static unsigned char err_last, err_curr;
-
-        err_curr = *(unsigned char *)&err & err_last;
-        FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, &err_curr, 1);
-        err_last = *(unsigned char *)&err;
-
         static bool basket_lock;
         if (basket_info.dist_cm <= 1000 && !basket_lock)
         {
@@ -43,7 +38,7 @@ float Gimbal_PID(float err)
     else
         iterm += err / 30;
 
-    float yaw = (ABS(err) >= 2 ? err : 0) * camera_Kp + LIMIT_ABS(iterm, 2) * camera_Ki + (err - err_prev) * 30 * camera_Kd;
+    float yaw = (ABS(err) > 1 ? err : 0) * camera_Kp + LIMIT_ABS(iterm, 0.25) * camera_Ki;
 
     err_prev = err;
 
@@ -65,7 +60,7 @@ void FDCAN3_IT0_IRQHandler(void)
         // shot
         case 0xA:
         {
-            if (state == IDLE)
+            if (state == LOCK)
                 state = SHOT;
             break;
         }
@@ -83,7 +78,6 @@ void FDCAN3_IT0_IRQHandler(void)
             state_W.aim_R2 = 1;
             break;
         }
-        case 0xE:  // dribble done
         case 0x12: // dribble start
         {
             if (state == IDLE)
@@ -94,20 +88,22 @@ void FDCAN3_IT0_IRQHandler(void)
         case 0x14: // manual init
         {
             state_W.ball = 1;
-            if (state == IDLE)
-                state = INIT;
             break;
         }
         // rst
         case 0xF6:
         {
-            if (state == IDLE &&
-                GPIOE->IDR & 0x4)
+            if (state == IDLE)
             {
                 state_R.shot_ready = state_W.ball = 0;
-                state_W.RST = 1;
                 state = INIT;
             }
+            else if (state == LOCK)
+            {
+                state_R.shot_ready = state_W.ball = 0;
+                state = IDLE;
+            }
+
             break;
         }
         // pos from lidar, for data collection only
@@ -135,8 +131,11 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0x105:
         {
-            basket_info.dist_cm = MovAvgFltr(&basket_info.dist_cm_fltr, *(float *)RxData) * 100;
-            // basket_info.yaw = MovAvgFltr(&basket_info.yaw_fltr, *(float *)&RxData[4]));
+            // Timer_Clear(&gimbal_time);
+            // basket_yaw_prev = basket_info.yaw;
+
+            // basket_info.dist_cm = MovAvgFltr(&basket_info.dist_cm_fltr, *(float *)RxData) * 100;
+            // basket_info.yaw = MovAvgFltr(&basket_info.yaw_fltr, -*(float *)&RxData[4]);
 
             break;
         }
@@ -145,10 +144,10 @@ void FDCAN3_IT0_IRQHandler(void)
         {
             err.basket_yaw = 0; // clear err flag
 
-            if (state_W.ball || state_R.shot_ready)
+            if (state_W.ball)
             {
                 Timer_Clear(&gimbal_time);
-                basket_yaw_last = basket_info.yaw;
+                basket_yaw_prev = basket_info.yaw;
                 basket_info.yaw -= Gimbal_PID(*(float *)RxData);
             }
             LIMIT_ABS(basket_info.yaw, 16);
