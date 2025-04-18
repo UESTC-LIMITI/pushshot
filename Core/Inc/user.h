@@ -55,7 +55,8 @@ extern struct STATE_R state_R;
 struct STATE_W
 {
     unsigned char ball : 1,
-        aim_R2 : 1;
+        aim_R2 : 1,
+        R2_at_pos : 1;
 };
 extern struct STATE_W state_W;
 
@@ -66,9 +67,22 @@ struct ERR
         pos_lidar : 1,
         pos_chassis : 1,
         R2_pos : 1,
-        basket_yaw : 1;
+        basket_camera : 1,
+        basket_lidar : 1;
 };
 extern struct ERR err;
+
+struct ERR_CNT
+{
+    unsigned char VESC,
+        HighTorque,
+        pos_lidar,
+        pos_chassis,
+        R2_pos,
+        basket_camera,
+        basket_lidar;
+};
+extern struct ERR_CNT err_cnt;
 
 struct target_info
 {
@@ -96,5 +110,6 @@ void UART5_Init(void);
 
 extern timer_t gimbal_time;
 extern float basket_yaw_prev;
+extern MovAvgFltr_t dist_fltr, yaw_fltr;
 
 #endif

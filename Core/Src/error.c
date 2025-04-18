@@ -1,31 +1,27 @@
 #include "user.h"
 
-struct ERR err = {
-    .VESC = 1,
-    .HighTorque = 1,
-    .pos_lidar = 1,
-    .pos_chassis = 1,
-    .R2_pos = 1,
-    .basket_yaw = 1};
+struct ERR err;
+struct ERR_CNT err_cnt;
 
 void Error(void *argument)
 {
     while (1)
     {
-        static struct ERR err_prev, err_curr;
-
-        *(unsigned char *)&err_prev = *(unsigned char *)&err_curr;
-        *(unsigned char *)&err_curr = *(unsigned char *)&err;
-        *(unsigned char *)&err &= *(unsigned char *)&err_prev;
+        for (unsigned char cnt = 0; cnt < 7; cnt++)
+        {
+            // max failure
+            if (((unsigned char *)&err_cnt)[cnt] == 9)
+                *(unsigned char *)&err |= 1 << cnt;
+            else
+                ((unsigned char *)&err_cnt)[cnt]++;
+        }
 
         FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 1);
 
         // set err flag
-        state_R.err = *(unsigned char *)&err ? true
-                                             : false;
+        state_R.err = *(unsigned char *)&err ? 1
+                                             : 0;
 
-        *(unsigned char *)&err = 0xFF;
-
-        osDelay(500);
+        osDelay(40);
     }
 }

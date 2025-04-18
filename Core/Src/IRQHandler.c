@@ -14,7 +14,7 @@ void FDCAN1_IT0_IRQHandler(void)
         {
         case 0x200:
         {
-            err.HighTorque = 0; // clear err flag
+            err_cnt.HighTorque = err.HighTorque = 0; // clear error flag
 
             if (RxData[0] == (HIGHTORQUE_DATA_RE | HIGHTORQUE_DATA_TYPE_FLOAT | 3) &&
                 RxData[1] == HIGHTORQUE_REG_POS_FDBK &&
@@ -46,7 +46,7 @@ void FDCAN2_IT0_IRQHandler(void)
         {
         case (VESC_STATUS_1 | 1):
         {
-            err.VESC = 0; // clear err flag
+            err_cnt.VESC = err.VESC = 0; // clear error flag
 
             VESC[1 - VESC_ID_OFFSET].fdbk.spd = (float)(RxData[0] << 24 | RxData[1] << 16 | RxData[2] << 8 | RxData[3]) / HOBBYWING_V9626_KV160.PP;
             VESC[1 - VESC_ID_OFFSET].fdbk.curr = (float)(RxData[4] << 8 | RxData[5]) / VESC_fCURR_R;
@@ -56,7 +56,7 @@ void FDCAN2_IT0_IRQHandler(void)
     }
 }
 
-// top pg
+// top photogate, trigger brake
 void EXTI1_IRQHandler(void)
 {
     EXTI->PR1 |= 0x2;
