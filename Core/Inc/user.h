@@ -31,10 +31,12 @@
 
 extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 
+extern USART_info_t UART7_info, UART5_info;
+
 enum STATE
 {
-    IDLE,
     INIT,
+    IDLE,
     BACK,
     LOCK,
     SHOT,
@@ -55,8 +57,7 @@ extern struct STATE_R state_R;
 struct STATE_W
 {
     unsigned char ball : 1,
-        aim_R2 : 1,
-        R2_at_pos : 1;
+        aim_R2 : 1;
 };
 extern struct STATE_W state_W;
 
@@ -87,7 +88,7 @@ extern struct ERR_CNT err_cnt;
 struct target_info
 {
     float dist_cm, yaw;
-    MovAvgFltr_t dist_cm_fltr, yaw_fltr;
+    MovAvgFltr_t dist_fltr, yaw_fltr;
 };
 extern struct target_info basket_info, R2_info;
 
@@ -97,9 +98,13 @@ struct pos_info
 };
 extern struct pos_info R1_pos_lidar, R1_pos_chassis, R2_pos;
 
-extern USART_info_t UART7_info, UART5_info;
+extern timer_t runtime, gimbal_time;
 
-extern timer_t runtime;
+extern float R2_yaw_prev, basket_yaw_prev;
+
+extern MovAvgFltr_t yaw_fltr;
+
+extern unsigned char RxData_D1S2[];
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);
@@ -107,9 +112,5 @@ void FDCAN3_Init(void);
 void TIM7_Init(void);
 void TIM16_Init(void);
 void UART5_Init(void);
-
-extern timer_t gimbal_time;
-extern float basket_yaw_prev;
-extern MovAvgFltr_t dist_fltr, yaw_fltr;
 
 #endif

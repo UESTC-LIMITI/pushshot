@@ -102,6 +102,10 @@ void TIM16_Init(void)
 
 void UART5_Init(void)
 {
-    UART5->CR1 |= 0x20;
-    UART5->CR3 |= 0x1;
+    UART5->CR3 |= 0x40;
+
+    DMA1_Stream2->NDTR = 10;
+    DMA1_Stream2->PAR = (unsigned)&UART5->RDR;
+    DMA1_Stream2->M0AR = (unsigned)RxData_D1S2;
+    DMA1_Stream2->CR |= 0x11;
 }
