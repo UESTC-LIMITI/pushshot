@@ -60,6 +60,6 @@ void FDCAN2_IT0_IRQHandler(void)
 void EXTI1_IRQHandler(void)
 {
     EXTI->PR1 |= 0x2;
-    if (GPIOF->IDR & 0x2 && state == SHOT)
+    if (GPIOF->IDR & 0x2 && state == SHOT && ++block_cnt == BLOCK_NUM)
         state_R.brake = 1;
 }

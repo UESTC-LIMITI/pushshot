@@ -29,6 +29,8 @@
 #define HIGHTORQUE_ID_OFFSET 2
 #include "HighTorque.h"
 
+#define BLOCK_NUM 1
+
 extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 
 extern USART_info_t UART7_info, UART5_info;
@@ -39,8 +41,7 @@ enum STATE
     IDLE,
     BACK,
     LOCK,
-    SHOT,
-    READY
+    SHOT
 };
 extern enum STATE state;
 
@@ -88,7 +89,7 @@ extern struct ERR_CNT err_cnt;
 struct target_info
 {
     float dist_cm, yaw;
-    MovAvgFltr_t dist_fltr, yaw_fltr;
+    MovAvgFltr_t dist_fltr;
 };
 extern struct target_info basket_info, R2_info;
 
@@ -98,13 +99,14 @@ struct pos_info
 };
 extern struct pos_info R1_pos_lidar, R1_pos_chassis, R2_pos;
 
-extern timer_t runtime, gimbal_time;
+extern timer_t runtime, HighTorque_time, gimbal_time;
 
-extern float R2_yaw_prev, basket_yaw_prev;
+extern float yaw_prev;
 
 extern MovAvgFltr_t yaw_fltr;
 
-extern unsigned char RxData_D1S2[];
+extern unsigned char RxData_D1S2[],
+    block_cnt;
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);

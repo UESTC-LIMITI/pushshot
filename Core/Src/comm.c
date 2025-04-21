@@ -9,7 +9,9 @@
 float camera_Kp = 0.02,
       camera_Ki = 0.002;
 
-__attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[10] = {0xA5};
+__attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[10] = {0xA5},
+                                                               RxData_D1S2[10];
+
 void Comm(void *argument)
 {
     while (1)
@@ -92,13 +94,24 @@ void FDCAN3_IT0_IRQHandler(void)
                 state = BACK;
             break;
         }
-        case 0xF:  // ball passed
-        case 0x14: // manual init
+        // ball passed
+        case 0xF:
         {
+            Timer_Clear(&HighTorque_time);
             state_W.ball = 1;
             break;
         }
-        // rst
+        // manual init, for test only
+        case 0x14:
+        {
+            if (state == IDLE)
+            {
+                state_W.ball = 1;
+                state = BACK;
+            }
+            break;
+        }
+        // reset
         case 0xF6:
         {
             if (state == IDLE)
@@ -114,7 +127,7 @@ void FDCAN3_IT0_IRQHandler(void)
 
             break;
         }
-        // position info from lidar, 2
+        // position info from lidar, 1
         case 0x104:
         {
             err_cnt.pos_lidar = err.pos_lidar = 0; // clear error flag
@@ -123,66 +136,71 @@ void FDCAN3_IT0_IRQHandler(void)
             R1_pos_lidar.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[8]);
             R1_pos_lidar.yaw = *(float *)&RxData[8] * R2D;
 
-            float dist_x = BASKET_X - R1_pos_lidar.x,
-                  dist_y = BASKET_Y - R1_pos_lidar.y;
-
             if (err.basket_lidar)
             {
-                basket_info.dist_cm = MovAvgFltr(&basket_info.dist_fltr, sqrt(pow(dist_x, 2) + pow(dist_y, 2))) * 100;
-
-                if (err.basket_camera)
+                if (!state_W.aim_R2)
                 {
                     Timer_Clear(&gimbal_time);
-                    basket_yaw_prev = basket_info.yaw;
-                    basket_info.yaw = MovAvgFltr(&basket_info.yaw_fltr, (dist_x >= 0 ? atan(dist_y / dist_x) * R2D                                   // basket at front
-                                                                                     : (atan(dist_y / dist_x) * R2D + (dist_y >= 0 ? 180 : -180))) - // basket behind
-                                                                            R1_pos_lidar.yaw);
-
-                    // mini angle
-                    if (basket_info.yaw > 180)
-                        basket_info.yaw = basket_info.yaw - 360;
-                    else if (basket_info.yaw < -180)
-                        basket_info.yaw = basket_info.yaw + 360;
+                    yaw_prev = basket_info.yaw;
                 }
+
+                float dist_x = BASKET_X - R1_pos_lidar.x,
+                      dist_y = BASKET_Y - R1_pos_lidar.y;
+
+                basket_info.dist_cm = sqrt(pow(dist_x, 2) + pow(dist_y, 2)) * 100;
+
+                // absolute angle
+                basket_info.yaw = (dist_x >= 0 ? atan(dist_y / dist_x) * R2D                                   // basket at front
+                                               : (atan(dist_y / dist_x) * R2D + (dist_y >= 0 ? 180 : -180))) - // basket behind
+                                  R1_pos_lidar.yaw;
+
+                // mini angle
+                if (basket_info.yaw > 180)
+                    basket_info.yaw -= 360;
+                else if (basket_info.yaw < -180)
+                    basket_info.yaw += 360;
             }
 
             break;
         }
-        // basket info from lidar, 1
+        // basket info from lidar, 0
         case 0x105:
         {
             err_cnt.basket_lidar = err.basket_lidar = 0; // clear error flag
 
-            basket_info.dist_cm = MovAvgFltr(&basket_info.dist_fltr, *(float *)RxData) * 100;
-
-            if (err.basket_camera)
+            if (!state_W.aim_R2)
             {
                 Timer_Clear(&gimbal_time);
-                basket_yaw_prev = basket_info.yaw;
-                basket_info.yaw = MovAvgFltr(&basket_info.yaw_fltr, -*(float *)&RxData[4]);
+                yaw_prev = basket_info.yaw;
             }
+
+            basket_info.dist_cm = *(float *)RxData * 100,
+            basket_info.yaw = -*(float *)&RxData[4];
 
             break;
         }
-        // basket info from camera, 0
+        // basket info from camera, 2
         case 0x106:
         {
-            err_cnt.basket_camera = err.basket_camera = 0; // clear err flag
+            err_cnt.basket_camera = err.basket_camera = 0; // clear error flag
 
-            if (state_W.ball && basket_info.dist_cm <= 900)
+            if (state_W.ball && basket_info.dist_cm <= 900 && // start PID calculation
+                err.basket_lidar && err.pos_lidar &&
+                !state_W.aim_R2)
             {
                 Timer_Clear(&gimbal_time);
-                basket_yaw_prev = basket_info.yaw;
+                yaw_prev = basket_info.yaw;
+
                 basket_info.yaw -= Gimbal_PID(*(float *)RxData);
+                LIMIT_ABS(basket_info.yaw, 16); // max angle for PID
             }
-            LIMIT_ABS(basket_info.yaw, 16); // max angle for PID
 
             break;
         }
         // pos from chassis, 3
         case 0x201:
         {
-            err_cnt.pos_chassis = err.pos_chassis = 0; // clear err flag
+            err_cnt.pos_chassis = err.pos_chassis = 0; // clear error flag
 
             R1_pos_chassis.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[16]);
             R1_pos_chassis.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[16]);
@@ -193,19 +211,26 @@ void FDCAN3_IT0_IRQHandler(void)
                 float dist_x = BASKET_X - R1_pos_chassis.x,
                       dist_y = BASKET_Y - R1_pos_chassis.y;
 
-                basket_info.dist_cm = MovAvgFltr(&basket_info.dist_fltr, sqrt(pow(dist_x, 2) + pow(dist_y, 2))) * 100;
+                basket_info.dist_cm = sqrt(pow(dist_x, 2) + pow(dist_y, 2)) * 100;
 
                 if (err.basket_camera)
                 {
-                    basket_info.yaw = MovAvgFltr(&basket_info.yaw_fltr, (dist_x >= 0 ? atan(dist_y / dist_x) * R2D                                   // basket at front
-                                                                                     : (atan(dist_y / dist_x) * R2D + (dist_y >= 0 ? 180 : -180))) - // basket behind
-                                                                            R1_pos_chassis.yaw);
+                    if (!state_W.aim_R2)
+                    {
+                        Timer_Clear(&gimbal_time);
+                        yaw_prev = basket_info.yaw;
+                    }
+
+                    // absolute angle
+                    basket_info.yaw = (dist_x >= 0 ? atan(dist_y / dist_x) * R2D                                   // basket at front
+                                                   : (atan(dist_y / dist_x) * R2D + (dist_y >= 0 ? 180 : -180))) - // basket behind
+                                      R1_pos_chassis.yaw;
 
                     // mini angle
                     if (basket_info.yaw > 180)
-                        basket_info.yaw = basket_info.yaw - 360;
+                        basket_info.yaw -= 360;
                     else if (basket_info.yaw < -180)
-                        basket_info.yaw = basket_info.yaw + 360;
+                        basket_info.yaw += 360;
                 }
             }
             break;
@@ -215,7 +240,6 @@ void FDCAN3_IT0_IRQHandler(void)
 }
 
 // info of R2
-__attribute__((section(".ARM.__at_0x24000000"))) unsigned char RxData_D1S2[10];
 void DMA1_Stream2_IRQHandler(void)
 {
     if (DMA1->LISR & 0x20 << 16)
@@ -230,20 +254,25 @@ void DMA1_Stream2_IRQHandler(void)
         float dist_x = R2_pos.x - (err.pos_lidar ? R1_pos_chassis.x : R1_pos_lidar.x),
               dist_y = R2_pos.y - (err.pos_lidar ? R1_pos_chassis.y : R1_pos_lidar.y);
 
-        R2_info.dist_cm = MovAvgFltr(&R2_info.dist_fltr, sqrt(pow(dist_x, 2) + pow(dist_y, 2))) * 100,
+        R2_info.dist_cm = sqrt(pow(dist_x, 2) + pow(dist_y, 2)) * 100;
 
-        Timer_Clear(&gimbal_time);
-        R2_yaw_prev = R2_info.yaw;
-        R2_info.yaw = MovAvgFltr(&R2_info.yaw_fltr, (dist_x >= 0 ? atan(dist_y / dist_x) * R2D                                   // R2 at front
-                                                                 : (atan(dist_y / dist_x) * R2D + (dist_y >= 0 ? 180 : -180))) - // R2 behind
-                                                        (err.pos_lidar ? R1_pos_chassis.yaw                                      // position from lidar offline
-                                                                       : R1_pos_lidar.yaw));                                     // position from lidar online
+        if (state_W.aim_R2)
+        {
+            Timer_Clear(&gimbal_time);
+            yaw_prev = R2_info.yaw;
+        }
+
+        // absolute angle
+        R2_info.yaw = (dist_x >= 0 ? atan(dist_y / dist_x) * R2D                                   // R2 at front
+                                   : (atan(dist_y / dist_x) * R2D + (dist_y >= 0 ? 180 : -180))) - // R2 behind
+                      (err.pos_lidar ? R1_pos_chassis.yaw                                          // position from lidar offline
+                                     : R1_pos_lidar.yaw);                                          // position from lidar online
 
         // mini angle
         if (R2_info.yaw > 180)
-            R2_info.yaw = R2_info.yaw - 360;
+            R2_info.yaw -= 360;
         else if (R2_info.yaw < -180)
-            R2_info.yaw = R2_info.yaw + 360;
+            R2_info.yaw += 360;
 
         FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA1, (unsigned char *)&R2_pos, 8);
     }
