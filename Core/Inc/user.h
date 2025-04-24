@@ -29,16 +29,14 @@
 #define HIGHTORQUE_ID_OFFSET 2
 #include "HighTorque.h"
 
-#define BLOCK_NUM 1
-
 extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 
 extern USART_info_t UART7_info, UART5_info;
 
 enum STATE
 {
-    INIT,
     IDLE,
+    INIT,
     BACK,
     LOCK,
     SHOT
@@ -105,8 +103,7 @@ extern float yaw_prev;
 
 extern MovAvgFltr_t yaw_fltr;
 
-extern unsigned char RxData_D1S2[],
-    block_cnt;
+extern unsigned char RxData_D1S2[];
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);

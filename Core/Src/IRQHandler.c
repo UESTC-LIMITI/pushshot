@@ -52,6 +52,13 @@ void FDCAN2_IT0_IRQHandler(void)
             VESC[1 - VESC_ID_OFFSET].fdbk.curr = (float)(RxData[4] << 8 | RxData[5]) / VESC_fCURR_R;
             break;
         }
+        case (VESC_STATUS_5 | 1):
+        {
+            err_cnt.VESC = err.VESC = 0; // clear error flag
+
+            VESC[1 - VESC_ID_OFFSET].fdbk.volt = (float)(RxData[4] << 8 | RxData[5]) / VESC_fVOLT;
+            break;
+        }
         }
     }
 }
@@ -60,6 +67,6 @@ void FDCAN2_IT0_IRQHandler(void)
 void EXTI1_IRQHandler(void)
 {
     EXTI->PR1 |= 0x2;
-    if (GPIOF->IDR & 0x2 && state == SHOT && ++block_cnt == BLOCK_NUM)
+    if (GPIOF->IDR & 0x2 && state == SHOT)
         state_R.brake = 1;
 }

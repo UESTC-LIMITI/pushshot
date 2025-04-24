@@ -7,7 +7,7 @@ USART_info_t UART7_info = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subha
 
 enum STATE state;
 struct STATE_R state_R = {
-    .fitting = 1};
+    .fitting = 0};
 struct STATE_W state_W;
 timer_t runtime;
 
@@ -47,16 +47,16 @@ struct
 
     .shot.acc_curr_pct = 0.1,
     .shot.spd = 810,
-    .shot.spd_ctrl_pct = 0.9, // 0.9375
+    .shot.spd_ctrl_pct = 0.9,
     .shot.brake_curr_pct = 0,
-    .shot.timeout = 1.25,
+    .shot.timeout = 1,
     .shot.brake_time = 0.25};
 
 struct
 {
     float pos_0, gain;
 } HighTorque_param = {
-    .pos_0 = -9,
+    .pos_0 = -12,
     .gain = 1};
 
 // gimbal limit
@@ -73,21 +73,20 @@ struct pos_info R1_pos_lidar, R1_pos_chassis, R2_pos;
 timer_t HighTorque_time, gimbal_time;
 
 float yaw_prev;
-float basket_dist_offset = 0,
+float basket_dist_offset = 4,
       R2_dist_offset = 0;
 
 MovAvgFltr_t yaw_fltr;
 
-unsigned char block_cnt;
-
+// e2 sum: 90.55
 float Fitting_Calc_Basket(float dist_cm)
 {
-    return -5.779193970777076e-11 * pow(dist_cm, 5) +
-           1.032496124431237e-7 * pow(dist_cm, 4) +
-           -0.00006821829540371027 * pow(dist_cm, 3) +
-           0.020129026095673908 * pow(dist_cm, 2) +
-           -1.6322567197494209 * dist_cm +
-           571.5975465047942;
+    return 9.764124696899938e-11 * pow(dist_cm, 5) +
+           -1.992741376632967e-7 * pow(dist_cm, 4) +
+           0.00016035614885367977 * pow(dist_cm, 3) +
+           -0.06357325820499682 * pow(dist_cm, 2) +
+           13.22967619728297 * dist_cm +
+           -453.2900860446316;
 }
 
 float Fitting_Calc_R2(float dist_cm)
@@ -107,10 +106,10 @@ void State(void *argument)
     while (1)
     {
 #ifdef DATA_OUTPUT
-        if (ABS(HighTorque[2 - HIGHTORQUE_ID_OFFSET].fdbk.pos + basket_info.yaw * Gimbal_GR) >= 0.5)
+        if (state == SHOT && !state_R.brake)
         {
-            sprintf((char *)VOFA, "T:%.2f,%.2f,%.2f\n", HighTorque[2 - HIGHTORQUE_ID_OFFSET].fdbk.pos, -basket_info.yaw * Gimbal_GR, HighTorque[2 - HIGHTORQUE_ID_OFFSET].fdbk.pos + basket_info.yaw * Gimbal_GR);
-            UART_SendArray(&UART7_info, VOFA, 24);
+            sprintf((char *)VOFA, "T:%.2f\n", VESC[1 - VESC_ID_OFFSET].fdbk.spd);
+            UART_SendArray(&UART7_info, VOFA, 12);
         }
 #endif
         switch (state)
@@ -216,7 +215,7 @@ void State(void *argument)
 
                 if (runtime.intvl >= VESC_param.shot.timeout + VESC_param.shot.brake_time) // total duration
                 {
-                    block_cnt = basket_info.yaw = state_R.shot_ready = state_W.ball = state_R.brake = state_R.spd_ctrl = 0;
+                    basket_info.yaw = state_R.shot_ready = state_W.ball = state_R.brake = state_R.spd_ctrl = 0;
                     Timer_Clear(&runtime);
                     Timer_Clear(&HighTorque_time);
                     state = IDLE;
@@ -279,7 +278,7 @@ void State(void *argument)
         if (state_W.ball &&
             (state_W.aim_R2 ? MovAvgFltr_GetNewStatus(&R2_info.dist_fltr, R2_info.dist_cm, 2.5)             // position ready for R2
                             : MovAvgFltr_GetNewStatus(&basket_info.dist_fltr, basket_info.dist_cm, 2.5)) && // position ready for basket
-            MovAvgFltr_GetNewTargetStatus(&yaw_fltr, HighTorque[2 - HIGHTORQUE_ID_OFFSET].fdbk.spd, 0, 4))  // yaw ready
+            MovAvgFltr_GetNewTargetStatus(&yaw_fltr, HighTorque[2 - HIGHTORQUE_ID_OFFSET].fdbk.spd, 0, 8))  // yaw ready
             state_R.shot_ready = 1;
         else if (state != SHOT)
             state_R.shot_ready = 0;
