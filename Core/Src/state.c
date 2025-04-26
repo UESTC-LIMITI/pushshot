@@ -48,22 +48,22 @@ struct
     .shot.acc_curr_pct = 0.1,
     .shot.spd = 810,
     .shot.spd_ctrl_pct = 0.9,
-    .shot.brake_curr_pct = 0,
-    .shot.timeout = 1,
+    .shot.brake_curr_pct = 0.05,
+    .shot.timeout = 1.5,
     .shot.brake_time = 0.25};
 
 struct
 {
     float pos_0, gain;
 } HighTorque_param = {
-    .pos_0 = -12,
+    .pos_0 = -2,
     .gain = 1};
 
 // gimbal limit
-#define YAW_MIN -160
-#define YAW_MAX 160
+#define YAW_MIN (-115 + HighTorque_param.pos_0)
+#define YAW_MAX (115 + HighTorque_param.pos_0)
 
-#define Gimbal_GR (11 * HighTorque_param.gain)
+#define Gimbal_GR (14.45f * HighTorque_param.gain)
 
 struct target_info basket_info = {.dist_fltr.size = 2},
                    R2_info = {.dist_fltr.size = 4};
@@ -78,15 +78,10 @@ float basket_dist_offset = 4,
 
 MovAvgFltr_t yaw_fltr;
 
-// e2 sum: 90.55
 float Fitting_Calc_Basket(float dist_cm)
 {
-    return 9.764124696899938e-11 * pow(dist_cm, 5) +
-           -1.992741376632967e-7 * pow(dist_cm, 4) +
-           0.00016035614885367977 * pow(dist_cm, 3) +
-           -0.06357325820499682 * pow(dist_cm, 2) +
-           13.22967619728297 * dist_cm +
-           -453.2900860446316;
+    return 0.9125 * dist_cm +
+           596.25;
 }
 
 float Fitting_Calc_R2(float dist_cm)
@@ -99,7 +94,7 @@ void State(void *argument)
     GPIOD->ODR |= 0x80; // fan for wireless bridge
 
     // default param
-    HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos = -HighTorque_param.pos_0;
+    HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0;
     HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.Kp = 2;
     HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.Kd = 1;
 
@@ -114,6 +109,16 @@ void State(void *argument)
 #endif
         switch (state)
         {
+        case IDLE:
+        {
+            VESC[1 - VESC_ID_OFFSET].ctrl.curr = 0;
+
+            // control
+            {
+                VESC_SendCmd(&hfdcan2, 1, VESC_SET_CURR, &HOBBYWING_V9626_KV160);
+            }
+            break;
+        }
         // spin to top
         case INIT:
         {
@@ -122,7 +127,7 @@ void State(void *argument)
             if (Timer_CheckTimeout(&runtime, VESC_param.init.timeout) ||                                                           // timeout
                 GPIOE->IDR & 0x4 ||                                                                                                // bottom reached
                                                                                                                                    // ball plate detected
-                MovAvgFltr(&VESC_fltr, VESC[1 - VESC_ID_OFFSET].fdbk.curr <= 50 ? VESC[1 - VESC_ID_OFFSET].fdbk.curr : 0) >= 20 && // current large enough
+                MovAvgFltr(&VESC_fltr, VESC[1 - VESC_ID_OFFSET].fdbk.curr <= 50 ? VESC[1 - VESC_ID_OFFSET].fdbk.curr : 0) >= 16 && // current large enough
                     runtime.intvl >= 0.125)                                                                                        // time long enough
             {
                 MovAvgFltr_Clear(&VESC_fltr);
@@ -139,16 +144,6 @@ void State(void *argument)
             // control
             {
                 VESC_SendCmd(&hfdcan2, 1, VESC_SET_SPD, &HOBBYWING_V9626_KV160);
-            }
-            break;
-        }
-        case IDLE:
-        {
-            VESC[1 - VESC_ID_OFFSET].ctrl.curr = 0;
-
-            // control
-            {
-                VESC_SendCmd(&hfdcan2, 1, VESC_SET_CURR, &HOBBYWING_V9626_KV160);
             }
             break;
         }
@@ -254,19 +249,19 @@ void State(void *argument)
         }
 
         // delay after action
-        if (Timer_CheckTimeout(&HighTorque_time, 1))
-            HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos = -HighTorque_param.pos_0 - (state_W.ball
-                                                                                           // aim at R2
-                                                                                           ? (state_W.aim_R2 ? yaw_prev + (R2_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 25.f)
-                                                                                                             // aim at basket when close to
-                                                                                                             : (basket_info.dist_cm <= 900 ? (yaw_prev + (basket_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / (err.basket_lidar && err.pos_lidar ? (err.basket_camera ? 500.f // chassis
-                                                                                                                                                                                                                                                                                 : 30.f) // camera
-                                                                                                                                                                                                                                                            : 10.f)))                    // lidar
-                                                                                                                                           // stay at middle when far from
-                                                                                                                                           : 0)) *
-                                                                                                 Gimbal_GR
-                                                                                           // stay at middle
-                                                                                           : 0);
+        if (Timer_CheckTimeout(&HighTorque_time, 0.25))
+            HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0 + (state_W.ball
+                                                                                          // aim at R2
+                                                                                          ? (state_W.aim_R2 ? yaw_prev + (R2_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 25.f)
+                                                                                                            // aim at basket when close to
+                                                                                                            : (basket_info.dist_cm <= 900 ? (yaw_prev + (basket_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / (err.basket_lidar && err.pos_lidar ? (err.basket_camera ? 500.f // chassis
+                                                                                                                                                                                                                                                                                : 30.f) // camera
+                                                                                                                                                                                                                                                           : 10.f)))                    // lidar
+                                                                                                                                          // stay at middle when far from
+                                                                                                                                          : 0)) *
+                                                                                                Gimbal_GR
+                                                                                          // stay at middle
+                                                                                          : 0);
 
         LIMIT_RANGE(HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
 
@@ -278,7 +273,7 @@ void State(void *argument)
         if (state_W.ball &&
             (state_W.aim_R2 ? MovAvgFltr_GetNewStatus(&R2_info.dist_fltr, R2_info.dist_cm, 2.5)             // position ready for R2
                             : MovAvgFltr_GetNewStatus(&basket_info.dist_fltr, basket_info.dist_cm, 2.5)) && // position ready for basket
-            MovAvgFltr_GetNewTargetStatus(&yaw_fltr, HighTorque[2 - HIGHTORQUE_ID_OFFSET].fdbk.spd, 0, 8))  // yaw ready
+            MovAvgFltr_GetNewTargetStatus(&yaw_fltr, HighTorque[2 - HIGHTORQUE_ID_OFFSET].fdbk.spd, 0, 10)) // yaw ready
             state_R.shot_ready = 1;
         else if (state != SHOT)
             state_R.shot_ready = 0;

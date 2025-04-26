@@ -4,7 +4,7 @@
 #define BASKET_X 14.05f
 #define BASKET_Y -3.99f
 
-#define CENTRE_OFFSET 0.2f
+#define CENTRE_OFFSET 0.1365f
 
 float camera_Kp = 0.02,
       camera_Ki = 0.002;
@@ -118,11 +118,6 @@ void FDCAN3_IT0_IRQHandler(void)
             {
                 state_R.shot_ready = state_W.ball = 0;
                 state = INIT;
-            }
-            else if (state == LOCK)
-            {
-                state_R.shot_ready = state_W.ball = 0;
-                state = IDLE;
             }
 
             break;
