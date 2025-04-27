@@ -1,7 +1,5 @@
 #include "user.h"
 
-#include <stdio.h>
-
 USART_info_t UART7_info = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream0, .DMA_ID = 0},
              UART5_info = {.USART_handle = UART5, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream1, .DMA_ID = 1};
 
@@ -14,19 +12,12 @@ timer_t runtime;
 #define nDATA_OUTPUT
 
 #ifdef DATA_OUTPUT
+#include <stdio.h>
 unsigned char VOFA[32];
 #endif
 
 struct
 {
-    struct
-    {
-        float timeout, spd;
-    } init;
-    struct
-    {
-        float curr, time;
-    } lock;
     struct
     {
         float timeout, spd;
@@ -36,12 +27,6 @@ struct
         float acc_curr_pct, spd, spd_ctrl_pct, brake_curr_pct, timeout, brake_time;
     } shot;
 } VESC_param = {
-    .init.timeout = 3,
-    .init.spd = -200,
-
-    .lock.curr = -5,
-    .lock.time = 1,
-
     .back.timeout = 2,
     .back.spd = -150,
 
@@ -119,50 +104,14 @@ void State(void *argument)
             }
             break;
         }
-        // spin to top
-        case INIT:
-        {
-            static MovAvgFltr_t VESC_fltr;
-
-            if (Timer_CheckTimeout(&runtime, VESC_param.init.timeout) ||                                                           // timeout
-                GPIOE->IDR & 0x4 ||                                                                                                // bottom reached
-                                                                                                                                   // ball plate detected
-                MovAvgFltr(&VESC_fltr, VESC[1 - VESC_ID_OFFSET].fdbk.curr <= 50 ? VESC[1 - VESC_ID_OFFSET].fdbk.curr : 0) >= 16 && // current large enough
-                    runtime.intvl >= 0.125)                                                                                        // time long enough
-            {
-                MovAvgFltr_Clear(&VESC_fltr);
-                Timer_Clear(&runtime);
-                state = IDLE;
-                break;
-            }
-            // go down
-            else
-            {
-                VESC[1 - VESC_ID_OFFSET].ctrl.spd = VESC_param.init.spd;
-            }
-
-            // control
-            {
-                VESC_SendCmd(&hfdcan2, 1, VESC_SET_SPD, &HOBBYWING_V9626_KV160);
-            }
-            break;
-        }
         // spin to bottom
         case BACK:
         {
-            // timeout
-            if (Timer_CheckTimeout(&runtime, VESC_param.back.timeout))
+            if (Timer_CheckTimeout(&runtime, VESC_param.back.timeout) || // timeout
+                GPIOE->IDR & 0x4)                                        // bottom reached
             {
                 Timer_Clear(&runtime);
                 state = IDLE;
-                break;
-            }
-
-            // bottom reached
-            if (GPIOE->IDR & 0x4)
-            {
-                Timer_Clear(&runtime);
-                state = LOCK;
                 break;
             }
             // go down
@@ -172,25 +121,6 @@ void State(void *argument)
             // control
             {
                 VESC_SendCmd(&hfdcan2, 1, VESC_SET_SPD, &HOBBYWING_V9626_KV160);
-            }
-            break;
-        }
-        // stay at pos, wait for ball
-        case LOCK:
-        {
-            VESC[1 - VESC_ID_OFFSET].ctrl.curr = VESC_param.lock.curr;
-
-            // time limit
-            if (Timer_CheckTimeout(&runtime, VESC_param.lock.time))
-            {
-                Timer_Clear(&runtime);
-                state = IDLE;
-                break;
-            }
-
-            // control
-            {
-                VESC_SendCmd(&hfdcan2, 1, VESC_SET_CURR, &HOBBYWING_V9626_KV160);
             }
             break;
         }

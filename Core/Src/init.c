@@ -67,7 +67,7 @@ void FDCAN3_Init(void)
 
     FDCAN_Filter.FilterIndex = 2;
     FDCAN_Filter.FilterID1 = 0x14;
-    FDCAN_Filter.FilterID2 = 0xF6;
+    FDCAN_Filter.FilterID2 = 0;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
     FDCAN_Filter.FilterIndex = 3;
