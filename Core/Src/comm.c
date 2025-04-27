@@ -25,8 +25,8 @@ void Comm(void *argument)
         else if (basket_info.dist_cm > 1000)
             basket_lock = false;
 
-        *(float *)&R1_Data[1] = err.pos_lidar ? R1_pos_chassis.x : R1_pos_lidar.x;
-        *(float *)&R1_Data[5] = err.pos_lidar ? R1_pos_chassis.y : R1_pos_lidar.y;
+        *(float *)&R1_Data[1] = err.pos_chassis ? R1_pos_lidar.x : R1_pos_chassis.x;
+        *(float *)&R1_Data[5] = err.pos_chassis ? R1_pos_lidar.y : R1_pos_chassis.y;
         R1_Data[9] = state_W.aim_R2 && state_R.brake;
         UART_SendArray(&UART5_info, R1_Data, 10);
         osDelay(10);
@@ -47,6 +47,18 @@ float Gimbal_PID(float err)
     err_prev = err;
 
     return yaw;
+}
+
+float Yaw_Stablize(float yaw)
+{
+    static MovAvgFltr_t lidar_yaw_fltr = {.size = 4};
+
+    // tiny fluctuation, filter before output
+    if (MovAvgFltr_GetNewStatus(&lidar_yaw_fltr, yaw, 0.5))
+        return lidar_yaw_fltr.sum / lidar_yaw_fltr.len;
+    // error, direct output
+    else
+        return yaw;
 }
 
 void FDCAN3_IT0_IRQHandler(void)
@@ -146,15 +158,17 @@ void FDCAN3_IT0_IRQHandler(void)
                 basket_info.dist_cm = sqrt(pow(dist_x, 2) + pow(dist_y, 2)) * 100;
 
                 // absolute angle
-                basket_info.yaw = (dist_x >= 0 ? atan(dist_y / dist_x) * R2D                                   // basket at front
-                                               : (atan(dist_y / dist_x) * R2D + (dist_y >= 0 ? 180 : -180))) - // basket behind
-                                  R1_pos_lidar.yaw;
+                float yaw = (dist_x >= 0 ? atan(dist_y / dist_x) * R2D                                   // basket at front
+                                         : (atan(dist_y / dist_x) * R2D + (dist_y >= 0 ? 180 : -180))) - // basket behind
+                            R1_pos_lidar.yaw;
 
                 // mini angle
-                if (basket_info.yaw > 180)
-                    basket_info.yaw -= 360;
-                else if (basket_info.yaw < -180)
-                    basket_info.yaw += 360;
+                if (yaw > 180)
+                    yaw -= 360;
+                else if (yaw < -180)
+                    yaw += 360;
+
+                basket_info.yaw = Yaw_Stablize(yaw);
             }
 
             break;
@@ -171,7 +185,7 @@ void FDCAN3_IT0_IRQHandler(void)
             }
 
             basket_info.dist_cm = *(float *)RxData * 100,
-            basket_info.yaw = -*(float *)&RxData[4];
+            basket_info.yaw = Yaw_Stablize(-*(float *)&RxData[4]);
 
             break;
         }

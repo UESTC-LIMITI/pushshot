@@ -5,7 +5,7 @@ USART_info_t UART7_info = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subha
 
 enum STATE state;
 struct STATE_R state_R = {
-    .fitting = 0};
+    .fitting = 1};
 struct STATE_W state_W;
 timer_t runtime;
 
@@ -45,8 +45,8 @@ struct
     .gain = 1};
 
 // gimbal limit
-#define YAW_MIN (-115 + HighTorque_param.pos_0)
-#define YAW_MAX (115 + HighTorque_param.pos_0)
+#define YAW_MIN (-108 + HighTorque_param.pos_0)
+#define YAW_MAX (122 + HighTorque_param.pos_0)
 
 #define Gimbal_GR (14.45f * HighTorque_param.gain)
 
@@ -58,7 +58,7 @@ struct pos_info R1_pos_lidar, R1_pos_chassis, R2_pos;
 timer_t HighTorque_time, gimbal_time;
 
 float yaw_prev;
-float basket_dist_offset = 4,
+float basket_dist_offset = 0,
       R2_dist_offset = 0;
 
 MovAvgFltr_t yaw_fltr;
@@ -66,7 +66,7 @@ MovAvgFltr_t yaw_fltr;
 float Fitting_Calc_Basket(float dist_cm)
 {
     return 0.9125 * dist_cm +
-           596.25;
+           617.5;
 }
 
 float Fitting_Calc_R2(float dist_cm)
@@ -76,8 +76,6 @@ float Fitting_Calc_R2(float dist_cm)
 
 void State(void *argument)
 {
-    GPIOD->ODR |= 0x80; // fan for wireless bridge
-
     // default param
     HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0;
     HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.Kp = 2;
@@ -157,7 +155,7 @@ void State(void *argument)
             VESC[1 - VESC_ID_OFFSET].ctrl.curr = VESC_param.shot.spd * (state_R.brake ? VESC_param.shot.brake_curr_pct // curr for brake
                                                                                       : VESC_param.shot.acc_curr_pct); // curr for acceleration
 
-            LIMIT_RANGE(VESC[1 - VESC_ID_OFFSET].ctrl.curr, 50, 120); // ESC current limit
+            LIMIT_RANGE(VESC[1 - VESC_ID_OFFSET].ctrl.curr, 70, 120); // ESC current limit
 
             VESC[1 - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot.spd; // target speed
 
@@ -203,7 +201,7 @@ void State(void *argument)
         if (state_W.ball &&
             (state_W.aim_R2 ? MovAvgFltr_GetNewStatus(&R2_info.dist_fltr, R2_info.dist_cm, 2.5)             // position ready for R2
                             : MovAvgFltr_GetNewStatus(&basket_info.dist_fltr, basket_info.dist_cm, 2.5)) && // position ready for basket
-            MovAvgFltr_GetNewTargetStatus(&yaw_fltr, HighTorque[2 - HIGHTORQUE_ID_OFFSET].fdbk.spd, 0, 10)) // yaw ready
+            MovAvgFltr_GetNewTargetStatus(&yaw_fltr, HighTorque[2 - HIGHTORQUE_ID_OFFSET].fdbk.spd, 0, 4))  // yaw ready
             state_R.shot_ready = 1;
         else if (state != SHOT)
             state_R.shot_ready = 0;
