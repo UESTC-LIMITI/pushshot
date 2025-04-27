@@ -88,7 +88,7 @@ void FDCAN3_IT0_IRQHandler(void)
             }
             break;
         }
-        case 0xE: // dribble start
+        case 0xE: // dribble end
         {
             if (state == IDLE)
                 state = BACK;
@@ -119,12 +119,6 @@ void FDCAN3_IT0_IRQHandler(void)
                 state_R.shot_ready = state_W.ball = 0;
                 state = INIT;
             }
-            else if (state == LOCK)
-            {
-                state_R.shot_ready = state_W.ball = 0;
-                state = IDLE;
-            }
-
             break;
         }
         // position info from lidar, 1

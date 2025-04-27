@@ -7,7 +7,7 @@ USART_info_t UART7_info = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subha
 
 enum STATE state;
 struct STATE_R state_R = {
-    .fitting = 0};
+    .fitting = 1};
 struct STATE_W state_W;
 timer_t runtime;
 
@@ -46,7 +46,7 @@ struct
     .back.spd = -150,
 
     .shot.acc_curr_pct = 0.1,
-    .shot.spd = 810,
+    .shot.spd = 1000,
     .shot.spd_ctrl_pct = 0.9,
     .shot.brake_curr_pct = 0,
     .shot.timeout = 1,
@@ -254,7 +254,7 @@ void State(void *argument)
         }
 
         // delay after action
-        if (Timer_CheckTimeout(&HighTorque_time, 1))
+        if (Timer_CheckTimeout(&HighTorque_time, 0.25))
             HighTorque[2 - HIGHTORQUE_ID_OFFSET].ctrl.pos = -HighTorque_param.pos_0 - (state_W.ball
                                                                                            // aim at R2
                                                                                            ? (state_W.aim_R2 ? yaw_prev + (R2_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 25.f)

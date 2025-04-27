@@ -20,7 +20,6 @@
 #include "fltr.h"
 
 // from periph
-
 #define VESC_NUM 1
 #define VESC_ID_OFFSET 1
 #include "VESC.h"
