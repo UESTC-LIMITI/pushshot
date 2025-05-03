@@ -16,8 +16,6 @@ timer_t runtime;
 unsigned char VOFA[32];
 #endif
 
-#define PUSHSHOT_ID 1 - VESC_ID_OFFSET
-
 struct
 {
     struct
@@ -39,13 +37,11 @@ struct
     .shot.timeout = 1.5,
     .shot.brake_time = 0.25};
 
-#define GIMBAL_ID 2 - HIGHTORQUE_ID_OFFSET
-
 struct
 {
     float pos_0, gain;
 } HighTorque_param = {
-    .pos_0 = -2,
+    .pos_0 = -6,
     .gain = 1};
 
 #define YAW_MIN (-101 + HighTorque_param.pos_0)
@@ -62,7 +58,7 @@ timer_t HighTorque_time, gimbal_time;
 
 float yaw_prev;
 float basket_dist_offset = 0,
-      basket_spd_offset = -6,
+      basket_spd_offset = -5,
       R2_dist_offset = 0,
       R2_spd_offset = 0;
 
@@ -112,16 +108,16 @@ float Fitting_Calc_R2(float dist_cm)
 void State(void *argument)
 {
     // default param
-    HighTorque[GIMBAL_ID].ctrl.pos = HighTorque_param.pos_0;
-    HighTorque[GIMBAL_ID].ctrl.Kp = 2;
-    HighTorque[GIMBAL_ID].ctrl.Kd = 1;
+    HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0;
+    HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kp = 2;
+    HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kd = 1;
 
     while (1)
     {
 #ifdef DATA_OUTPUT
         if (state == SHOT && !state_R.brake)
         {
-            sprintf((char *)VOFA, "T:%.2f\n", VESC[PUSHSHOT_ID].fdbk.spd);
+            sprintf((char *)VOFA, "T:%.2f\n", VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd);
             UART_SendArray(&UART7_info, VOFA, 12);
         }
 #endif
@@ -129,11 +125,11 @@ void State(void *argument)
         {
         case IDLE:
         {
-            VESC[PUSHSHOT_ID].ctrl.curr = 0;
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = 0;
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, 1, VESC_SET_CURR, &HOBBYWING_V9626_KV160);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_CURR, &HOBBYWING_V9626_KV160);
             }
             break;
         }
@@ -149,11 +145,11 @@ void State(void *argument)
             }
             // go down
             else
-                VESC[PUSHSHOT_ID].ctrl.spd = VESC_param.back.spd;
+                VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.back.spd;
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, 1, VESC_SET_SPD, &HOBBYWING_V9626_KV160);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_SPD, &HOBBYWING_V9626_KV160);
             }
             break;
         }
@@ -188,25 +184,25 @@ void State(void *argument)
 
             LIMIT(VESC_param.shot.spd, HOBBYWING_V9626_KV160.spd_max); // speed limit
 
-            VESC[PUSHSHOT_ID].ctrl.curr = VESC_param.shot.spd * (state_R.brake ? VESC_param.shot.brake_curr_pct // curr for brake
-                                                                               : VESC_param.shot.acc_curr_pct); // curr for acceleration
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.shot.spd * (state_R.brake ? VESC_param.shot.brake_curr_pct // curr for brake
+                                                                                                : VESC_param.shot.acc_curr_pct); // curr for acceleration
 
-            LIMIT_RANGE(VESC[PUSHSHOT_ID].ctrl.curr, 70, 120); // ESC current limit
+            LIMIT_RANGE(VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr, 70, 120); // ESC current limit
 
-            VESC[PUSHSHOT_ID].ctrl.spd = VESC_param.shot.spd; // target speed
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot.spd; // target speed
 
             // switch control mode
-            if (VESC[PUSHSHOT_ID].fdbk.spd / VESC_param.shot.spd >= VESC_param.shot.spd_ctrl_pct)
+            if (VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd / VESC_param.shot.spd >= VESC_param.shot.spd_ctrl_pct)
                 state_R.spd_ctrl = 1;
 
             // control
             {
                 if (state_R.brake)
-                    VESC_SendCmd(&hfdcan2, 1, VESC_SET_CURR_BRAKE, &HOBBYWING_V9626_KV160);
+                    VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_CURR_BRAKE, &HOBBYWING_V9626_KV160);
                 else if (state_R.spd_ctrl)
-                    VESC_SendCmd(&hfdcan2, 1, VESC_SET_SPD, &HOBBYWING_V9626_KV160);
+                    VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_SPD, &HOBBYWING_V9626_KV160);
                 else
-                    VESC_SendCmd(&hfdcan2, 1, VESC_SET_CURR, &HOBBYWING_V9626_KV160);
+                    VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_CURR, &HOBBYWING_V9626_KV160);
             }
             break;
         }
@@ -214,29 +210,29 @@ void State(void *argument)
 
         // delay after action
         if (Timer_CheckTimeout(&HighTorque_time, 0.25))
-            HighTorque[GIMBAL_ID].ctrl.pos = HighTorque_param.pos_0 + (state_W.ball
-                                                                           // aim at R2 && R2 online
-                                                                           ? (state_W.aim_R2 && !err.R2_pos ? yaw_prev + (R2_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 25.f)
-                                                                                                            // aim at basket when close to
-                                                                                                            : (basket_info.dist_cm <= 900 ? (yaw_prev + (basket_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / (err.basket_info && err.pos_lidar ? 500.f   // chassis
-                                                                                                                                                                                                                                                          : 10.f))) // lidar
-                                                                                                                                          // stay at middle when far from
-                                                                                                                                          : 0)) *
-                                                                                 Gimbal_GR
-                                                                           // stay at middle
-                                                                           : 0);
+            HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0 + (state_W.ball
+                                                                                                  // aim at R2 && R2 online
+                                                                                                  ? (state_W.aim_R2 && !err.R2_pos ? yaw_prev + (R2_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 25.f)
+                                                                                                                                   // aim at basket when close to
+                                                                                                                                   : (basket_info.dist_cm <= 900 ? (yaw_prev + (basket_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / (err.basket_info && err.pos_lidar ? 500.f   // chassis
+                                                                                                                                                                                                                                                                                 : 10.f))) // lidar
+                                                                                                                                                                 // stay at middle when far from
+                                                                                                                                                                 : 0)) *
+                                                                                                        Gimbal_GR
+                                                                                                  // stay at middle
+                                                                                                  : 0);
 
-        LIMIT_RANGE(HighTorque[GIMBAL_ID].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
+        LIMIT_RANGE(HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
 
         // control
         {
-            HighTorque_SetMixParam_f(&hfdcan1, 2);
+            HighTorque_SetMixParam_f(&hfdcan1, GIMBAL_ID);
         }
 
         if (state_W.ball &&
             (state_W.aim_R2 ? MovAvgFltr_GetNewStatus(&R2_info.dist_fltr, R2_info.dist_cm, 1.5)             // position ready for R2
                             : MovAvgFltr_GetNewStatus(&basket_info.dist_fltr, basket_info.dist_cm, 1.5)) && // position ready for basket
-            MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID].fdbk.pos, 2))                          // yaw ready
+            MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 2))   // yaw ready
             state_R.shot_ready = 1;
         else if (state != SHOT) // SHOT process protection
             state_R.shot_ready = 0;

@@ -23,10 +23,12 @@
 #define VESC_NUM 1
 #define VESC_ID_OFFSET 1
 #include "VESC.h"
+#define PUSHSHOT_ID 1
 
 #define HIGHTORQUE_NUM 1
-#define HIGHTORQUE_ID_OFFSET 2
+#define HIGHTORQUE_ID_OFFSET 1
 #include "HighTorque.h"
+#define GIMBAL_ID 1
 
 extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 
