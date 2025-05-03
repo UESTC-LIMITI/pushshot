@@ -7,7 +7,7 @@ void Error(void *argument)
 {
     while (1)
     {
-        for (unsigned char cnt = 0; cnt < 7; cnt++)
+        for (unsigned char cnt = 0; cnt < 6; cnt++)
         {
             // max failure
             if (((unsigned char *)&err_cnt)[cnt] == 9)

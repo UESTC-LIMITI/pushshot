@@ -64,8 +64,7 @@ struct ERR
         pos_lidar : 1,
         pos_chassis : 1,
         R2_pos : 1,
-        basket_camera : 1,
-        basket_lidar : 1;
+        basket_info : 1;
 };
 extern struct ERR err;
 
@@ -76,8 +75,7 @@ struct ERR_CNT
         pos_lidar,
         pos_chassis,
         R2_pos,
-        basket_camera,
-        basket_lidar;
+        basket_info;
 };
 extern struct ERR_CNT err_cnt;
 

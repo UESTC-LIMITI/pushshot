@@ -48,8 +48,8 @@ struct
     .pos_0 = -2,
     .gain = 1};
 
-#define YAW_MIN (-108 + HighTorque_param.pos_0)
-#define YAW_MAX (122 + HighTorque_param.pos_0)
+#define YAW_MIN (-101 + HighTorque_param.pos_0)
+#define YAW_MAX (115 + HighTorque_param.pos_0)
 
 #define Gimbal_GR (14.45f * HighTorque_param.gain)
 
@@ -62,7 +62,7 @@ timer_t HighTorque_time, gimbal_time;
 
 float yaw_prev;
 float basket_dist_offset = 0,
-      basket_spd_offset = -4,
+      basket_spd_offset = -6,
       R2_dist_offset = 0,
       R2_spd_offset = 0;
 
@@ -218,9 +218,8 @@ void State(void *argument)
                                                                            // aim at R2 && R2 online
                                                                            ? (state_W.aim_R2 && !err.R2_pos ? yaw_prev + (R2_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 25.f)
                                                                                                             // aim at basket when close to
-                                                                                                            : (basket_info.dist_cm <= 900 ? (yaw_prev + (basket_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / (err.basket_lidar && err.pos_lidar ? (err.basket_camera ? 500.f // chassis
-                                                                                                                                                                                                                                                                                : 30.f) // camera
-                                                                                                                                                                                                                                                           : 10.f)))                    // lidar
+                                                                                                            : (basket_info.dist_cm <= 900 ? (yaw_prev + (basket_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / (err.basket_info && err.pos_lidar ? 500.f   // chassis
+                                                                                                                                                                                                                                                          : 10.f))) // lidar
                                                                                                                                           // stay at middle when far from
                                                                                                                                           : 0)) *
                                                                                  Gimbal_GR
