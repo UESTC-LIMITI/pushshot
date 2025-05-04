@@ -17,6 +17,17 @@ void Comm(void *argument)
         *(float *)&R1_Data[5] = err.pos_chassis ? R1_pos_lidar.y : R1_pos_chassis.y;
         R1_Data[9] = state_W.aim_R2 && !err.R2_pos && state_R.brake;
         UART_SendArray(&UART5_info, R1_Data, 10);
+
+        static timer_t dual_robo_comm_time;
+
+        // restart DMA after 0.1s
+        if (!(DMA1_Stream2->CR & 1) && Timer_CheckTimeout(&dual_robo_comm_time, 0.1))
+        {
+            Timer_Clear(&dual_robo_comm_time);
+
+            DMA1_Stream2->NDTR = 10;
+            DMA1_Stream2->CR |= 1;
+        }
         osDelay(10);
     }
 }
@@ -48,7 +59,7 @@ void FDCAN3_IT0_IRQHandler(void)
         // shot
         case 0xA:
         {
-            if (state == IDLE)
+            if (state == IDLE && state_R.shot_ready)
                 state = SHOT;
             break;
         }
@@ -225,6 +236,11 @@ void DMA1_Stream2_IRQHandler(void)
                 R2_info.yaw += 360;
 
             FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA1, (unsigned char *)&R2_pos, 8);
+        }
+        // disable DMA
+        else
+        {
+            DMA1_Stream2->CR &= ~1;
         }
     }
 }

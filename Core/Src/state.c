@@ -9,7 +9,7 @@ struct STATE_R state_R = { // internal-change state
 struct STATE_W state_W; // external-change state
 timer_t runtime;
 
-#define DATA_OUTPUT
+#define nDATA_OUTPUT
 
 #ifdef DATA_OUTPUT
 #include <stdio.h>
@@ -30,18 +30,18 @@ struct
     .back.timeout = 2,
     .back.spd = -200,
 
-    .shot.acc_curr_pct = 0.1,
+    .shot.acc_curr_pct = 0.11,
     .shot.spd = 1000,
-    .shot.spd_ctrl_pct = 0.875,
+    .shot.spd_ctrl_pct = 0.89,
     .shot.brake_curr_pct = 0.05,
-    .shot.timeout = 1.5,
+    .shot.timeout = 1,
     .shot.brake_time = 0.25};
 
 struct
 {
     float pos_0, gain;
 } HighTorque_param = {
-    .pos_0 = -6,
+    .pos_0 = -8,
     .gain = 1};
 
 #define YAW_MIN (-101 + HighTorque_param.pos_0)
@@ -49,7 +49,7 @@ struct
 
 #define Gimbal_GR (14.45f * HighTorque_param.gain)
 
-struct target_info basket_info = {.dist_fltr.size = 2},
+struct target_info basket_info = {.dist_fltr.size = 4},
                    R2_info = {.dist_fltr.size = 4};
 
 struct pos_info R1_pos_lidar, R1_pos_chassis, R2_pos;
@@ -58,37 +58,36 @@ timer_t HighTorque_time, gimbal_time;
 
 float yaw_prev;
 float basket_dist_offset = 0,
-      basket_spd_offset = -5,
+      basket_spd_offset = 0,
       R2_dist_offset = 0,
-      R2_spd_offset = 0;
+      R2_spd_offset = -8;
 
 MovAvgFltr_t yaw_fltr;
 
 float Fitting_Calc_Basket(float dist_cm)
 {
-    // e2 sum: 89.77
-    // return 5.140813755997965e-12 * pow(dist_cm, 5) +
-    //        -8.718216121250677e-9 * pow(dist_cm, 4) +
-    //        0.000004339723124857642 * pow(dist_cm, 3) +
-    //        0.00022797951896791346 * pow(dist_cm, 2) +
-    //        0.17669564730022103 * dist_cm +
-    //        728.6753135213174 + basket_spd_offset;
-
-    // e2 sum: 77.96
-    return -7.969408091887571e-10 * pow(dist_cm, 5) +
-           0.0000017742687568045312 * pow(dist_cm, 4) +
-           -0.0015595432989812252 * pow(dist_cm, 3) +
-           0.6748970650078263 * pow(dist_cm, 2) +
-           -142.63446494936943 * dist_cm +
-           12597.700893643732 + basket_spd_offset;
-
-    // e2 sum: 59.86
-    // return 9.105900798539739e-10 * pow(dist_cm, 5) +
-    //        -0.0000016365813943902685 * pow(dist_cm, 4) +
-    //        0.0011434304287192276 * pow(dist_cm, 3) +
-    //        -0.3866560404894699 * pow(dist_cm, 2) +
-    //        63.979260883294046 * dist_cm +
-    //        -3312.014752839768;
+    if (dist_cm <= 440)
+        // e2 sum: 9.16
+        return -0.0000015861742424794212 * pow(dist_cm, 4) +
+               0.002400568181997187 * pow(dist_cm, 3) +
+               -1.3551231060409918 * pow(dist_cm, 2) +
+               339.0213744863868 * dist_cm +
+               -30837.94807418798 + basket_spd_offset;
+    else if (dist_cm <= 560)
+        // e2 sum: 0.00
+        return -3.907911882983228e-9 * pow(dist_cm, 5) +
+               0.000010101219118041627 * pow(dist_cm, 4) +
+               -0.010351922363042831 * pow(dist_cm, 3) +
+               5.256966412067413 * pow(dist_cm, 2) +
+               -1321.8689270019531 * dist_cm +
+               132554.23063334628 + basket_spd_offset;
+    else
+        // e2 sum: 1.94
+        return 7.339014634899499e-7 * pow(dist_cm, 4) +
+               -0.0018235478512451664 * pow(dist_cm, 3) +
+               1.6927176844328642 * pow(dist_cm, 2) +
+               -695.037252664566 * dist_cm +
+               107565.29744557396 + basket_spd_offset;
 }
 
 float Fitting_Calc_R2(float dist_cm)
@@ -96,13 +95,6 @@ float Fitting_Calc_R2(float dist_cm)
     // e2 sum: 0
     return 0.8 * dist_cm +
            600 + R2_spd_offset;
-
-    // e2 sum: 21.88
-    // return -2.0606060378153268e-7 * pow(dist_cm, 4) +
-    //        0.00045232322764832134 * pow(dist_cm, 3) +
-    //        -0.36987120850244537 * pow(dist_cm, 2) +
-    //        134.43093313649297 * dist_cm +
-    //        -17330.890011500775 + R2_spd_offset;
 }
 
 void State(void *argument)
@@ -117,8 +109,8 @@ void State(void *argument)
 #ifdef DATA_OUTPUT
         if (state == SHOT && !state_R.brake)
         {
-            sprintf((char *)VOFA, "T:%.2f\n", VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd);
-            UART_SendArray(&UART7_info, VOFA, 12);
+            sprintf((char *)VOFA, "T:%.2f,%d\n", VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd, state_R.spd_ctrl ? 1000 : 0);
+            UART_SendArray(&UART7_info, VOFA, 16);
         }
 #endif
         switch (state)
@@ -155,13 +147,6 @@ void State(void *argument)
         }
         case SHOT:
         {
-            // not ready for shot
-            if (!state_R.shot_ready)
-            {
-                state = IDLE;
-                break;
-            }
-
             // timeout
             if (Timer_CheckTimeout(&runtime, VESC_param.shot.timeout))
             {
@@ -230,9 +215,9 @@ void State(void *argument)
         }
 
         if (state_W.ball &&
-            (state_W.aim_R2 ? MovAvgFltr_GetNewStatus(&R2_info.dist_fltr, R2_info.dist_cm, 1.5)             // position ready for R2
-                            : MovAvgFltr_GetNewStatus(&basket_info.dist_fltr, basket_info.dist_cm, 1.5)) && // position ready for basket
-            MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 2))   // yaw ready
+            (state_W.aim_R2 ? MovAvgFltr_GetNewStatus(&R2_info.dist_fltr, R2_info.dist_cm, 1)             // position ready for R2
+                            : MovAvgFltr_GetNewStatus(&basket_info.dist_fltr, basket_info.dist_cm, 1)) && // position ready for basket
+            MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1)) // yaw ready
             state_R.shot_ready = 1;
         else if (state != SHOT) // SHOT process protection
             state_R.shot_ready = 0;
