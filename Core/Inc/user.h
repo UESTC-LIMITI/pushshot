@@ -88,11 +88,11 @@ struct target_info
 };
 extern struct target_info basket_info, R2_info;
 
-struct pos_info
+struct pos_t
 {
     float x, y, yaw;
 };
-extern struct pos_info R1_pos_lidar, R1_pos_chassis, R2_pos;
+extern struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos;
 
 extern timer_t runtime, HighTorque_time, gimbal_time;
 
