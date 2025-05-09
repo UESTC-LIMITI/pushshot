@@ -95,9 +95,9 @@ void FDCAN3_IT0_IRQHandler(void)
         {
             err_cnt.pos_lidar = err.pos_lidar = 0; // clear error flag
 
-            R1_pos_lidar.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[8]);
-            R1_pos_lidar.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[8]);
-            R1_pos_lidar.yaw = *(float *)&RxData[8] * R2D;
+            R1_pos_lidar.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[8] / R2D);
+            R1_pos_lidar.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[8] / R2D);
+            R1_pos_lidar.yaw = *(float *)&RxData[8];
 
             break;
         }
@@ -128,9 +128,9 @@ void FDCAN3_IT0_IRQHandler(void)
         {
             err_cnt.pos_chassis = err.pos_chassis = 0; // clear error flag
 
-            R1_pos_chassis.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[16]);
-            R1_pos_chassis.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[16]);
-            R1_pos_chassis.yaw = *(float *)&RxData[16] * R2D;
+            R1_pos_chassis.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D);
+            R1_pos_chassis.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D);
+            R1_pos_chassis.yaw = *(float *)&RxData[16];
 
             if (err.basket_info)
             {
