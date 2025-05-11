@@ -66,7 +66,8 @@ struct ERR
         pos_lidar : 1,
         pos_chassis : 1,
         R2_pos : 1,
-        basket_info : 1;
+        basket_info : 1,
+        UV : 1;
 };
 extern struct ERR err;
 

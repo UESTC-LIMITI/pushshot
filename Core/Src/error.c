@@ -16,6 +16,10 @@ void Error(void *argument)
                 ((unsigned char *)&err_cnt)[cnt]++;
         }
 
+        // under voltage
+        if (VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.volt <= 22.8)
+            err.UV = 1;
+
         FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 1);
 
         // set err flag
