@@ -110,6 +110,7 @@ void FDCAN3_IT0_IRQHandler(void)
             basket_pos.y = *(float *)&RxData[4];
 
             basket_info.dist_cm = *(float *)&RxData[8] * 100;
+            MovAvgFltr(&basket_info.dist_fltr, basket_info.dist_cm);
 
             if ((!state_W.aim_R2 || err.R2_pos) && // not aim at R2 or R2 offline
                 Timer_CheckTimeout(&gimbal_time, 0.1))
@@ -128,8 +129,8 @@ void FDCAN3_IT0_IRQHandler(void)
         {
             err_cnt.pos_chassis = err.pos_chassis = 0; // clear error flag
 
-            R1_pos_chassis.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D);
-            R1_pos_chassis.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D);
+            R1_pos_chassis.x = *(float *)&RxData[24] - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D);
+            R1_pos_chassis.y = *(float *)&RxData[28] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D);
             R1_pos_chassis.yaw = *(float *)&RxData[16];
 
             if (err.basket_info)
@@ -138,6 +139,7 @@ void FDCAN3_IT0_IRQHandler(void)
                       dist_y = basket_pos.y - R1_pos_chassis.y;
 
                 basket_info.dist_cm = sqrt(pow(dist_x, 2) + pow(dist_y, 2)) * 100;
+                MovAvgFltr(&basket_info.dist_fltr, basket_info.dist_cm);
 
                 // absolute angle
                 basket_info.yaw = atan2(dist_y, dist_x) * R2D - R1_pos_chassis.yaw;
@@ -172,6 +174,7 @@ void DMA1_Stream2_IRQHandler(void)
                   dist_y = R2_pos.y - R1_pos_chassis.y;
 
             R2_info.dist_cm = sqrt(pow(dist_x, 2) + pow(dist_y, 2)) * 100;
+            MovAvgFltr(&R2_info.dist_fltr, R2_info.dist_cm);
 
             if (state_W.aim_R2)
             {

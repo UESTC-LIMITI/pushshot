@@ -41,7 +41,7 @@ struct
 {
     float basket_pos_0, R2_pos_0, gain;
 } HighTorque_param = {
-    .basket_pos_0 = 12,
+    .basket_pos_0 = 14,
     .R2_pos_0 = 15,
     .gain = 1};
 
@@ -52,13 +52,14 @@ struct
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -3.99};
 
-struct target_info basket_info, R2_info;
+struct target_info basket_info,
+    R2_info = {.dist_fltr.size = 8};
 
 timer_t HighTorque_time, gimbal_time;
 
 float yaw_prev;
 float basket_spd_offset = -26, //-29
-    R2_spd_offset = -4;
+    R2_spd_offset = 0;
 
 MovAvgFltr_t yaw_fltr;
 
@@ -182,7 +183,7 @@ void State(void *argument)
 
             // use fitting data
             if (state_R.fitting)
-                VESC_param.shot.spd = state_W.aim_R2 && !err.R2_pos ? Fitting_Calc_R2(R2_info.dist_cm)
+                VESC_param.shot.spd = state_W.aim_R2 && !err.R2_pos ? Fitting_Calc_R2(R2_info.dist_cm - 12.5)
                                                                     : Fitting_Calc_Basket(basket_info.dist_cm);
 
             LIMIT(VESC_param.shot.spd, HOBBYWING_V9626_KV160.spd_max); // speed limit
@@ -236,9 +237,9 @@ void State(void *argument)
         }
 
         if (state_W.ball &&
-            (state_W.aim_R2 ? MovAvgFltr_GetNewStatus(&R2_info.dist_fltr, R2_info.dist_cm, 1) && R2_info.dist_cm <= 800                 // position ready for R2
-                            : MovAvgFltr_GetNewStatus(&basket_info.dist_fltr, basket_info.dist_cm, 1) && basket_info.dist_cm <= 800) && // position ready for basket
-            MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1))                               // yaw ready
+            (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 1) && R2_info.dist_cm <= 800                               // position ready for R2
+                            : MovAvgFltr_GetStatus(&basket_info.dist_fltr, basket_info.dist_cm) && basket_info.dist_cm <= 800) && // position ready for basket
+            MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1))                         // yaw ready
             state_R.shot_ready = 1;
         else if (state != SHOT) // SHOT process protection
             state_R.shot_ready = 0;
