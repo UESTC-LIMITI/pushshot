@@ -1,7 +1,7 @@
 #include "user.h"
 
 USART_info_t UART7_info = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream0, .DMA_ID = 0}, // USB to TTL
-    UART5_info = {.USART_handle = UART5, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream1, .DMA_ID = 1};          // wireless bridge Tx
+    UART5_info = {.USART_handle = UART5, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream1, .DMA_ID = 1};          // dual robot communication Tx
 
 enum STATE state;
 struct STATE_R state_R = { // internal-change state
@@ -41,7 +41,7 @@ struct
 {
     float basket_pos_0, R2_pos_0, gain;
 } HighTorque_param = {
-    .basket_pos_0 = 14,
+    .basket_pos_0 = 13,
     .R2_pos_0 = 15,
     .gain = 1};
 
@@ -58,8 +58,8 @@ struct target_info basket_info,
 timer_t HighTorque_time, gimbal_time;
 
 float yaw_prev;
-float basket_spd_offset = -26, //-29
-    R2_spd_offset = 0;
+float basket_spd_offset = -26,
+      R2_spd_offset = 0;
 
 MovAvgFltr_t yaw_fltr;
 
@@ -183,8 +183,8 @@ void State(void *argument)
 
             // use fitting data
             if (state_R.fitting)
-                VESC_param.shot.spd = state_W.aim_R2 && !err.R2_pos ? Fitting_Calc_R2(R2_info.dist_cm - 12.5)
-                                                                    : Fitting_Calc_Basket(basket_info.dist_cm);
+                VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2(R2_info.dist_cm - 12.5)
+                                                     : Fitting_Calc_Basket(basket_info.dist_cm);
 
             LIMIT(VESC_param.shot.spd, HOBBYWING_V9626_KV160.spd_max); // speed limit
 
@@ -216,16 +216,16 @@ void State(void *argument)
         if (Timer_CheckTimeout(&HighTorque_time, 0.25))
             HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = state_W.ball
                                                                         // aim at R2 && R2 online && close to
-                                                                        ? (state_W.aim_R2 && !err.R2_pos ? HighTorque_param.R2_pos_0 + (R2_info.dist_cm <= 1000 ? yaw_prev + (R2_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 50.f)
-                                                                                                                                                                // stay at initial position when far from
-                                                                                                                                                                : 0) *
-                                                                                                                                           Gimbal_GR
-                                                                                                         // aim at basket when close to
-                                                                                                         : HighTorque_param.basket_pos_0 + (basket_info.dist_cm <= 1000 ? (err.basket_info ? basket_info.yaw                                                                   // chassis
-                                                                                                                                                                                           : yaw_prev + (basket_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 10.f)) // lidar
-                                                                                                                                                                        // stay at initial position when far from
-                                                                                                                                                                        : 0) *
-                                                                                                                                               Gimbal_GR)
+                                                                        ? (state_W.aim_R2 ? HighTorque_param.R2_pos_0 + (R2_info.dist_cm <= 1000 ? yaw_prev + (R2_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 50.f)
+                                                                                                                                                 // stay at initial position when far from
+                                                                                                                                                 : 0) *
+                                                                                                                            Gimbal_GR
+                                                                                          // aim at basket when close to
+                                                                                          : HighTorque_param.basket_pos_0 + (basket_info.dist_cm <= 1000 ? (err.basket_info ? basket_info.yaw                                                                   // chassis
+                                                                                                                                                                            : yaw_prev + (basket_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 10.f)) // lidar
+                                                                                                                                                         // stay at initial position when far from
+                                                                                                                                                         : 0) *
+                                                                                                                                Gimbal_GR)
                                                                         // no ball, stay at middle
                                                                         : (YAW_MAX + YAW_MIN) / 2;
 

@@ -11,7 +11,7 @@ void Comm(void *argument)
     {
         *(float *)&R1_Data[1] = R1_pos_chassis.x;
         *(float *)&R1_Data[5] = R1_pos_chassis.y;
-        R1_Data[9] = state_W.aim_R2 && !err.R2_pos && state_R.brake;
+        R1_Data[9] = state_W.aim_R2 && state_R.brake;
         UART_SendArray(&UART5_info, R1_Data, 10);
 
         static timer_t dual_robo_comm_time;
@@ -112,7 +112,7 @@ void FDCAN3_IT0_IRQHandler(void)
             basket_info.dist_cm = *(float *)&RxData[8] * 100;
             MovAvgFltr(&basket_info.dist_fltr, basket_info.dist_cm);
 
-            if ((!state_W.aim_R2 || err.R2_pos) && // not aim at R2 or R2 offline
+            if (!state_W.aim_R2 && // not aim at R2
                 Timer_CheckTimeout(&gimbal_time, 0.1))
             {
                 Timer_Clear(&gimbal_time);
@@ -129,8 +129,8 @@ void FDCAN3_IT0_IRQHandler(void)
         {
             err_cnt.pos_chassis = err.pos_chassis = 0; // clear error flag
 
-            R1_pos_chassis.x = *(float *)&RxData[24] - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D);
-            R1_pos_chassis.y = *(float *)&RxData[28] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D);
+            R1_pos_chassis.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D);
+            R1_pos_chassis.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D);
             R1_pos_chassis.yaw = *(float *)&RxData[16];
 
             if (err.basket_info)
@@ -170,28 +170,9 @@ void DMA1_Stream2_IRQHandler(void)
             R2_pos.x = *(float *)&RxData_D1S2[1] / 1000,
             R2_pos.y = *(float *)&RxData_D1S2[5] / 1000;
 
-            float dist_x = R2_pos.x - R1_pos_chassis.x,
-                  dist_y = R2_pos.y - R1_pos_chassis.y;
+            state_W.R2_ready = RxData_D1S2[9];
 
-            R2_info.dist_cm = sqrt(pow(dist_x, 2) + pow(dist_y, 2)) * 100;
-            MovAvgFltr(&R2_info.dist_fltr, R2_info.dist_cm);
-
-            if (state_W.aim_R2)
-            {
-                Timer_Clear(&gimbal_time);
-                yaw_prev = R2_info.yaw;
-            }
-
-            // absolute angle
-            R2_info.yaw = atan2(dist_y, dist_x) * R2D - R1_pos_chassis.yaw;
-
-            // mini angle
-            if (R2_info.yaw > 180)
-                R2_info.yaw -= 360;
-            else if (R2_info.yaw < -180)
-                R2_info.yaw += 360;
-
-            FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA1, (unsigned char *)&R2_pos, 8);
+            R2_Pos_Process();
         }
         // disable DMA
         else
@@ -199,4 +180,30 @@ void DMA1_Stream2_IRQHandler(void)
             DMA1_Stream2->CR &= ~1;
         }
     }
+}
+
+void R2_Pos_Process(void)
+{
+    float dist_x = R2_pos.x - R1_pos_chassis.x,
+          dist_y = R2_pos.y - R1_pos_chassis.y;
+
+    R2_info.dist_cm = sqrt(pow(dist_x, 2) + pow(dist_y, 2)) * 100;
+    MovAvgFltr(&R2_info.dist_fltr, R2_info.dist_cm);
+
+    if (state_W.aim_R2)
+    {
+        Timer_Clear(&gimbal_time);
+        yaw_prev = R2_info.yaw;
+    }
+
+    // absolute angle
+    R2_info.yaw = atan2(dist_y, dist_x) * R2D - R1_pos_chassis.yaw;
+
+    // mini angle
+    if (R2_info.yaw > 180)
+        R2_info.yaw -= 360;
+    else if (R2_info.yaw < -180)
+        R2_info.yaw += 360;
+
+    FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA1, (unsigned char *)&R2_pos, 8);
 }

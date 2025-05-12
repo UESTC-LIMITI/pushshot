@@ -55,7 +55,8 @@ extern struct STATE_R state_R;
 struct STATE_W
 {
     unsigned char ball : 1,
-        aim_R2 : 1;
+        aim_R2 : 1,
+        R2_ready : 1;
 };
 extern struct STATE_W state_W;
 
@@ -66,8 +67,7 @@ struct ERR
         pos_lidar : 1,
         pos_chassis : 1,
         R2_pos : 1,
-        basket_info : 1,
-        UV : 1;
+        basket_info : 1;
 };
 extern struct ERR err;
 
@@ -109,5 +109,7 @@ void FDCAN3_Init(void);
 void TIM7_Init(void);
 void TIM16_Init(void);
 void UART5_Init(void);
+
+void R2_Pos_Process(void);
 
 #endif
