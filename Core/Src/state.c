@@ -39,16 +39,10 @@ struct
 
 struct
 {
-    float basket_pos_0, R2_pos_0, gain;
+    float basket_pos_0, R2_pos_0;
 } HighTorque_param = {
     .basket_pos_0 = 13,
-    .R2_pos_0 = 15,
-    .gain = 1};
-
-#define YAW_MIN -99
-#define YAW_MAX 117
-
-#define Gimbal_GR (14.45f * HighTorque_param.gain)
+    .R2_pos_0 = 15};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -3.99};
 

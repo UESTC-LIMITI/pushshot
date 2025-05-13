@@ -129,7 +129,11 @@ void FDCAN3_IT0_IRQHandler(void)
             R1_pos_chassis.yaw = *(float *)&RxData[16];
 
             if (state_W.ball)
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.spd = -*(float *)&RxData[20] * 10;
+                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.spd = -*(float *)&RxData[20] * Gimbal_GR *
+                                                                        // feedforward gain
+                                                                        (-*(float *)&RxData[20] >= 0 ? YAW_MAX - HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos
+                                                                                                     : HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos - YAW_MIN) /
+                                                                        (YAW_MAX - YAW_MIN);
 
             if (err.basket_info)
             {
