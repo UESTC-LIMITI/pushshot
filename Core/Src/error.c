@@ -16,10 +16,11 @@ void Error(void *argument)
                 ((unsigned char *)&err_cnt)[cnt]++;
         }
 
-        if (err.R2_pos && !state_W.R2_ready)
+        if (err.R2_pos)
         {
-            R2_pos.x = 12.5,
-            R2_pos.y = -4;
+            if (!state_W.R2_ready)
+                R2_pos.x = 12.5,
+                R2_pos.y = -4;
 
             R2_Pos_Process();
         }

@@ -45,8 +45,8 @@ struct
     .R2_pos_0 = 15,
     .gain = 1};
 
-#define YAW_MIN -104
-#define YAW_MAX 122
+#define YAW_MIN -99
+#define YAW_MAX 117
 
 #define Gimbal_GR (14.45f * HighTorque_param.gain)
 

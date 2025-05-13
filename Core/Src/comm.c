@@ -50,21 +50,13 @@ void FDCAN3_IT0_IRQHandler(void)
         // switch target to basket
         case 0xB:
         {
-            if (state_W.aim_R2)
-            {
-                MovAvgFltr_Clear(&yaw_fltr);
-                state_W.aim_R2 = 0;
-            }
+            state_W.aim_R2 = 0;
             break;
         }
         // switch target to R2
         case 0xC:
         {
-            if (!state_W.aim_R2)
-            {
-                MovAvgFltr_Clear(&yaw_fltr);
-                state_W.aim_R2 = 1;
-            }
+            state_W.aim_R2 = 1;
             break;
         }
         case 0xE: // dribble end
@@ -132,6 +124,9 @@ void FDCAN3_IT0_IRQHandler(void)
             R1_pos_chassis.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D);
             R1_pos_chassis.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D);
             R1_pos_chassis.yaw = *(float *)&RxData[16];
+
+            if (state_W.ball)
+                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.spd = -*(float *)&RxData[20] * 0.6;
 
             if (err.basket_info)
             {
