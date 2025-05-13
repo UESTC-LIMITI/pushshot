@@ -97,7 +97,7 @@ extern struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos;
 
 extern timer_t runtime, HighTorque_time, gimbal_time;
 
-extern float yaw_prev;
+extern float yaw_prev, yaw_curr;
 
 extern MovAvgFltr_t yaw_fltr;
 
@@ -105,8 +105,8 @@ extern unsigned char RxData_D1S2[];
 
 #define Gimbal_GR (14.45 * 1) // real gear ratio * gain
 
-#define YAW_MIN -104
-#define YAW_MAX 122
+#define YAW_MIN -119
+#define YAW_MAX 107
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);

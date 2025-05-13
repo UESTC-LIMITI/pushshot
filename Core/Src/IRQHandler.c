@@ -1,5 +1,6 @@
 #include "user.h"
 
+// gimbal
 void FDCAN1_IT0_IRQHandler(void)
 {
     if (FDCAN1->IR & 0x1)
@@ -12,7 +13,7 @@ void FDCAN1_IT0_IRQHandler(void)
 
         switch (FDCAN_RxHeader.Identifier)
         {
-        case 0x100:
+        case (GIMBAL_ID << 8):
         {
             err_cnt.HighTorque = err.HighTorque = 0; // clear error flag
 
@@ -32,6 +33,7 @@ void FDCAN1_IT0_IRQHandler(void)
     }
 }
 
+// pushshot esc
 void FDCAN2_IT0_IRQHandler(void)
 {
     if (FDCAN2->IR & 0x1)
@@ -44,7 +46,7 @@ void FDCAN2_IT0_IRQHandler(void)
 
         switch (FDCAN_RxHeader.Identifier)
         {
-        case (VESC_STATUS_1 | 1):
+        case (VESC_STATUS_1 | PUSHSHOT_ID):
         {
             err_cnt.VESC = err.VESC = 0; // clear error flag
 
@@ -52,7 +54,7 @@ void FDCAN2_IT0_IRQHandler(void)
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.curr = (float)(RxData[4] << 8 | RxData[5]) / VESC_fCURR_R;
             break;
         }
-        case (VESC_STATUS_5 | 1):
+        case (VESC_STATUS_5 | PUSHSHOT_ID):
         {
             err_cnt.VESC = err.VESC = 0; // clear error flag
 

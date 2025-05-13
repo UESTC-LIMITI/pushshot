@@ -41,8 +41,8 @@ struct
 {
     float basket_pos_0, R2_pos_0;
 } HighTorque_param = {
-    .basket_pos_0 = 13,
-    .R2_pos_0 = 15};
+    .basket_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 4,
+    .R2_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 6};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -3.99};
 
@@ -51,7 +51,8 @@ struct target_info basket_info,
 
 timer_t HighTorque_time, gimbal_time;
 
-float yaw_prev;
+float yaw_prev, yaw_curr = (YAW_MAX + YAW_MIN) / 2;
+
 float basket_spd_offset = -26,
       R2_spd_offset = 0;
 
@@ -113,7 +114,6 @@ float Fitting_Calc_R2(float dist_cm)
 void State(void *argument)
 {
     // default param
-    HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MAX + YAW_MIN) / 2;
     HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kp = 2;
     HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kd = 1;
 
@@ -208,20 +208,23 @@ void State(void *argument)
 
         // delay after action
         if (Timer_CheckTimeout(&HighTorque_time, 0.25))
-            HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = state_W.ball
-                                                                        // aim at R2 && R2 online && close to
-                                                                        ? (state_W.aim_R2 ? HighTorque_param.R2_pos_0 + (R2_info.dist_cm <= 1000 ? yaw_prev + (R2_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 50.f)
-                                                                                                                                                 // stay at initial position when far from
-                                                                                                                                                 : 0) *
-                                                                                                                            Gimbal_GR
-                                                                                          // aim at basket when close to
-                                                                                          : HighTorque_param.basket_pos_0 + (basket_info.dist_cm <= 1000 ? (err.basket_info ? basket_info.yaw                                                                   // chassis
-                                                                                                                                                                            : yaw_prev + (basket_info.yaw - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 10.f)) // lidar
-                                                                                                                                                         // stay at initial position when far from
-                                                                                                                                                         : 0) *
-                                                                                                                                Gimbal_GR)
-                                                                        // no ball, stay at middle
-                                                                        : (YAW_MAX + YAW_MIN) / 2;
+        {
+            // stay at middle
+            if (!state_W.ball ||                                 // no ball
+                !state_W.aim_R2 && basket_info.dist_cm >= 900 || // aim at R2 but too far
+                state_W.aim_R2 && R2_info.dist_cm >= 900)        // aim at basket but too far
+                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = 0;
+            // aim at basket
+            else if (!state_W.aim_R2)                                                                                                                                                                 // aim at basket
+                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.basket_pos_0 + (err.basket_info ? yaw_curr                                                                   // chassis
+                                                                                                                         : yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 10.f)) // lidar
+                                                                                                            * Gimbal_GR;
+            // aim at R2
+            else if (state_W.aim_R2)
+                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.R2_pos_0 + (yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / (err.basket_info ? 50.f      // chassis, err.basket_info as lidar position error flag
+                                                                                                                                                                                          : 10.f))) * // lidar
+                                                                                                        Gimbal_GR;
+        }
 
         LIMIT_RANGE(HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
 
@@ -231,8 +234,8 @@ void State(void *argument)
         }
 
         if (state_W.ball &&
-            (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 1) && R2_info.dist_cm <= 800                               // position ready for R2
-                            : MovAvgFltr_GetStatus(&basket_info.dist_fltr, basket_info.dist_cm) && basket_info.dist_cm <= 800) && // position ready for basket
+            (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 1) && R2_info.dist_cm <= 900                               // position ready for R2
+                            : MovAvgFltr_GetStatus(&basket_info.dist_fltr, basket_info.dist_cm) && basket_info.dist_cm <= 900) && // position ready for basket
             MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1))                         // yaw ready
             state_R.shot_ready = 1;
         else if (state != SHOT) // SHOT process protection
