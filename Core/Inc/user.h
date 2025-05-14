@@ -55,6 +55,7 @@ extern struct STATE_R state_R;
 struct STATE_W
 {
     unsigned char ball : 1,
+        gimbal : 1,
         aim_R2 : 1,
         R2_ready : 1;
 };

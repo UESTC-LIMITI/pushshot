@@ -89,6 +89,18 @@ void FDCAN3_IT0_IRQHandler(void)
             }
             break;
         }
+        // enable gimbal
+        case 0xA6:
+        {
+            state_W.gimbal = 1;
+            break;
+        }
+        // disable gimbal
+        case 0xA7:
+        {
+            state_W.gimbal = 0;
+            break;
+        }
         // position info from lidar
         case 0x104:
         {

@@ -210,7 +210,7 @@ void State(void *argument)
         if (Timer_CheckTimeout(&HighTorque_time, 0.25))
         {
             // stay at middle
-            if (!state_W.ball ||                                 // no ball
+            if (!state_W.ball || !state_W.gimbal ||              // no ball or gimbal disabled
                 !state_W.aim_R2 && basket_info.dist_cm >= 900 || // aim at R2 but too far
                 state_W.aim_R2 && R2_info.dist_cm >= 900)        // aim at basket but too far
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = 0;
