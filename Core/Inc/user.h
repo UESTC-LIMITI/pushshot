@@ -23,10 +23,12 @@
 #define VESC_NUM 1
 #define VESC_ID_OFFSET 1
 #include "VESC.h"
+#define PUSHSHOT_ID 1
 
 #define HIGHTORQUE_NUM 1
 #define HIGHTORQUE_ID_OFFSET 2
 #include "HighTorque.h"
+#define GIMBAL_ID 2
 
 extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 
@@ -55,7 +57,9 @@ extern struct STATE_R state_R;
 struct STATE_W
 {
     unsigned char ball : 1,
-        aim_R2 : 1;
+        gimbal : 1,
+        aim_R2 : 1,
+        R2_ready : 1;
 };
 extern struct STATE_W state_W;
 
@@ -66,8 +70,7 @@ struct ERR
         pos_lidar : 1,
         pos_chassis : 1,
         R2_pos : 1,
-        basket_camera : 1,
-        basket_lidar : 1;
+        basket_info : 1;
 };
 extern struct ERR err;
 
@@ -78,8 +81,7 @@ struct ERR_CNT
         pos_lidar,
         pos_chassis,
         R2_pos,
-        basket_camera,
-        basket_lidar;
+        basket_info;
 };
 extern struct ERR_CNT err_cnt;
 
@@ -90,19 +92,22 @@ struct target_info
 };
 extern struct target_info basket_info, R2_info;
 
-struct pos_info
+struct pos_t
 {
     float x, y, yaw;
 };
-extern struct pos_info R1_pos_lidar, R1_pos_chassis, R2_pos;
+extern struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos;
 
 extern timer_t runtime, HighTorque_time, gimbal_time;
 
-extern float yaw_prev;
-
-extern MovAvgFltr_t yaw_fltr;
+extern float yaw_prev, yaw_curr;
 
 extern unsigned char RxData_D1S2[];
+
+#define Gimbal_GR (14.45 * 1) // real gear ratio * gain
+
+#define YAW_MIN -(139 - 5)
+#define YAW_MAX (127 - 5)
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);
@@ -110,5 +115,7 @@ void FDCAN3_Init(void);
 void TIM7_Init(void);
 void TIM16_Init(void);
 void UART5_Init(void);
+
+void R2_Pos_Process(void);
 
 #endif

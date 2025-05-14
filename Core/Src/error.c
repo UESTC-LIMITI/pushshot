@@ -7,7 +7,7 @@ void Error(void *argument)
 {
     while (1)
     {
-        for (unsigned char cnt = 0; cnt < 7; cnt++)
+        for (unsigned char cnt = 0; cnt < 6; cnt++)
         {
             // max failure
             if (((unsigned char *)&err_cnt)[cnt] == 9)
@@ -16,12 +16,25 @@ void Error(void *argument)
                 ((unsigned char *)&err_cnt)[cnt]++;
         }
 
+        if (err.R2_pos)
+        {
+            if (!state_W.R2_ready)
+                R2_pos.x = 12.5,
+                R2_pos.y = -4;
+
+            R2_Pos_Process();
+        }
+
+        // under voltage
+        if (VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.volt <= 22.8)
+            err.VESC = 1;
+
         FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 1);
 
         // set err flag
         state_R.err = *(unsigned char *)&err ? 1
                                              : 0;
 
-        osDelay(40);
+        osDelay(20);
     }
 }
