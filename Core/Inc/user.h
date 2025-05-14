@@ -100,14 +100,12 @@ extern timer_t runtime, HighTorque_time, gimbal_time;
 
 extern float yaw_prev, yaw_curr;
 
-extern MovAvgFltr_t yaw_fltr;
-
 extern unsigned char RxData_D1S2[];
 
 #define Gimbal_GR (14.45 * 1) // real gear ratio * gain
 
-#define YAW_MIN -115
-#define YAW_MAX 111
+#define YAW_MIN -114
+#define YAW_MAX 112
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);
