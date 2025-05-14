@@ -20,7 +20,7 @@ struct
 {
     struct
     {
-        float timeout, spd;
+        float timeout, curr, spd, spd_ctrl_pct;
     } back;
     struct
     {
@@ -28,7 +28,9 @@ struct
     } shot;
 } VESC_param = {
     .back.timeout = 2,
+    .back.curr = -32,
     .back.spd = -200,
+    .back.spd_ctrl_pct = 0.75,
 
     .shot.acc_curr_pct = 0.11,
     .shot.spd = 1000,
@@ -41,8 +43,8 @@ struct
 {
     float basket_pos_0, R2_pos_0;
 } HighTorque_param = {
-    .basket_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 4,
-    .R2_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 6};
+    .basket_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 12,
+    .R2_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 14};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -3.99};
 
@@ -145,16 +147,19 @@ void State(void *argument)
                 GPIOE->IDR & 0x4)                                        // bottom reached
             {
                 Timer_Clear(&runtime);
+                state_R.spd_ctrl = 0;
                 state = IDLE;
                 break;
             }
-            // go down
             else
-                VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.back.spd;
+                state_R.spd_ctrl = VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd / VESC_param.back.spd >= VESC_param.back.spd_ctrl_pct; // stall protection
+
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.back.curr;
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.back.spd;
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_SPD, &HOBBYWING_V9626_KV160);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, state_R.spd_ctrl ? VESC_SET_SPD : VESC_SET_CURR, &HOBBYWING_V9626_KV160);
             }
             break;
         }
@@ -195,12 +200,7 @@ void State(void *argument)
 
             // control
             {
-                if (state_R.brake)
-                    VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_CURR_BRAKE, &HOBBYWING_V9626_KV160);
-                else if (state_R.spd_ctrl)
-                    VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_SPD, &HOBBYWING_V9626_KV160);
-                else
-                    VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_CURR, &HOBBYWING_V9626_KV160);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, state_R.brake ? VESC_SET_CURR_BRAKE : (state_R.spd_ctrl ? VESC_SET_SPD : VESC_SET_CURR), &HOBBYWING_V9626_KV160);
             }
             break;
         }

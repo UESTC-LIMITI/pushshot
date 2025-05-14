@@ -134,7 +134,7 @@ void FDCAN3_IT0_IRQHandler(void)
             R1_pos_chassis.y = *(float *)&RxData[28] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D),
             R1_pos_chassis.yaw = *(float *)&RxData[16];
 
-            // gimbal feedforward
+            // gimbal feedforward associated with angular velocity of chassis
             if (state_W.ball)
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.spd = -*(float *)&RxData[20] * Gimbal_GR *
                                                                         // feedforward gain
