@@ -66,27 +66,11 @@ void FDCAN3_IT0_IRQHandler(void)
             state_W.aim_R2 = 1;
             break;
         }
-        case 0xE: // dribble end
+        case 0xE:  // dribble end
+        case 0x14: // manual init, for test only
         {
             if (state == IDLE)
                 state = BACK;
-            break;
-        }
-        // ball passed
-        case 0xF:
-        {
-            Timer_Clear(&HighTorque_time);
-            state_W.ball = 1;
-            break;
-        }
-        // manual init, for test only
-        case 0x14:
-        {
-            if (state == IDLE)
-            {
-                state_W.ball = 1;
-                state = BACK;
-            }
             break;
         }
         // enable gimbal

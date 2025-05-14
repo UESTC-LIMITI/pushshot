@@ -29,7 +29,7 @@ struct
 } VESC_param = {
     .back.timeout = 2,
     .back.curr = -32,
-    .back.spd = -200,
+    .back.spd = -250,
     .back.spd_ctrl_pct = 0.75,
 
     .shot.acc_curr_pct = 0.11,
@@ -148,6 +148,8 @@ void State(void *argument)
             {
                 Timer_Clear(&runtime);
                 state_R.spd_ctrl = 0;
+                if (GPIOE->IDR & 0x4)
+                    state_W.ball = 1;
                 state = IDLE;
                 break;
             }
@@ -215,7 +217,7 @@ void State(void *argument)
                 state_W.aim_R2 && R2_info.dist_cm >= 900)        // aim at basket but too far
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = 0;
             // aim at basket
-            else if (!state_W.aim_R2)                                                                                                                                                                 // aim at basket
+            else if (!state_W.aim_R2)
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.basket_pos_0 + (err.basket_info ? yaw_curr                                                                   // chassis
                                                                                                                          : yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 10.f)) // lidar
                                                                                                             * Gimbal_GR;
