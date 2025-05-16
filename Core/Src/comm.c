@@ -47,62 +47,65 @@ void FDCAN3_IT0_IRQHandler(void)
 
         switch (FDCAN_RxHeader.Identifier)
         {
-        // shot
-        case 0xA:
+        case 0xA: // shoot
         {
             if (state == IDLE && state_R.shot_ready)
                 state = SHOT;
             break;
         }
-        // switch target to basket
-        case 0xB:
+        case 0xB: // switch target to basket
         {
             state_W.aim_R2 = 0;
             break;
         }
-        // switch target to R2
-        case 0xC:
+        case 0xC: // switch target to R2
         {
             state_W.aim_R2 = 1;
             break;
         }
         case 0xE:  // dribble end
-        case 0x14: // manual init, for test only
+        case 0x12: // dribble start
         {
             if (state == IDLE)
-                state = BACK;
+                state = LOCK;
+            else if (state == LOCK)
+                Timer_Clear(&runtime);
             break;
         }
-        // enable gimbal
-        case 0xA6:
+        case 0xF: // pass ball
+        {
+            state_W.ball = 1;
+            break;
+        }
+        case 0x14: // manual initialization, for test only
+        {
+            if (state == IDLE)
+            {
+                state_W.ball = 1;
+                state = INIT;
+            }
+            break;
+        }
+        case 0xA6: // enable gimbal
         {
             state_W.gimbal = 1;
             break;
         }
-        // disable gimbal
-        case 0xA7:
+        case 0xA7: // disable gimbal
         {
             state_W.gimbal = 0;
             break;
         }
-        // reset
-        case 0xF6:
+        case 0xF6: // reset
         {
             if (state == IDLE)
             {
                 state_R.shot_ready = state_W.ball = 0;
                 state = INIT;
             }
-            else if (state == LOCK)
-            {
-                Timer_Clear(&runtime);
-                state_R.shot_ready = state_W.ball = 0;
-                state = IDLE;
-            }
             break;
         }
-        // position info from lidar
-        case 0x104:
+        case 0x104: // position info from lidar
         {
             err_cnt.pos_lidar = err.pos_lidar = 0; // clear error flag
 
@@ -112,8 +115,7 @@ void FDCAN3_IT0_IRQHandler(void)
 
             break;
         }
-        // basket info from lidar
-        case 0x105:
+        case 0x105: // basket info from lidar
         {
             err_cnt.basket_info = err.basket_info = 0; // clear error flag
 
@@ -134,8 +136,7 @@ void FDCAN3_IT0_IRQHandler(void)
             }
             break;
         }
-        // position info from chassis
-        case 0x201:
+        case 0x201: // position info from chassis
         {
             err_cnt.pos_chassis = err.pos_chassis = 0; // clear error flag
 

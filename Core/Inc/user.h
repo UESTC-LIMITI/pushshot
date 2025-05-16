@@ -38,7 +38,6 @@ enum STATE
 {
     IDLE,
     INIT,
-    BACK,
     LOCK,
     SHOT
 };
@@ -104,10 +103,10 @@ extern float yaw_prev, yaw_curr;
 
 extern unsigned char RxData_D1S2[];
 
-#define Gimbal_GR (14.45 * 1) // real gear ratio * gain
+#define Gimbal_GR (14.6875 * 1) // real gear ratio * gain
 
-#define YAW_MIN -(139 - 5)
-#define YAW_MAX (127 - 5)
+#define YAW_MIN -(132 - 5)
+#define YAW_MAX (120 - 5)
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);

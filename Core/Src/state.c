@@ -20,35 +20,25 @@ struct
 {
     struct
     {
-        float timeout, curr_detect, fltr_time, spd;
+        float spd;
     } init;
     struct
     {
-        float curr, time;
+        float time, curr;
     } lock;
-    struct
-    {
-        float timeout, spd;
-    } back;
     struct
     {
         float acc_curr_pct, spd, spd_ctrl_pct, brake_curr_pct, timeout, brake_time;
     } shot;
 } VESC_param = {
-    .init.timeout = 5,
-    .init.curr_detect = 5,
-    .init.fltr_time = 0.125,
-    .init.spd = -250,
+    .init.spd = -100,
 
-    .lock.curr = -5,
-    .lock.time = 1,
-
-    .back.timeout = 2,
-    .back.spd = -250,
+    .lock.time = 1.5,
+    .lock.curr = -4,
 
     .shot.acc_curr_pct = 0.1,
-    .shot.spd = 1000,
-    .shot.spd_ctrl_pct = 0.8,
+    .shot.spd = 800,
+    .shot.spd_ctrl_pct = 0.85,
     .shot.brake_curr_pct = 0.03125,
     .shot.timeout = 0.5,
     .shot.brake_time = 0.25};
@@ -86,8 +76,7 @@ float Fitting_Calc_R2(float dist_cm)
 
 void State(void *argument)
 {
-    // fan for lidar
-    GPIOG->ODR |= 0x400;
+    GPIOG->ODR |= 0x400; // fan for lidar
 
     // default param
     HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MIN + YAW_MAX) / 2;
@@ -115,23 +104,17 @@ void State(void *argument)
             }
             break;
         }
-        // spin to top
+        // spin to bottom, before dribble start
         case INIT:
         {
-            static MovAvgFltr_t VESC_fltr;
-
-            if (Timer_CheckTimeout(&runtime, VESC_param.init.timeout) ||                                               // timeout
-                                                                                                                       // ball plate detected
-                MovAvgFltr(&VESC_fltr, VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.curr) >= VESC_param.init.curr_detect && // current large enough
-                    runtime.intvl >= VESC_param.init.fltr_time)                                                        // time long enough
+            // bottom photogate
+            if (GPIOE->IDR & 0x4)
             {
-                MovAvgFltr_Clear(&VESC_fltr);
-                Timer_Clear(&runtime);
-                state = IDLE;
+                state = LOCK;
                 break;
             }
 
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.init.spd; // go down
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.init.spd;
 
             // control
             {
@@ -139,43 +122,17 @@ void State(void *argument)
             }
             break;
         }
-        // spin to bottom
-        case BACK:
-        {
-            if (Timer_CheckTimeout(&runtime, VESC_param.back.timeout) || // timeout
-                GPIOE->IDR & 0x4)                                        // bottom reached
-            {
-                Timer_Clear(&runtime);
-                if (GPIOE->IDR & 0x4)
-                {
-                    state_W.ball = 1;
-                    state = LOCK;
-                    break;
-                }
-                state = IDLE;
-                break;
-            }
-
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.back.spd; // go down
-
-            // control
-            {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_SPD, &CUBEMARS_R100_KV90);
-            }
-            break;
-        }
-        // stay at pos, wait for ball
+        // stay at position
         case LOCK:
         {
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.lock.curr;
-
-            // time limit
             if (Timer_CheckTimeout(&runtime, VESC_param.lock.time))
             {
                 Timer_Clear(&runtime);
                 state = IDLE;
                 break;
             }
+
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.lock.curr;
 
             // control
             {
@@ -192,9 +149,9 @@ void State(void *argument)
 
                 if (runtime.intvl >= VESC_param.shot.timeout + VESC_param.shot.brake_time) // total duration
                 {
-                    basket_info.yaw = state_R.shot_ready = state_W.ball = state_R.brake = state_R.spd_ctrl = 0;
                     Timer_Clear(&runtime);
                     Timer_Clear(&HighTorque_time);
+                    state_R.shot_ready = state_W.ball = state_R.brake = state_R.spd_ctrl = 0;
                     state = IDLE;
                     break;
                 }
@@ -207,10 +164,10 @@ void State(void *argument)
 
             LIMIT(VESC_param.shot.spd, CUBEMARS_R100_KV90.spd_max); // speed limit
 
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.shot.spd * (state_R.brake ? VESC_param.shot.brake_curr_pct // curr for brake
-                                                                                                : VESC_param.shot.acc_curr_pct); // curr for acceleration
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.shot.spd * (state_R.brake ? VESC_param.shot.brake_curr_pct // current for brake
+                                                                                                : VESC_param.shot.acc_curr_pct); // current for acceleration
 
-            LIMIT_RANGE(VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr, 70, 120); // ESC current limit
+            LIMIT(VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr, 120); // ESC current limit
 
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot.spd; // target speed
 
@@ -254,9 +211,9 @@ void State(void *argument)
         }
 
         if (state_W.ball &&
-            (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 1) && R2_info.dist_cm <= 900                               // position ready for R2
-                            : MovAvgFltr_GetStatus(&basket_info.dist_fltr, basket_info.dist_cm) && basket_info.dist_cm <= 750) && // position ready for basket
-            MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1))                         // yaw ready
+            (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 1) && R2_info.dist_cm <= 900             // position ready for R2
+                            : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1) && basket_info.dist_cm <= 750) && // position ready for basket
+            MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1))       // yaw ready
             state_R.shot_ready = 1;
         else if (state != SHOT) // SHOT process protection
             state_R.shot_ready = 0;
