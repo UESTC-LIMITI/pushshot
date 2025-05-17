@@ -104,8 +104,8 @@ extern unsigned char RxData_D1S2[];
 
 #define Gimbal_GR (14.45 * 1) // real gear ratio * gain
 
-#define YAW_MIN -114
-#define YAW_MAX 112
+#define YAW_MIN -(119 - 5)
+#define YAW_MAX (117 - 5)
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);

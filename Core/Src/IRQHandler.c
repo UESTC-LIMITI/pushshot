@@ -46,7 +46,7 @@ void FDCAN2_IT0_IRQHandler(void)
 
         switch (FDCAN_RxHeader.Identifier)
         {
-        case (VESC_STATUS_1 | PUSHSHOT_ID):
+        case (VESC_STATUS_1 << 8 | PUSHSHOT_ID):
         {
             err_cnt.VESC = err.VESC = 0; // clear error flag
 
@@ -54,7 +54,7 @@ void FDCAN2_IT0_IRQHandler(void)
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.curr = (float)(RxData[4] << 8 | RxData[5]) / VESC_fCURR_R;
             break;
         }
-        case (VESC_STATUS_5 | PUSHSHOT_ID):
+        case (VESC_STATUS_5 << 8 | PUSHSHOT_ID):
         {
             err_cnt.VESC = err.VESC = 0; // clear error flag
 

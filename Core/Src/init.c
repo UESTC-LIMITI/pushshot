@@ -14,11 +14,6 @@ void FDCAN1_Init(void)
     HAL_FDCAN_ConfigFilter(&hfdcan1, &FDCAN_Filter);
 
     FDCAN_Filter.IdType = FDCAN_EXTENDED_ID;
-    FDCAN_Filter.FilterIndex = 0;
-    FDCAN_Filter.FilterType = FDCAN_FILTER_MASK;
-    FDCAN_Filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    FDCAN_Filter.FilterID1 = 0;
-    FDCAN_Filter.FilterID2 = 0;
     HAL_FDCAN_ConfigFilter(&hfdcan1, &FDCAN_Filter);
 
     HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
@@ -37,11 +32,6 @@ void FDCAN2_Init(void)
     HAL_FDCAN_ConfigFilter(&hfdcan2, &FDCAN_Filter);
 
     FDCAN_Filter.IdType = FDCAN_EXTENDED_ID;
-    FDCAN_Filter.FilterIndex = 0;
-    FDCAN_Filter.FilterType = FDCAN_FILTER_MASK;
-    FDCAN_Filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    FDCAN_Filter.FilterID1 = 0;
-    FDCAN_Filter.FilterID2 = 0;
     HAL_FDCAN_ConfigFilter(&hfdcan2, &FDCAN_Filter);
 
     HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
@@ -62,22 +52,22 @@ void FDCAN3_Init(void)
     FDCAN_Filter.FilterIndex = 1;
     FDCAN_Filter.FilterType = FDCAN_FILTER_DUAL;
     FDCAN_Filter.FilterID1 = 0xE;
-    FDCAN_Filter.FilterID2 = 0x14;
+    FDCAN_Filter.FilterID2 = 0xF;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
     FDCAN_Filter.FilterIndex = 2;
-    FDCAN_Filter.FilterID1 = 0xA6;
-    FDCAN_Filter.FilterID2 = 0xA7;
+    FDCAN_Filter.FilterID1 = 0x14;
+    FDCAN_Filter.FilterID2 = 0xA6;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
     FDCAN_Filter.FilterIndex = 3;
-    FDCAN_Filter.FilterID1 = 0x104;
-    FDCAN_Filter.FilterID2 = 0x105;
+    FDCAN_Filter.FilterID1 = 0xA7;
+    FDCAN_Filter.FilterID2 = 0x104;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
     FDCAN_Filter.FilterIndex = 4;
-    FDCAN_Filter.FilterID1 = 0x201;
-    FDCAN_Filter.FilterID2 = 0;
+    FDCAN_Filter.FilterID1 = 0x105;
+    FDCAN_Filter.FilterID2 = 0x201;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
     FDCAN3->GFC = 0x3F;

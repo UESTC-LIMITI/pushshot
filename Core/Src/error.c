@@ -9,8 +9,8 @@ void Error(void *argument)
     {
         for (unsigned char cnt = 0; cnt < 6; cnt++)
         {
-            // max failure
-            if (((unsigned char *)&err_cnt)[cnt] == 9)
+            // max failure, 200ms
+            if (((unsigned char *)&err_cnt)[cnt] == 10)
                 *(unsigned char *)&err |= 1 << cnt;
             else
                 ((unsigned char *)&err_cnt)[cnt]++;

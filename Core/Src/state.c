@@ -53,7 +53,8 @@ struct target_info basket_info,
 
 timer_t HighTorque_time, gimbal_time;
 
-float yaw_prev, yaw_curr = (YAW_MAX + YAW_MIN) / 2;
+float yaw_prev = (YAW_MAX + YAW_MIN) / 2,
+      yaw_curr = (YAW_MAX + YAW_MIN) / 2;
 
 float basket_spd_offset = 0,
       R2_spd_offset = 0;
@@ -165,8 +166,6 @@ void State(void *argument)
             {
                 Timer_Clear(&runtime);
                 state_R.spd_ctrl = 0;
-                if (GPIOE->IDR & 0x4)
-                    state_W.ball = 1;
                 state = IDLE;
                 break;
             }
@@ -191,9 +190,9 @@ void State(void *argument)
 
                 if (runtime.intvl >= VESC_param.shot.timeout + VESC_param.shot.brake_time) // total duration
                 {
-                    basket_info.yaw = state_R.shot_ready = state_W.ball = state_R.brake = state_R.spd_ctrl = 0;
                     Timer_Clear(&runtime);
                     Timer_Clear(&HighTorque_time);
+                    state_R.shot_ready = state_W.ball = state_R.brake = state_R.spd_ctrl = 0;
                     state = IDLE;
                     break;
                 }
@@ -203,15 +202,12 @@ void State(void *argument)
             if (state_R.fitting)
                 VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2(R2_info.dist_cm - 12.5)
                                                      : Fitting_Calc_Basket(basket_info.dist_cm);
-
-            LIMIT(VESC_param.shot.spd, HOBBYWING_V9626_KV160.spd_max); // speed limit
-
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.shot.spd * (state_R.brake ? VESC_param.shot.brake_curr_pct // curr for brake
-                                                                                                : VESC_param.shot.acc_curr_pct); // curr for acceleration
-
-            LIMIT_RANGE(VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr, 70, 120); // ESC current limit
-
+            LIMIT(VESC_param.shot.spd, HOBBYWING_V9626_KV160.spd_max);         // speed limit
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot.spd; // target speed
+
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.shot.spd * (state_R.brake ? VESC_param.shot.brake_curr_pct // current for brake
+                                                                                                : VESC_param.shot.acc_curr_pct); // current for acceleration
+            LIMIT(VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr, 120);                                                            // ESC current limit
 
             // switch control mode
             if (VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd / VESC_param.shot.spd >= VESC_param.shot.spd_ctrl_pct)
@@ -253,12 +249,10 @@ void State(void *argument)
         }
 
         if (state_W.ball &&
-            (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 1) && R2_info.dist_cm <= 900                               // position ready for R2
-                            : MovAvgFltr_GetStatus(&basket_info.dist_fltr, basket_info.dist_cm) && basket_info.dist_cm <= 750) && // position ready for basket
-            MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1))                         // yaw ready
+            (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 1) && R2_info.dist_cm <= 900             // position ready for R2
+                            : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1) && basket_info.dist_cm <= 750) && // position ready for basket
+            MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1))       // yaw ready
             state_R.shot_ready = 1;
-        else if (state != SHOT) // SHOT process protection
-            state_R.shot_ready = 0;
 
         osDelay(1);
     }
