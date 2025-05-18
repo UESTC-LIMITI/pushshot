@@ -20,7 +20,7 @@ struct
 {
     struct
     {
-        float spd;
+        float spd, curr_detect, OC_time;
     } init;
     struct
     {
@@ -31,14 +31,16 @@ struct
         float acc_curr_pct, spd, spd_ctrl_pct, brake_curr_pct, timeout, brake_time;
     } shot;
 } VESC_param = {
-    .init.spd = -100,
+    .init.spd = -150,
+    .init.curr_detect = 20,
+    .init.OC_time = 1,
 
     .lock.time = 1.5,
     .lock.curr = -4,
 
     .shot.acc_curr_pct = 0.1,
     .shot.spd = 800,
-    .shot.spd_ctrl_pct = 0.85,
+    .shot.spd_ctrl_pct = 0.9,
     .shot.brake_curr_pct = 0.03125,
     .shot.timeout = 0.5,
     .shot.brake_time = 0.25};
@@ -112,6 +114,20 @@ void State(void *argument)
             {
                 state = LOCK;
                 break;
+            }
+
+            // stall protection
+            static MovAvgFltr_t curr_fltr;
+            static timer_t OC_time;
+            if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.curr) >= VESC_param.init.curr_detect)
+            {
+                if (Timer_CheckTimeout(&OC_time, VESC_param.init.OC_time))
+                {
+                    state = IDLE;
+                    break;
+                }
+                else
+                    Timer_Clear(&OC_time);
             }
 
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.init.spd;
@@ -215,8 +231,6 @@ void State(void *argument)
                             : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1) && basket_info.dist_cm <= 750) && // position ready for basket
             MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1))       // yaw ready
             state_R.shot_ready = 1;
-        else if (state != SHOT) // SHOT process protection
-            state_R.shot_ready = 0;
 
         osDelay(1);
     }
