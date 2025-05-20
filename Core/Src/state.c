@@ -43,13 +43,13 @@ struct
     .shot.spd_ctrl_pct = 0.9,
     .shot.brake_curr_pct = 0.03125,
     .shot.timeout = 0.5,
-    .shot.brake_time = 0.25};
+    .shot.brake_time = 0.5};
 
 struct
 {
     float basket_pos_0, R2_pos_0;
 } HighTorque_param = {
-    .basket_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 0,
+    .basket_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 20,
     .R2_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 0};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
@@ -168,7 +168,7 @@ void State(void *argument)
                     Timer_Clear(&runtime);
                     Timer_Clear(&HighTorque_time);
                     state_R.shot_ready = state_W.ball = state_R.brake = state_R.spd_ctrl = 0;
-                    state = IDLE;
+                    state = INIT;
                     break;
                 }
             }
