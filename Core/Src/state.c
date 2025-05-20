@@ -31,12 +31,12 @@ struct
         float acc_curr_pct, spd, spd_ctrl_pct, brake_curr_pct, timeout, brake_time;
     } shot;
 } VESC_param = {
-    .init.spd = -150,
+    .init.spd = -200,
     .init.curr_detect = 20,
     .init.OC_time = 1,
 
     .lock.time = 1.5,
-    .lock.curr = -4,
+    .lock.curr = -5,
 
     .shot.acc_curr_pct = 0.1,
     .shot.spd = 800,
@@ -98,6 +98,13 @@ void State(void *argument)
         {
         case IDLE:
         {
+            // ball plate go up itself
+            if (state_W.ball && !(GPIOE->IDR & 0x4))
+            {
+                state = INIT;
+                break;
+            }
+
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = 0;
 
             // control
@@ -112,7 +119,7 @@ void State(void *argument)
             // bottom photogate
             if (GPIOE->IDR & 0x4)
             {
-                state = LOCK;
+                state = state_W.ball ? IDLE : LOCK;
                 break;
             }
 
