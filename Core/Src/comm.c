@@ -63,13 +63,13 @@ void FDCAN3_IT0_IRQHandler(void)
             state_W.aim_R2 = 1;
             break;
         }
-        case 0xE:  // dribble end
         case 0x12: // dribble start
         {
             if (state == IDLE)
-                state = LOCK;
-            else if (state == LOCK)
-                Timer_Clear(&runtime);
+            {
+                state_R.shot_ready = state_W.ball = 0;
+                state = INIT;
+            }
             break;
         }
         case 0xF: // pass ball
@@ -94,15 +94,6 @@ void FDCAN3_IT0_IRQHandler(void)
         case 0xA7: // disable gimbal
         {
             state_W.gimbal = 0;
-            break;
-        }
-        case 0xF6: // reset
-        {
-            if (state == IDLE)
-            {
-                state_R.shot_ready = state_W.ball = 0;
-                state = INIT;
-            }
             break;
         }
         case 0x104: // position info from lidar

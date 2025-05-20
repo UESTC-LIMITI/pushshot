@@ -24,24 +24,23 @@ struct
     } init;
     struct
     {
-        float time, curr;
+        float curr;
     } lock;
     struct
     {
-        float acc_curr_pct, spd, spd_ctrl_pct, brake_curr_pct, timeout, brake_time;
+        float acc_curr_pct, spd, spd_ctrl_err, brake_curr, timeout, brake_time;
     } shot;
 } VESC_param = {
-    .init.spd = -200,
-    .init.curr_detect = 20,
-    .init.OC_time = 1,
+    .init.spd = -100,
+    .init.curr_detect = 26,
+    .init.OC_time = 0.5,
 
-    .lock.time = 1.5,
     .lock.curr = -5,
 
-    .shot.acc_curr_pct = 0.1,
+    .shot.acc_curr_pct = 0.04,
     .shot.spd = 800,
-    .shot.spd_ctrl_pct = 0.9,
-    .shot.brake_curr_pct = 0.03125,
+    .shot.spd_ctrl_err = 50,
+    .shot.brake_curr = 26,
     .shot.timeout = 0.5,
     .shot.brake_time = 0.5};
 
@@ -59,7 +58,8 @@ struct target_info basket_info,
 
 timer_t HighTorque_time, gimbal_time;
 
-float yaw_prev, yaw_curr = (YAW_MAX + YAW_MIN) / 2;
+float yaw_prev = (YAW_MAX + YAW_MIN) / 2,
+      yaw_curr = (YAW_MAX + YAW_MIN) / 2;
 
 float basket_spd_offset = 0,
       R2_spd_offset = 0;
@@ -130,12 +130,13 @@ void State(void *argument)
             {
                 if (Timer_CheckTimeout(&OC_time, VESC_param.init.OC_time))
                 {
+                    Timer_Clear(&OC_time);
                     state = IDLE;
                     break;
                 }
-                else
-                    Timer_Clear(&OC_time);
             }
+            else
+                Timer_Clear(&OC_time);
 
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.init.spd;
 
@@ -148,9 +149,8 @@ void State(void *argument)
         // stay at position
         case LOCK:
         {
-            if (Timer_CheckTimeout(&runtime, VESC_param.lock.time))
+            if (state_W.ball)
             {
-                Timer_Clear(&runtime);
                 state = IDLE;
                 break;
             }
@@ -175,7 +175,7 @@ void State(void *argument)
                     Timer_Clear(&runtime);
                     Timer_Clear(&HighTorque_time);
                     state_R.shot_ready = state_W.ball = state_R.brake = state_R.spd_ctrl = 0;
-                    state = INIT;
+                    state = IDLE;
                     break;
                 }
             }
@@ -184,18 +184,16 @@ void State(void *argument)
             if (state_R.fitting)
                 VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2(R2_info.dist_cm)
                                                      : Fitting_Calc_Basket(basket_info.dist_cm);
-
             LIMIT(VESC_param.shot.spd, CUBEMARS_R100_KV90.spd_max); // speed limit
 
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.shot.spd * (state_R.brake ? VESC_param.shot.brake_curr_pct // current for brake
-                                                                                                : VESC_param.shot.acc_curr_pct); // current for acceleration
-
-            LIMIT(VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr, 120); // ESC current limit
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = state_R.brake ? VESC_param.shot.brake_curr                          // current for brake
+                                                                         : VESC_param.shot.spd * VESC_param.shot.acc_curr_pct; // current for acceleration
+            LIMIT(VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr, 120);                                                          // ESC current limit
 
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot.spd; // target speed
 
             // switch control mode
-            if (VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd / VESC_param.shot.spd >= VESC_param.shot.spd_ctrl_pct)
+            if (VESC_param.shot.spd - VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd <= VESC_param.shot.spd_ctrl_err)
                 state_R.spd_ctrl = 1;
 
             // control

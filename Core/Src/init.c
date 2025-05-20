@@ -51,26 +51,21 @@ void FDCAN3_Init(void)
 
     FDCAN_Filter.FilterIndex = 1;
     FDCAN_Filter.FilterType = FDCAN_FILTER_DUAL;
-    FDCAN_Filter.FilterID1 = 0xE;
-    FDCAN_Filter.FilterID2 = 0xF;
+    FDCAN_Filter.FilterID1 = 0xF;
+    FDCAN_Filter.FilterID2 = 0x12;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
     FDCAN_Filter.FilterIndex = 2;
-    FDCAN_Filter.FilterID1 = 0x12;
-    FDCAN_Filter.FilterID2 = 0x14;
+    FDCAN_Filter.FilterID1 = 0x14;
+    FDCAN_Filter.FilterID2 = 0xA6;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
     FDCAN_Filter.FilterIndex = 3;
-    FDCAN_Filter.FilterID1 = 0xA6;
-    FDCAN_Filter.FilterID2 = 0xA7;
-    HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
-
-    FDCAN_Filter.FilterIndex = 4;
-    FDCAN_Filter.FilterID1 = 0xF6;
+    FDCAN_Filter.FilterID1 = 0xA7;
     FDCAN_Filter.FilterID2 = 0x104;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
-    FDCAN_Filter.FilterIndex = 5;
+    FDCAN_Filter.FilterIndex = 4;
     FDCAN_Filter.FilterID1 = 0x105;
     FDCAN_Filter.FilterID2 = 0x201;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
