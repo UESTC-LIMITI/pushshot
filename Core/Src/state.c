@@ -28,7 +28,7 @@ struct
     } lock;
     struct
     {
-        float acc_curr_pct, spd, spd_ctrl_err, brake_curr, timeout, brake_time;
+        float acc_curr, spd, spd_ctrl_err, brake_curr, timeout, brake_time;
     } shot;
 } VESC_param = {
     .init.spd = -100,
@@ -37,7 +37,7 @@ struct
 
     .lock.curr = -5,
 
-    .shot.acc_curr_pct = 0.04,
+    .shot.acc_curr = 40,
     .shot.spd = 800,
     .shot.spd_ctrl_err = 50,
     .shot.brake_curr = 26,
@@ -48,8 +48,8 @@ struct
 {
     float basket_pos_0, R2_pos_0;
 } HighTorque_param = {
-    .basket_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 20,
-    .R2_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 0};
+    .basket_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 21,
+    .R2_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 21};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
 
@@ -65,6 +65,11 @@ float basket_spd_offset = 0,
       R2_spd_offset = 0;
 
 MovAvgFltr_t yaw_fltr;
+
+float Fitting_Calc_AccCurr(float spd)
+{
+    return spd / 10 - 40;
+}
 
 float Fitting_Calc_Basket(float dist_cm)
 {
@@ -131,6 +136,7 @@ void State(void *argument)
                 if (Timer_CheckTimeout(&OC_time, VESC_param.init.OC_time))
                 {
                     Timer_Clear(&OC_time);
+                    state_R.shot_ready = state_W.ball = 0;
                     state = IDLE;
                     break;
                 }
@@ -149,8 +155,9 @@ void State(void *argument)
         // stay at position
         case LOCK:
         {
-            if (state_W.ball)
+            if (state_W.ball && Timer_CheckTimeout(&runtime, 0.5))
             {
+                Timer_Clear(&runtime);
                 state = IDLE;
                 break;
             }
@@ -184,13 +191,13 @@ void State(void *argument)
             if (state_R.fitting)
                 VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2(R2_info.dist_cm)
                                                      : Fitting_Calc_Basket(basket_info.dist_cm);
-            LIMIT(VESC_param.shot.spd, CUBEMARS_R100_KV90.spd_max); // speed limit
-
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = state_R.brake ? VESC_param.shot.brake_curr                          // current for brake
-                                                                         : VESC_param.shot.spd * VESC_param.shot.acc_curr_pct; // current for acceleration
-            LIMIT(VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr, 120);                                                          // ESC current limit
-
+            LIMIT(VESC_param.shot.spd, CUBEMARS_R100_KV90.spd_max);            // speed limit
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot.spd; // target speed
+
+            VESC_param.shot.acc_curr = Fitting_Calc_AccCurr(VESC_param.shot.spd);
+            LIMIT(VESC_param.shot.acc_curr, 120);                                                     // ESC current limit
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = state_R.brake ? VESC_param.shot.brake_curr // current for brake
+                                                                         : VESC_param.shot.acc_curr;  // current for acceleration
 
             // switch control mode
             if (VESC_param.shot.spd - VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd <= VESC_param.shot.spd_ctrl_err)
@@ -231,11 +238,10 @@ void State(void *argument)
             HighTorque_SetMixParam_f(&hfdcan1, GIMBAL_ID);
         }
 
-        if (state_W.ball &&
-            (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 1) && R2_info.dist_cm <= 900             // position ready for R2
-                            : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1) && basket_info.dist_cm <= 750) && // position ready for basket
-            MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1))       // yaw ready
-            state_R.shot_ready = 1;
+        state_R.shot_ready = state_W.ball &&
+                             (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 1) && R2_info.dist_cm <= 900             // position ready for R2
+                                             : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1) && basket_info.dist_cm <= 750) && // position ready for basket
+                             MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1);       // yaw ready
 
         osDelay(1);
     }
