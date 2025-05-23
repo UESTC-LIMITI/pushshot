@@ -5,7 +5,7 @@ USART_info_t UART7_info = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subha
 
 enum STATE state;
 struct STATE_R state_R = { // internal-change state
-    .fitting = 0};
+    .fitting = 1};
 struct STATE_W state_W; // external-change state
 timer_t runtime;
 
@@ -31,7 +31,7 @@ struct
         float acc_curr, spd, spd_ctrl_err, brake_curr, timeout, brake_time;
     } shot;
 } VESC_param = {
-    .init.spd = -100,
+    .init.spd = -150,
     .init.curr_detect = 26,
     .init.OC_time = 0.5,
 
@@ -48,8 +48,8 @@ struct
 {
     float basket_pos_0, R2_pos_0;
 } HighTorque_param = {
-    .basket_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 21,
-    .R2_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 21};
+    .basket_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 21.5,
+    .R2_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 21.5};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
 
@@ -73,7 +73,40 @@ float Fitting_Calc_AccCurr(float spd)
 
 float Fitting_Calc_Basket(float dist_cm)
 {
-    return 0;
+    if (dist_cm <= 300)
+        // e2 sum: 3.30
+        return -0.0000300925925921236 * pow(dist_cm, 3) +
+               0.02498015872983217 * pow(dist_cm, 2) +
+               -6.331216931139352 * dist_cm +
+               1125.4285714222292;
+    else if (dist_cm <= 400)
+        // e2 sum: 0.00
+        return 1.562967899548795e-8 * pow(dist_cm, 5) +
+               -0.00002761235657544603 * pow(dist_cm, 4) +
+               0.01945363578852266 * pow(dist_cm, 3) +
+               -6.832199841737747 * pow(dist_cm, 2) +
+               1196.7891235351562 * dist_cm +
+               -83044.94940329742;
+    else if (dist_cm <= 500)
+        // e2 sum: 0.01
+        return -1.8207046537099814e-8 * pow(dist_cm, 5) +
+               0.0000413564698646951 * pow(dist_cm, 4) +
+               -0.03753339219838381 * pow(dist_cm, 3) +
+               17.012120008468628 * pow(dist_cm, 2) +
+               -3850.1966552734375 * dist_cm +
+               348714.13324400363;
+    else if (dist_cm <= 600)
+        // e2 sum: 0.02
+        return 3.15459356414749e-8 * pow(dist_cm, 5) +
+               -0.00008701174010639079 * pow(dist_cm, 4) +
+               0.09584219567477703 * pow(dist_cm, 3) +
+               -52.696343421936035 * pow(dist_cm, 2) +
+               14463.01123046875 * dist_cm +
+               -1584489.8656646358;
+    else
+        // e2 sum: 0.00
+        return 0.5 * dist_cm +
+               538;
 }
 
 float Fitting_Calc_R2(float dist_cm)
