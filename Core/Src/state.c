@@ -44,19 +44,19 @@ struct
     float basket_pos_0, R2_pos_0;
 } HighTorque_param = {
     .basket_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 12,
-    .R2_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 14};
+    .R2_pos_0 = (YAW_MAX + YAW_MIN) / 2 + -38};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
 
-struct target_info basket_info,
-    R2_info = {.dist_fltr.size = 8};
+struct target_info basket_info = {.dist_fltr.size = 4},
+                   R2_info = {.dist_fltr.size = 8};
 
 timer_t HighTorque_time, gimbal_time;
 
 float yaw_prev = (YAW_MAX + YAW_MIN) / 2,
       yaw_curr = (YAW_MAX + YAW_MIN) / 2;
 
-float basket_spd_offset = 0,
+float basket_spd_offset = -4,
       R2_spd_offset = 0;
 
 MovAvgFltr_t yaw_fltr;
@@ -106,12 +106,13 @@ float Fitting_Calc_Basket(float dist_cm)
 float Fitting_Calc_R2(float dist_cm)
 {
     if (dist_cm <= 475)
-        // e2 sum: 2.48
-        return -6.933333092928873e-7 * pow(dist_cm, 4) +
-               0.0011339258859948131 * pow(dist_cm, 3) +
-               -0.693499975343002 * pow(dist_cm, 2) +
-               188.9634324684739 * dist_cm +
-               -18521.29298183975 + R2_spd_offset;
+        // e2 sum: 0.00
+        return -2.133408949500648e-8 * pow(dist_cm, 5) +
+               0.000043308226054250554 * pow(dist_cm, 4) +
+               -0.03505994862644002 * pow(dist_cm, 3) +
+               14.147859066724777 * pow(dist_cm, 2) +
+               -2844.7474670410156 * dist_cm +
+               228775.7340842169 + R2_spd_offset;
     else if (dist_cm <= 600)
         // e2 sum: 0.09
         return 9.457479466234986e-9 * pow(dist_cm, 5) +
@@ -132,6 +133,8 @@ float Fitting_Calc_R2(float dist_cm)
 
 void State(void *argument)
 {
+    GPIOG->ODR |= 0x400; // fan for lidar
+
     // default param
     HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MIN + YAW_MAX) / 2;
     HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kp = 2;
