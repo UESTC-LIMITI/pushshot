@@ -35,7 +35,7 @@ struct
     .init.curr_detect = 26,
     .init.OC_time = 0.5,
 
-    .lock.curr = -5,
+    .lock.curr = -6.5,
 
     .shot.acc_curr = 40,
     .shot.spd = 800,
@@ -48,8 +48,8 @@ struct
 {
     float basket_pos_0, R2_pos_0;
 } HighTorque_param = {
-    .basket_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 21.5,
-    .R2_pos_0 = (YAW_MAX + YAW_MIN) / 2 + 21.5};
+    .basket_pos_0 = 7,
+    .R2_pos_0 = 2};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
 
@@ -78,7 +78,7 @@ float Fitting_Calc_Basket(float dist_cm)
         return -0.0000300925925921236 * pow(dist_cm, 3) +
                0.02498015872983217 * pow(dist_cm, 2) +
                -6.331216931139352 * dist_cm +
-               1125.4285714222292;
+               1125.4285714222292 + basket_spd_offset;
     else if (dist_cm <= 400)
         // e2 sum: 0.00
         return 1.562967899548795e-8 * pow(dist_cm, 5) +
@@ -86,7 +86,7 @@ float Fitting_Calc_Basket(float dist_cm)
                0.01945363578852266 * pow(dist_cm, 3) +
                -6.832199841737747 * pow(dist_cm, 2) +
                1196.7891235351562 * dist_cm +
-               -83044.94940329742;
+               -83044.94940329742 + basket_spd_offset;
     else if (dist_cm <= 500)
         // e2 sum: 0.01
         return -1.8207046537099814e-8 * pow(dist_cm, 5) +
@@ -94,7 +94,7 @@ float Fitting_Calc_Basket(float dist_cm)
                -0.03753339219838381 * pow(dist_cm, 3) +
                17.012120008468628 * pow(dist_cm, 2) +
                -3850.1966552734375 * dist_cm +
-               348714.13324400363;
+               348714.13324400363 + basket_spd_offset;
     else if (dist_cm <= 600)
         // e2 sum: 0.02
         return 3.15459356414749e-8 * pow(dist_cm, 5) +
@@ -102,11 +102,11 @@ float Fitting_Calc_Basket(float dist_cm)
                0.09584219567477703 * pow(dist_cm, 3) +
                -52.696343421936035 * pow(dist_cm, 2) +
                14463.01123046875 * dist_cm +
-               -1584489.8656646358;
+               -1584489.8656646358 + basket_spd_offset;
     else
         // e2 sum: 0.00
         return 0.5 * dist_cm +
-               538;
+               538 + basket_spd_offset;
 }
 
 float Fitting_Calc_R2(float dist_cm)
@@ -222,8 +222,8 @@ void State(void *argument)
 
             // use fitting data
             if (state_R.fitting)
-                VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2(R2_info.dist_cm)
-                                                     : Fitting_Calc_Basket(basket_info.dist_cm);
+                VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2(MovAvgFltr_GetData(&R2_info.dist_fltr))
+                                                     : Fitting_Calc_Basket(MovAvgFltr_GetData(&basket_info.dist_fltr));
             LIMIT(VESC_param.shot.spd, CUBEMARS_R100_KV90.spd_max);            // speed limit
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot.spd; // target speed
 
@@ -254,14 +254,14 @@ void State(void *argument)
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MIN + YAW_MAX) / 2;
             // aim at basket
             else if (!state_W.aim_R2)
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.basket_pos_0 + (err.basket_info ? yaw_curr                                                                   // chassis
-                                                                                                                         : yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 10.f)) // lidar
-                                                                                                            * Gimbal_GR;
+                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MAX + YAW_MIN) / 2 + HighTorque_param.basket_pos_0 + (err.basket_info ? yaw_curr                                                                   // chassis
+                                                                                                                                                   : yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 10.f)) // lidar
+                                                                                                                                      * Gimbal_GR;
             // aim at R2
             else if (state_W.aim_R2)
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.R2_pos_0 + (yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / (err.basket_info ? 50.f      // chassis, err.basket_info as lidar position error flag
-                                                                                                                                                                                          : 10.f))) * // lidar
-                                                                                                        Gimbal_GR;
+                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MAX + YAW_MIN) / 2 + HighTorque_param.R2_pos_0 + (yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / (err.basket_info ? 50.f      // chassis, err.basket_info as lidar position error flag
+                                                                                                                                                                                                                    : 10.f))) * // lidar
+                                                                                                                                  Gimbal_GR;
         }
 
         LIMIT_RANGE(HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
