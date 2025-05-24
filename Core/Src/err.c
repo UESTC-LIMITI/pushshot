@@ -24,6 +24,7 @@ void Error(void *argument)
             if (HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.temp >= 65)
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kd = HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kp = 0;
         }
+
         if (err.R2_pos)
         {
             if (!state_W.R2_ready)
@@ -34,7 +35,7 @@ void Error(void *argument)
         }
 
         // under voltage
-        if (VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.volt <= 22.8)
+        if (VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.volt <= 23.4)
             err.VESC = 1;
 
         FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 1);
