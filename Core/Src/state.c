@@ -20,22 +20,21 @@ struct
 {
     struct
     {
-        float timeout, curr, spd, spd_ctrl_pct;
+        float spd, curr_detect, OC_time;
     } back;
     struct
     {
-        float acc_curr_pct, spd, spd_ctrl_pct, brake_curr_pct, timeout, brake_time;
+        float acc_curr_pct, spd, spd_ctrl_pct, brake_curr, timeout, brake_time;
     } shot;
 } VESC_param = {
-    .back.timeout = 2,
-    .back.curr = -42.875,
-    .back.spd = -250,
-    .back.spd_ctrl_pct = 0.75,
+    .back.spd = -200,
+    .back.curr_detect = 42.875,
+    .back.OC_time = 0.5,
 
     .shot.acc_curr_pct = 0.11,
     .shot.spd = 1000,
     .shot.spd_ctrl_pct = 0.9,
-    .shot.brake_curr_pct = 0.05,
+    .shot.brake_curr = 42.875,
     .shot.timeout = 0.5,
     .shot.brake_time = 0.25};
 
@@ -44,20 +43,20 @@ struct
     float basket_pos_0, R2_pos_0;
 } HighTorque_param = {
     .basket_pos_0 = 12,
-    .R2_pos_0 = 0};
+    .R2_pos_0 = 12};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
 
-struct target_info basket_info,
-    R2_info = {.dist_fltr.size = 8};
+struct target_info basket_info = {.dist_fltr.size = 3},
+                   R2_info = {.dist_fltr.size = 8};
 
 timer_t HighTorque_time, gimbal_time;
 
 float yaw_prev = (YAW_MAX + YAW_MIN) / 2,
       yaw_curr = (YAW_MAX + YAW_MIN) / 2;
 
-float basket_spd_offset = 0,
-      R2_spd_offset = 0;
+float basket_spd_offset = -2,
+      R2_spd_offset = -9;
 
 MovAvgFltr_t yaw_fltr;
 
@@ -153,23 +152,32 @@ void State(void *argument)
         // spin to bottom
         case BACK:
         {
-            if (GPIOE->IDR & 0x4 ||                                    // bottom reached
-                Timer_CheckTimeout(&runtime, VESC_param.back.timeout)) // timeout
+            if (GPIOE->IDR & 0x4) // bottom reached
             {
-                Timer_Clear(&runtime);
-                state_R.spd_ctrl = 0;
                 state = IDLE;
                 break;
             }
-            else
-                state_R.spd_ctrl = VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd / VESC_param.back.spd >= VESC_param.back.spd_ctrl_pct; // stall protection
 
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.back.curr;
+            // stall protection
+            static MovAvgFltr_t curr_fltr;
+            static timer_t OC_time;
+            if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.curr) >= VESC_param.back.curr_detect)
+            {
+                if (Timer_CheckTimeout(&OC_time, VESC_param.back.OC_time))
+                {
+                    Timer_Clear(&OC_time);
+                    state = IDLE;
+                    break;
+                }
+            }
+            else
+                Timer_Clear(&OC_time);
+
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.back.spd;
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, state_R.spd_ctrl ? VESC_SET_SPD : VESC_SET_CURR, &HOBBYWING_V9626_KV160);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_SPD, &HOBBYWING_V9626_KV160);
             }
             break;
         }
@@ -197,9 +205,9 @@ void State(void *argument)
             LIMIT(VESC_param.shot.spd, HOBBYWING_V9626_KV160.spd_max);         // speed limit
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot.spd; // target speed
 
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.shot.spd * (state_R.brake ? VESC_param.shot.brake_curr_pct // current for brake
-                                                                                                : VESC_param.shot.acc_curr_pct); // current for acceleration
-            LIMIT(VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr, 120);                                                            // ESC current limit
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = state_R.brake ? VESC_param.shot.brake_curr                          // current for brake
+                                                                         : VESC_param.shot.spd * VESC_param.shot.acc_curr_pct; // current for acceleration
+            LIMIT(VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr, 120);                                                          // ESC current limit
 
             // switch control mode
             if (VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd / VESC_param.shot.spd >= VESC_param.shot.spd_ctrl_pct)
