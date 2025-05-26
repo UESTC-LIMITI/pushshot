@@ -1,6 +1,6 @@
 #include "user.h"
 
-#define CENTRE_OFFSET 0.069f
+#define CENTRE_OFFSET 0.069
 
 __attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[10] = {0xA5},
                                                                RxData_D1S2[10];
@@ -14,9 +14,8 @@ void Comm(void *argument)
             R1_Data[9] = state_W.aim_R2 && state_R.brake;
         UART_SendArray(&UART5_info, R1_Data, 10); // dual robot communication
 
-        static timer_t dual_robo_comm_time;
-
         // restart DMA after 0.1s
+        static timer_t dual_robo_comm_time;
         if (!(DMA1_Stream2->CR & 1) && Timer_CheckTimeout(&dual_robo_comm_time, 0.1))
         {
             Timer_Clear(&dual_robo_comm_time);
@@ -24,6 +23,13 @@ void Comm(void *argument)
             DMA1_Stream2->NDTR = 10;
             DMA1_Stream2->CR |= 1;
         }
+
+        unsigned char TxData[12];
+        *(float *)TxData = R2_info.dist_cm,
+                *(float *)&TxData[4] = basket_spd_offset,
+                *(float *)&TxData[8] = R2_spd_offset;
+        FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA2, TxData, 9);
+
         osDelay(10);
     }
 }
@@ -84,6 +90,16 @@ void FDCAN3_IT0_IRQHandler(void)
                 state_W.ball = 1;
                 state = INIT;
             }
+            break;
+        }
+        case 0xA3: // speed offset ++
+        {
+            state_W.aim_R2 ? ++R2_spd_offset : ++basket_spd_offset;
+            break;
+        }
+        case 0xA4: // speed offset --
+        {
+            state_W.aim_R2 ? --R2_spd_offset : --basket_spd_offset;
             break;
         }
         case 0xA6: // enable gimbal

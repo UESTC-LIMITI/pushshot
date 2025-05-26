@@ -31,7 +31,7 @@ struct
         float acc_curr, spd, spd_ctrl_err, brake_curr, timeout, brake_time;
     } shot;
 } VESC_param = {
-    .init.spd = -150,
+    .init.spd = -100,
     .init.curr_detect = 26,
     .init.OC_time = 0.5,
 
@@ -48,8 +48,8 @@ struct
 {
     float basket_pos_0, R2_pos_0;
 } HighTorque_param = {
-    .basket_pos_0 = 7,
-    .R2_pos_0 = 2};
+    .basket_pos_0 = 10,
+    .R2_pos_0 = 9};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
 
@@ -61,57 +61,77 @@ timer_t HighTorque_time, gimbal_time;
 float yaw_prev = (YAW_MAX + YAW_MIN) / 2,
       yaw_curr = (YAW_MAX + YAW_MIN) / 2;
 
-float basket_spd_offset = 0,
-      R2_spd_offset = 0;
+char basket_spd_offset = 1,
+     R2_spd_offset = 0;
 
 MovAvgFltr_t yaw_fltr;
 
 float Fitting_Calc_AccCurr(float spd)
 {
-    return spd / 10 - 40;
+    if (spd <= 700)
+        return (spd - 400) * 0.1;
+    else
+        return (spd - 500) * 0.15;
 }
 
 float Fitting_Calc_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
-        // e2 sum: 3.30
-        return -0.0000300925925921236 * pow(dist_cm, 3) +
-               0.02498015872983217 * pow(dist_cm, 2) +
-               -6.331216931139352 * dist_cm +
-               1125.4285714222292 + basket_spd_offset;
+        // e2 sum: 0.89
+        return -6.510416640237437e-7 * pow(dist_cm, 4) +
+               0.0006128472195428003 * pow(dist_cm, 3) +
+               -0.2110937490433571 * pow(dist_cm, 2) +
+               31.972420471720397 * dist_cm +
+               -1182.7857016678831 + basket_spd_offset;
     else if (dist_cm <= 400)
-        // e2 sum: 0.00
-        return 1.562967899548795e-8 * pow(dist_cm, 5) +
-               -0.00002761235657544603 * pow(dist_cm, 4) +
-               0.01945363578852266 * pow(dist_cm, 3) +
-               -6.832199841737747 * pow(dist_cm, 2) +
-               1196.7891235351562 * dist_cm +
-               -83044.94940329742 + basket_spd_offset;
+        // e2 sum: 0.34
+        return 0.5271428571428571 * dist_cm +
+               526 + basket_spd_offset;
     else if (dist_cm <= 500)
-        // e2 sum: 0.01
-        return -1.8207046537099814e-8 * pow(dist_cm, 5) +
-               0.0000413564698646951 * pow(dist_cm, 4) +
-               -0.03753339219838381 * pow(dist_cm, 3) +
-               17.012120008468628 * pow(dist_cm, 2) +
-               -3850.1966552734375 * dist_cm +
-               348714.13324400363 + basket_spd_offset;
+        // e2 sum: 0.57
+        return -5.208332252149006e-7 * pow(dist_cm, 4) +
+               0.0009305553608101036 * pow(dist_cm, 3) +
+               -0.6222915353719145 * pow(dist_cm, 2) +
+               185.0920243859291 * dist_cm +
+               -19955.424248173396 + basket_spd_offset;
     else if (dist_cm <= 600)
-        // e2 sum: 0.02
-        return 3.15459356414749e-8 * pow(dist_cm, 5) +
-               -0.00008701174010639079 * pow(dist_cm, 4) +
-               0.09584219567477703 * pow(dist_cm, 3) +
-               -52.696343421936035 * pow(dist_cm, 2) +
-               14463.01123046875 * dist_cm +
-               -1584489.8656646358 + basket_spd_offset;
+        // e2 sum: 0.57
+        return 5.208331681494371e-7 * pow(dist_cm, 4) +
+               -0.0011319440795887203 * pow(dist_cm, 3) +
+               0.9218746987171471 * pow(dist_cm, 2) +
+               -332.99116003513336 * dist_cm +
+               45752.7946803008 + basket_spd_offset;
     else
         // e2 sum: 0.00
-        return 0.5 * dist_cm +
-               538 + basket_spd_offset;
+        return 0.6 * dist_cm +
+               473 + basket_spd_offset;
 }
 
 float Fitting_Calc_R2(float dist_cm)
 {
-    return 0;
+    if (dist_cm <= 450)
+
+        return 0.0000019199993880336663 * pow(dist_cm, 4) +
+               -0.0030079990210651886 * pow(dist_cm, 3) +
+               1.7595994137227535 * pow(dist_cm, 2) +
+               -454.8198445737362 * dist_cm +
+               44451.9846487936 + R2_spd_offset;
+    else if (dist_cm <= 550)
+
+        return -0.00005333333327284251 * pow(dist_cm, 3) +
+               0.08239999990655633 * pow(dist_cm, 2) +
+               -41.82666661916301 * dist_cm +
+               7734.999992055529 + R2_spd_offset;
+    else if (dist_cm <= 650)
+
+        return -0.00009599999999920783 * pow(dist_cm, 3) +
+               0.1791999999950349 * pow(dist_cm, 2) +
+               -110.61999999918044 * dist_cm +
+               23400.000001181426 + R2_spd_offset;
+    else
+
+        return 0.2 * dist_cm +
+               715 + R2_spd_offset;
 }
 
 void State(void *argument)
@@ -263,7 +283,6 @@ void State(void *argument)
                                                                                                                                                                                                                     : 10.f))) * // lidar
                                                                                                                                   Gimbal_GR;
         }
-
         LIMIT_RANGE(HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
 
         // control

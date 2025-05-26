@@ -21,7 +21,7 @@ void Error(void *argument)
         {
             err.HighTorque = 1;
 
-            if (HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.temp >= 65)
+            if (HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.temp >= 60)
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kd = HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kp = 0;
         }
 
