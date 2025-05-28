@@ -277,14 +277,10 @@ void State(void *argument)
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MIN + YAW_MAX) / 2;
             // aim at basket
             else if (!state_W.aim_R2)
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MAX + YAW_MIN) / 2 + HighTorque_param.basket_pos_0 + (err.basket_info ? yaw_curr                                                                   // chassis
-                                                                                                                                                   : yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 10.f)) // lidar
-                                                                                                                                      * Gimbal_GR;
+                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MAX + YAW_MIN) / 2 + HighTorque_param.basket_pos_0 + MovAvgFltr_GetData(&basket_info.yaw_fltr) * Gimbal_GR;
             // aim at R2
             else if (state_W.aim_R2)
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MAX + YAW_MIN) / 2 + HighTorque_param.R2_pos_0 + (yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / (err.basket_info ? 50.f      // chassis, err.basket_info as lidar position error flag
-                                                                                                                                                                                                                    : 10.f))) * // lidar
-                                                                                                                                  Gimbal_GR;
+                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MAX + YAW_MIN) / 2 + HighTorque_param.R2_pos_0 + (yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 50.f)) * Gimbal_GR;
         }
         LIMIT_RANGE(HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
 
