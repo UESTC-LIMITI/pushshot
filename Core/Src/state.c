@@ -48,8 +48,8 @@ struct
 {
     float basket_pos_0, R2_pos_0;
 } HighTorque_param = {
-    .basket_pos_0 = 10,
-    .R2_pos_0 = 9};
+    .basket_pos_0 = 2,
+    .R2_pos_0 = 1};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
 
@@ -61,8 +61,8 @@ timer_t HighTorque_time, gimbal_time;
 float yaw_prev = (YAW_MAX + YAW_MIN) / 2,
       yaw_curr = (YAW_MAX + YAW_MIN) / 2;
 
-char basket_spd_offset = 1,
-     R2_spd_offset = 0;
+char basket_spd_offset = 5,
+     R2_spd_offset = 5;
 
 MovAvgFltr_t yaw_fltr;
 
@@ -174,13 +174,6 @@ void State(void *argument)
         // spin to bottom, before dribble start
         case INIT:
         {
-            // bottom photogate
-            if (GPIOE->IDR & 0x4)
-            {
-                state = state_W.ball ? IDLE : LOCK;
-                break;
-            }
-
             // stall protection
             static MovAvgFltr_t curr_fltr;
             static timer_t OC_time;
@@ -188,6 +181,7 @@ void State(void *argument)
             {
                 if (Timer_CheckTimeout(&OC_time, VESC_param.init.OC_time))
                 {
+                    MovAvgFltr_Clear(&curr_fltr);
                     Timer_Clear(&OC_time);
                     state_R.shot_ready = state_W.ball = 0;
                     state = IDLE;
@@ -196,6 +190,15 @@ void State(void *argument)
             }
             else
                 Timer_Clear(&OC_time);
+
+            // bottom photogate
+            if (GPIOE->IDR & 0x4)
+            {
+                MovAvgFltr_Clear(&curr_fltr);
+                Timer_Clear(&OC_time);
+                state = state_W.ball ? IDLE : LOCK;
+                break;
+            }
 
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.init.spd;
 
