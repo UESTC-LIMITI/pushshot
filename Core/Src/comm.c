@@ -48,7 +48,7 @@ void FDCAN3_IT0_IRQHandler(void)
         {
         case 0xA: // shoot
         {
-            if (state == IDLE && state_R.shot_ready)
+            if (state == LOCK && state_R.shot_ready)
                 state = SHOT;
             break;
         }
@@ -64,7 +64,7 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0x12: // dribble start
         {
-            if (state == IDLE)
+            if (state == IDLE || state == LOCK)
             {
                 state_R.shot_ready = state_W.ball = 0;
                 state = INIT;

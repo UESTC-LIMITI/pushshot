@@ -24,7 +24,7 @@ struct
     } init;
     struct
     {
-        float curr;
+        float curr_nball, curr_ball;
     } lock;
     struct
     {
@@ -35,7 +35,8 @@ struct
     .init.curr_detect = 26,
     .init.OC_time = 0.5,
 
-    .lock.curr = -6.5,
+    .lock.curr_nball = -6.5,
+    .lock.curr_ball = -3.25,
 
     .shot.acc_curr = 40,
     .shot.spd = 800,
@@ -156,13 +157,6 @@ void State(void *argument)
         {
         case IDLE:
         {
-            // ball plate go up itself
-            if (state_W.ball && !(GPIOE->IDR & 0x4))
-            {
-                state = INIT;
-                break;
-            }
-
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = 0;
 
             // control
@@ -196,7 +190,7 @@ void State(void *argument)
             {
                 MovAvgFltr_Clear(&curr_fltr);
                 Timer_Clear(&OC_time);
-                state = state_W.ball ? IDLE : LOCK;
+                state = LOCK;
                 break;
             }
 
@@ -211,14 +205,15 @@ void State(void *argument)
         // stay at position
         case LOCK:
         {
-            if (state_W.ball && Timer_CheckTimeout(&runtime, 0.5))
+            // ball plate go up itself
+            if (state_W.ball && !(GPIOE->IDR & 0x4))
             {
-                Timer_Clear(&runtime);
-                state = IDLE;
+                state = INIT;
                 break;
             }
 
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.lock.curr;
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = state_W.ball ? VESC_param.lock.curr_ball
+                                                                        : VESC_param.lock.curr_nball;
 
             // control
             {
