@@ -245,8 +245,8 @@ void State(void *argument)
 
             // use fitting data
             if (state_R.fitting)
-                VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2(MovAvgFltr_GetData(&R2_info.dist_fltr))
-                                                     : Fitting_Calc_Basket(MovAvgFltr_GetData(&basket_info.dist_fltr));
+                VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2(R2_info.dist_cm)
+                                                     : Fitting_Calc_Basket(basket_info.dist_cm);
             LIMIT(VESC_param.shot.spd, CUBEMARS_R100_KV90.spd_max);            // speed limit
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot.spd; // target speed
 
@@ -277,7 +277,7 @@ void State(void *argument)
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MIN + YAW_MAX) / 2;
             // aim at basket
             else if (!state_W.aim_R2)
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MAX + YAW_MIN) / 2 + HighTorque_param.basket_pos_0 + MovAvgFltr_GetData(&basket_info.yaw_fltr) * Gimbal_GR;
+                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MAX + YAW_MIN) / 2 + HighTorque_param.basket_pos_0 + basket_info.yaw * Gimbal_GR;
             // aim at R2
             else if (state_W.aim_R2)
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = (YAW_MAX + YAW_MIN) / 2 + HighTorque_param.R2_pos_0 + (yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 50.f)) * Gimbal_GR;

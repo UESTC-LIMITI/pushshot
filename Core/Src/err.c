@@ -40,10 +40,6 @@ void Error(void *argument)
 
         FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 1);
 
-        // set err flag
-        state_R.err = *(unsigned char *)&err ? 1
-                                             : 0;
-
         osDelay(20);
     }
 }

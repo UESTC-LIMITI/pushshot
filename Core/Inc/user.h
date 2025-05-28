@@ -45,8 +45,7 @@ extern enum STATE state;
 
 struct STATE_R
 {
-    unsigned char err : 1,
-        shot_ready : 1,
+    unsigned char shot_ready : 1,
         spd_ctrl : 1,
         brake : 1,
         fitting : 1;
@@ -107,8 +106,8 @@ extern unsigned char RxData_D1S2[];
 
 #define Gimbal_GR (14.6875 * 1) // real gear ratio * gain
 
-#define YAW_MIN -(114 - 18)
-#define YAW_MAX (114 - 18)
+#define YAW_MIN -(108 - 18)
+#define YAW_MAX (108 - 18)
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);

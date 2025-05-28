@@ -125,8 +125,7 @@ void FDCAN3_IT0_IRQHandler(void)
             basket_info.dist_cm = *(float *)&RxData[8] * 100,
             basket_info.yaw = -*(float *)&RxData[12];
 
-            MovAvgFltr(&basket_info.dist_fltr, basket_info.dist_cm),
-                MovAvgFltr(&basket_info.yaw_fltr, basket_info.yaw);
+            MovAvgFltr(&basket_info.dist_fltr, basket_info.dist_cm);
 
             break;
         }
@@ -163,8 +162,7 @@ void FDCAN3_IT0_IRQHandler(void)
                 else if (basket_info.yaw < -180)
                     basket_info.yaw += 360;
 
-                MovAvgFltr(&basket_info.dist_fltr, basket_info.dist_cm),
-                    MovAvgFltr(&basket_info.yaw_fltr, basket_info.yaw);
+                MovAvgFltr(&basket_info.dist_fltr, basket_info.dist_cm);
             }
             break;
         }
