@@ -43,13 +43,13 @@ struct
     .shot.spd_ctrl_err = 50,
     .shot.brake_curr = 26,
     .shot.timeout = 0.5,
-    .shot.brake_time = 0.5};
+    .shot.brake_time = 0.25};
 
 struct
 {
     float basket_pos_0, R2_pos_0;
 } HighTorque_param = {
-    .basket_pos_0 = 2,
+    .basket_pos_0 = 10,
     .R2_pos_0 = 3};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
@@ -57,7 +57,7 @@ struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y 
 struct target_info basket_info,
     R2_info = {.dist_fltr.size = 8};
 
-timer_t HighTorque_time, gimbal_time;
+timer_t gimbal_time;
 
 float yaw_prev = (YAW_MAX + YAW_MIN) / 2,
       yaw_curr = (YAW_MAX + YAW_MIN) / 2;
@@ -227,13 +227,13 @@ void State(void *argument)
             // timeout
             if (Timer_CheckTimeout(&runtime, VESC_param.shot.timeout))
             {
+                state_R.shot_ready = state_W.ball = state_R.spd_ctrl = 0;
                 state_R.brake = 1;
 
                 if (runtime.intvl >= VESC_param.shot.timeout + VESC_param.shot.brake_time) // total duration
                 {
                     Timer_Clear(&runtime);
-                    Timer_Clear(&HighTorque_time);
-                    state_R.shot_ready = state_W.ball = state_R.brake = state_R.spd_ctrl = 0;
+                    state_R.brake = 0;
                     state = IDLE;
                     break;
                 }
@@ -263,21 +263,18 @@ void State(void *argument)
         }
         }
 
-        // delay after action
-        if (Timer_CheckTimeout(&HighTorque_time, 0.25))
-        {
-            // stay at middle
-            if (!state_W.ball || !state_W.gimbal ||               // no ball or gimbal disabled
-                !state_W.aim_R2 && basket_info.dist_cm >= 1200 || // aim at basket but too far
-                state_W.aim_R2 && R2_info.dist_cm >= 1200)        // aim at R2 but too far
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = 0;
-            // aim at basket
-            else if (!state_W.aim_R2)
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.basket_pos_0 + basket_info.yaw * Gimbal_GR;
-            // aim at R2
-            else if (state_W.aim_R2)
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.R2_pos_0 + (yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 50.f)) * Gimbal_GR;
-        }
+        // stay at middle
+        if (!state_W.ball && state != SHOT ||                 // no ball and not shooting
+            !state_W.gimbal ||                                // gimbal disabled
+            !state_W.aim_R2 && basket_info.dist_cm >= 1200 || // aim at basket but too far
+            state_W.aim_R2 && R2_info.dist_cm >= 1200)        // aim at R2 but too far
+            HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = 0;
+        // aim at basket
+        else if (!state_W.aim_R2)
+            HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.basket_pos_0 + basket_info.yaw * Gimbal_GR;
+        // aim at R2
+        else if (state_W.aim_R2)
+            HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.R2_pos_0 + (yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 50.f)) * Gimbal_GR;
         LIMIT_RANGE(HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
 
         // control

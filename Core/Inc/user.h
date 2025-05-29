@@ -96,7 +96,7 @@ struct pos_t
 };
 extern struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos;
 
-extern timer_t runtime, HighTorque_time, gimbal_time;
+extern timer_t runtime, gimbal_time;
 
 extern float yaw_prev, yaw_curr;
 
