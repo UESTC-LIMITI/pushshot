@@ -15,8 +15,6 @@ void FDCAN1_IT0_IRQHandler(void)
         {
         case (GIMBAL_ID << 8):
         {
-            err_cnt.HighTorque = err.HighTorque = 0; // clear error flag
-
             if (RxData[0] == (HIGHTORQUE_DATA_RE | HIGHTORQUE_DATA_TYPE_FLOAT | 3) &&
                 RxData[1] == HIGHTORQUE_REG_POS_FDBK &&
                 RxData[14] == (HIGHTORQUE_DATA_RE | HIGHTORQUE_DATA_TYPE_FLOAT | 1) &&
@@ -25,7 +23,13 @@ void FDCAN1_IT0_IRQHandler(void)
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos = *(float *)&RxData[2] * 360;
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.spd = *(float *)&RxData[6] * 360;
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.trq = *(float *)&RxData[10];
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.temp = *(float *)&RxData[16];
+
+                // not over heat
+                if ((HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.temp = *(float *)&RxData[16]) <= 50)
+                    err_cnt.HighTorque = err.HighTorque = 0; // clear error flag
+                // over heat
+                else if (HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.temp >= 60)
+                    HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kd = HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kp = 0;
             }
             break;
         }
@@ -33,7 +37,7 @@ void FDCAN1_IT0_IRQHandler(void)
     }
 }
 
-// pushshot esc
+// pushshot ESC
 void FDCAN2_IT0_IRQHandler(void)
 {
     if (FDCAN2->IR & 0x1)
@@ -56,9 +60,9 @@ void FDCAN2_IT0_IRQHandler(void)
         }
         case (VESC_STATUS_5 << 8 | PUSHSHOT_ID):
         {
-            err_cnt.VESC = err.VESC = 0; // clear error flag
-
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.volt = (float)(RxData[4] << 8 | RxData[5]) / VESC_fVOLT;
+            // not under voltage
+            if ((VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.volt = (float)(RxData[4] << 8 | RxData[5]) / VESC_fVOLT) >= 23.4)
+                err_cnt.VESC = err.VESC = 0; // clear error flag
             break;
         }
         }

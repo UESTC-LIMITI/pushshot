@@ -30,7 +30,7 @@ struct
         float acc_curr, spd, spd_ctrl_err, brake_curr, timeout, brake_time;
     } shot;
 } VESC_param = {
-    .init.spd = -100,
+    .init.spd = -150,
     .init.curr_detect = 26,
     .init.OC_time = 0.5,
 
@@ -263,10 +263,8 @@ void State(void *argument)
         }
 
         // stay at middle
-        if (!state_W.ball && state != SHOT ||                 // no ball and not shooting
-            !state_W.gimbal ||                                // gimbal disabled
-            !state_W.aim_R2 && basket_info.dist_cm >= 1200 || // aim at basket but too far
-            state_W.aim_R2 && R2_info.dist_cm >= 1200)        // aim at R2 but too far
+        if (!state_W.ball && state != SHOT || // no ball and not shooting
+            !state_W.gimbal)                  // gimbal disabled
             HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = 0;
         // aim at basket
         else if (!state_W.aim_R2)
