@@ -7,7 +7,7 @@ void Error(void *argument)
 {
     while (1)
     {
-        for (unsigned char cnt = 0; cnt < 6; cnt++)
+        for (unsigned char cnt = 0; cnt < 5; cnt++)
         {
             // max failure, 200ms
             if (((unsigned char *)&err_cnt)[cnt] == 10)

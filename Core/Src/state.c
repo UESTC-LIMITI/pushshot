@@ -9,8 +9,7 @@ struct STATE_R state_R = { // internal-change state
 struct STATE_W state_W; // external-change state
 timer_t runtime;
 
-#define DATA_OUTPUT
-
+#define nDATA_OUTPUT
 #ifdef DATA_OUTPUT
 #include <stdio.h>
 unsigned char VOFA[32];

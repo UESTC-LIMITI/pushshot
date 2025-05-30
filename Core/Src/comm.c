@@ -64,7 +64,7 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0x12: // dribble start
         {
-            if (state == IDLE || state == LOCK)
+            if (state != SHOT)
             {
                 state_R.shot_ready = state_W.ball = 0;
                 state = INIT;
@@ -105,14 +105,13 @@ void FDCAN3_IT0_IRQHandler(void)
             state_W.gimbal = 0;
             break;
         }
-        case 0x104: // position info from lidar
+        case 0xDF: // reset
         {
-            err_cnt.pos_lidar = err.pos_lidar = 0; // clear error flag
-
-            // R1_pos_lidar.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[8] / R2D),
-            // R1_pos_lidar.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[8] / R2D),
-            // R1_pos_lidar.yaw = *(float *)&RxData[8];
-
+            if (state != SHOT)
+            {
+                state_R.shot_ready = state_W.ball = 0;
+                state = IDLE;
+            }
             break;
         }
         case 0x105: // basket info from lidar
@@ -131,7 +130,7 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0x201: // position info from chassis
         {
-            err_cnt.pos_chassis = err.pos_chassis = 0; // clear error flag
+            err_cnt.pos = err.pos = 0; // clear error flag
 
             R1_pos_lidar.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D),
             R1_pos_lidar.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D),

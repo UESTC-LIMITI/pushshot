@@ -65,10 +65,9 @@ struct ERR
 {
     unsigned char VESC : 1,
         HighTorque : 1,
-        pos_lidar : 1,
-        pos_chassis : 1,
-        R2_pos : 1,
-        basket_info : 1;
+        basket_info : 1,
+        pos : 1,
+        R2_pos : 1;
 };
 extern struct ERR err;
 
@@ -76,10 +75,9 @@ struct ERR_CNT
 {
     unsigned char VESC,
         HighTorque,
-        pos_lidar,
-        pos_chassis,
-        R2_pos,
-        basket_info;
+        basket_info,
+        pos,
+        R2_pos;
 };
 extern struct ERR_CNT err_cnt;
 
