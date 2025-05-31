@@ -48,8 +48,8 @@ struct
 {
     float basket_pos_0, R2_pos_0;
 } HighTorque_param = {
-    .basket_pos_0 = 10,
-    .R2_pos_0 = 3};
+    .basket_pos_0 = 15,
+    .R2_pos_0 = 12};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
 
@@ -61,8 +61,8 @@ timer_t gimbal_time;
 float yaw_prev = (YAW_MAX + YAW_MIN) / 2,
       yaw_curr = (YAW_MAX + YAW_MIN) / 2;
 
-char basket_spd_offset = 0,
-     R2_spd_offset = 2;
+char basket_spd_offset = -20,
+     R2_spd_offset = -18;
 
 MovAvgFltr_t yaw_fltr;
 
@@ -280,9 +280,10 @@ void State(void *argument)
         }
 
         state_R.shot_ready = state_W.ball &&
-                             MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1) &&   // yaw ready
-                             (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 2) && R2_info.dist_cm <= 900           // position ready for R2
-                                             : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 2) && basket_info.dist_cm <= 750); // position ready for basket
+                             (MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1) &&         // yaw ready
+                                  (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 2) && R2_info.dist_cm <= 900             // position ready for R2
+                                                  : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 2) && basket_info.dist_cm <= 750) || // position ready for basket
+                              !state_R.fitting);                                                                                      // test
 
         osDelay(1);
     }

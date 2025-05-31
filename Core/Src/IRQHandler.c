@@ -52,8 +52,6 @@ void FDCAN2_IT0_IRQHandler(void)
         {
         case (VESC_STATUS_1 << 8 | PUSHSHOT_ID):
         {
-            err_cnt.VESC = err.VESC = 0; // clear error flag
-
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd = (float)(RxData[0] << 24 | RxData[1] << 16 | RxData[2] << 8 | RxData[3]) / CUBEMARS_R100_KV90.PP;
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.curr = (float)(RxData[4] << 8 | RxData[5]) / VESC_fCURR_R;
             break;
