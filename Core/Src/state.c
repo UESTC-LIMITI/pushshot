@@ -9,7 +9,7 @@ struct STATE_R state_R = { // internal-change state
 struct STATE_W state_W; // external-change state
 timer_t runtime;
 
-#define nDATA_OUTPUT
+#define DATA_OUTPUT
 #ifdef DATA_OUTPUT
 #include <stdio.h>
 unsigned char VOFA[32];
@@ -49,8 +49,8 @@ struct
     float pos_0, basket_offset, R2_offset;
 } HighTorque_param = {
     .pos_0 = (YAW_MAX + YAW_MIN) / 2,
-    .basket_offset = 0,
-    .R2_offset = 0};
+    .basket_offset = 16,
+    .R2_offset = 13};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
 
@@ -62,8 +62,8 @@ timer_t R2_yaw_time;
 float R2_yaw_prev = (YAW_MAX + YAW_MIN) / 2,
       R2_yaw_curr = (YAW_MAX + YAW_MIN) / 2;
 
-char basket_spd_offset = -20,
-     R2_spd_offset = -18;
+char basket_spd_offset = -2,
+     R2_spd_offset = -2;
 
 MovAvgFltr_t yaw_fltr;
 
@@ -77,64 +77,38 @@ float Fitting_Calc_AccCurr(float spd)
 
 float Fitting_Calc_Basket(float dist_cm)
 {
-    if (dist_cm <= 300)
-        // e2 sum: 0.32
-        return -6.510416640237437e-7 * pow(dist_cm, 4) +
-               0.0006197916639649748 * pow(dist_cm, 3) +
-               -0.21630208235001191 * pow(dist_cm, 2) +
-               33.24761888757348 * dist_cm +
-               -1282.0714180733416 + basket_spd_offset;
-    else if (dist_cm <= 400)
-        // e2 sum: 0.16
-        return 0.000009259259260041564 * pow(dist_cm, 3) +
-               -0.009543650794398673 * pow(dist_cm, 2) +
-               3.784788360062521 * dist_cm +
-               159.55555551758732 + basket_spd_offset;
-    else if (dist_cm <= 500)
-        // e2 sum: 0.57
-        return -5.208332252149006e-7 * pow(dist_cm, 4) +
-               0.0009305553608101036 * pow(dist_cm, 3) +
-               -0.6222915353719145 * pow(dist_cm, 2) +
-               185.0920243859291 * dist_cm +
-               -19953.424248173396 + basket_spd_offset;
-    else if (dist_cm <= 600)
-        // e2 sum: 0.00
-        return 5.208331588235637e-7 * pow(dist_cm, 4) +
-               -0.0011458329495326325 * pow(dist_cm, 3) +
-               0.9447913500480354 * pow(dist_cm, 2) +
-               -345.54155111312866 * dist_cm +
-               48036.98433709078 + basket_spd_offset;
-    else
-        // e2 sum: 0.00
+    if (dist_cm <= 220)
+        return 0.15 * dist_cm +
+               592 + basket_spd_offset;
+    else if (dist_cm <= 300)
         return 0.6 * dist_cm +
-               477 + basket_spd_offset;
+               493 + basket_spd_offset;
+    else
+        return 0.5 * dist_cm +
+               523 + basket_spd_offset;
 }
 
 float Fitting_Calc_R2(float dist_cm)
 {
     if (dist_cm <= 450)
-
-        return 0.0000019199993880336663 * pow(dist_cm, 4) +
-               -0.0030079990210651886 * pow(dist_cm, 3) +
-               1.7595994137227535 * pow(dist_cm, 2) +
-               -454.8198445737362 * dist_cm +
-               44451.9846487936 + R2_spd_offset;
+        return -0.0016000000000002679 * pow(dist_cm, 2) +
+               2.1200000000003456 * dist_cm +
+               97.99999999990166 + R2_spd_offset;
     else if (dist_cm <= 550)
-
-        return -0.00005333333327284251 * pow(dist_cm, 3) +
-               0.08239999990655633 * pow(dist_cm, 2) +
-               -41.82666661916301 * dist_cm +
-               7734.999992055529 + R2_spd_offset;
+        return -0.0000020266644877864337 * pow(dist_cm, 4) +
+               0.003962662308367726 * pow(dist_cm, 3) +
+               -2.89873006939888 * pow(dist_cm, 2) +
+               940.7022491693497 * dist_cm +
+               -113586.86529356409 + R2_spd_offset;
     else if (dist_cm <= 650)
-
-        return -0.00009599999999920783 * pow(dist_cm, 3) +
-               0.1791999999950349 * pow(dist_cm, 2) +
-               -110.61999999918044 * dist_cm +
-               23400.000001181426 + R2_spd_offset;
+        return -0.000001813337599188003 * pow(dist_cm, 4) +
+               0.004261343567122822 * pow(dist_cm, 3) +
+               -3.749275869689882 * pow(dist_cm, 2) +
+               1464.4203391075134 * dist_cm +
+               -213555.54801302342 + R2_spd_offset;
     else
-
-        return 0.2 * dist_cm +
-               715 + R2_spd_offset;
+        return 0.6 * dist_cm +
+               425 + R2_spd_offset;
 }
 
 void State(void *argument)
@@ -166,7 +140,7 @@ void State(void *argument)
             }
             break;
         }
-        // spin to bottom, before dribble start
+        // spin to bottom
         case INIT:
         {
             // stall protection
@@ -241,8 +215,8 @@ void State(void *argument)
 
             // use fitting data
             if (state_R.fitting)
-                VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2(R2_info.dist_cm)
-                                                     : Fitting_Calc_Basket(basket_info.dist_cm);
+                VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2(MovAvgFltr_GetData(&R2_info.dist_fltr))
+                                                     : Fitting_Calc_Basket(MovAvgFltr_GetData(&basket_info.dist_fltr));
             LIMIT(VESC_param.shot.spd, CUBEMARS_R100_KV90.spd_max);            // speed limit
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot.spd; // target speed
 

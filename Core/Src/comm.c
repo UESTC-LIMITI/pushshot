@@ -14,7 +14,7 @@ void Comm(void *argument)
                 R1_Data[9] = state_W.aim_R2 && state_R.brake;
         UART_SendArray(&UART5_info, R1_Data, 10); // dual robot communication
 
-        // restart DMA after 0.1s
+        // @bug restart DMA after 0.1s
         static timer_t dual_robo_comm_time;
         if (!(DMA1_Stream2->CR & 1) && Timer_CheckTimeout(&dual_robo_comm_time, 0.1))
         {
