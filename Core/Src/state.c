@@ -46,20 +46,21 @@ struct
 
 struct
 {
-    float basket_pos_0, R2_pos_0;
+    float pos_0, basket_offset, R2_offset;
 } HighTorque_param = {
-    .basket_pos_0 = 15,
-    .R2_pos_0 = 12};
+    .pos_0 = (YAW_MAX + YAW_MIN) / 2,
+    .basket_offset = 0,
+    .R2_offset = 0};
 
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
 
 struct target_info basket_info,
     R2_info = {.dist_fltr.size = 8};
 
-timer_t gimbal_time;
+timer_t R2_yaw_time;
 
-float yaw_prev = (YAW_MAX + YAW_MIN) / 2,
-      yaw_curr = (YAW_MAX + YAW_MIN) / 2;
+float R2_yaw_prev = (YAW_MAX + YAW_MIN) / 2,
+      R2_yaw_curr = (YAW_MAX + YAW_MIN) / 2;
 
 char basket_spd_offset = -20,
      R2_spd_offset = -18;
@@ -265,13 +266,13 @@ void State(void *argument)
         // stay at middle
         if (!state_W.ball && state != SHOT || // no ball and not shooting
             !state_W.gimbal)                  // gimbal disabled
-            HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = 0;
+            HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0;
         // aim at basket
         else if (!state_W.aim_R2)
-            HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.basket_pos_0 + basket_info.yaw * Gimbal_GR;
+            HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.basket_offset + basket_info.yaw * Gimbal_GR;
         // aim at R2
         else if (state_W.aim_R2)
-            HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.R2_pos_0 + (yaw_prev + (yaw_curr - yaw_prev) * Timer_GetRatio(&gimbal_time, 1 / 50.f)) * Gimbal_GR;
+            HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.R2_offset + (R2_yaw_prev + (R2_yaw_curr - R2_yaw_prev) * Timer_GetRatio(&R2_yaw_time, 1 / 50.f)) * Gimbal_GR;
         LIMIT_RANGE(HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
 
         // control

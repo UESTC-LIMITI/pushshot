@@ -197,6 +197,8 @@ void DMA1_Stream2_IRQHandler(void)
 
 void R2_Pos_Process(void)
 {
+    Timer_Clear(&R2_yaw_time);
+
     float dist_x = R2_pos.x - R1_pos_lidar.x,
           dist_y = R2_pos.y - R1_pos_lidar.y;
 
@@ -208,15 +210,10 @@ void R2_Pos_Process(void)
     else if (R2_info.yaw < -180)
         R2_info.yaw += 360;
 
-    MovAvgFltr(&R2_info.dist_fltr, R2_info.dist_cm),
-        MovAvgFltr(&R2_info.yaw_fltr, R2_info.yaw);
+    MovAvgFltr(&R2_info.dist_fltr, R2_info.dist_cm);
 
-    if (state_W.aim_R2)
-    {
-        Timer_Clear(&gimbal_time);
-        yaw_prev = yaw_curr,
-        yaw_curr = MovAvgFltr_GetData(&R2_info.yaw_fltr);
-    }
+    R2_yaw_prev = R2_yaw_curr,
+    R2_yaw_curr = MovAvgFltr(&R2_info.yaw_fltr, R2_info.yaw);
 
     FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA1, (unsigned char *)&R2_pos, 8);
 }
