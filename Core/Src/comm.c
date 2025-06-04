@@ -9,19 +9,22 @@ void Comm(void *argument)
 {
     while (1)
     {
+        // dual robot communication
         *(float *)&R1_Data[1] = R1_pos_lidar.x,
                 *(float *)&R1_Data[5] = R1_pos_lidar.y,
                 R1_Data[9] = state_W.aim_R2 && state_R.brake;
-        UART_SendArray(&UART5_info, R1_Data, 10); // dual robot communication
+        UART_SendArray(&UART5_info, R1_Data, 10);
 
-        // @bug restart DMA after 0.1s
-        static timer_t dual_robo_comm_time;
-        if (!(DMA1_Stream2->CR & 1) && Timer_CheckTimeout(&dual_robo_comm_time, 0.1))
+        // @bug restart DMA
+        if (UART5->ISR & 0x8)
         {
-            Timer_Clear(&dual_robo_comm_time);
+            UART5->ICR |= 0x8;
 
+            if (!(DMA1_Stream2->CR & 1))
+            {
             DMA1_Stream2->NDTR = 10;
             DMA1_Stream2->CR |= 1;
+        }
         }
 
         unsigned char TxData[12];
@@ -30,7 +33,7 @@ void Comm(void *argument)
                 *(float *)&TxData[8] = R2_spd_offset;
         FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA2, TxData, 9);
 
-        osDelay(10);
+        osDelay(20);
     }
 }
 
@@ -183,7 +186,24 @@ void DMA1_Stream2_IRQHandler(void)
             R2_pos.x = *(float *)&RxData_D1S2[1] / 1000,
             R2_pos.y = *(float *)&RxData_D1S2[5] / 1000;
 
-            state_W.R2_ready = RxData_D1S2[9];
+            switch (RxData_D1S2[9])
+            {
+            case 0:
+            {
+                state_W.R2_ready = 0;
+                break;
+            }
+            case 2:
+            {
+                if (state_W.aim_R2 && state == LOCK && state_R.shot_ready)
+                    state = SHOT;
+            }
+            case 1:
+            {
+                state_W.R2_ready = 1;
+                break;
+            }
+            }
 
             R2_Pos_Process();
         }

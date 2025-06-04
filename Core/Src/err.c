@@ -27,6 +27,6 @@ void Error(void *argument)
 
         FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 1);
 
-        osDelay(20);
+        osDelay(50);
     }
 }

@@ -26,9 +26,9 @@
 #define PUSHSHOT_ID 1
 
 #define HIGHTORQUE_NUM 1
-#define HIGHTORQUE_ID_OFFSET 2
+#define HIGHTORQUE_ID_OFFSET 1
 #include "HighTorque.h"
-#define GIMBAL_ID 2
+#define GIMBAL_ID 1
 
 extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 
@@ -104,8 +104,8 @@ extern unsigned char RxData_D1S2[];
 
 #define Gimbal_GR (14.6875 * 1) // real gear ratio * gain
 
-#define YAW_MIN -(122 - 18)
-#define YAW_MAX (138 - 18)
+#define YAW_MIN -(127 - 18)
+#define YAW_MAX (133 - 18)
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);
