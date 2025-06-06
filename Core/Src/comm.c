@@ -22,9 +22,9 @@ void Comm(void *argument)
 
             if (!(DMA1_Stream2->CR & 1))
             {
-            DMA1_Stream2->NDTR = 10;
-            DMA1_Stream2->CR |= 1;
-        }
+                DMA1_Stream2->NDTR = 10;
+                DMA1_Stream2->CR |= 1;
+            }
         }
 
         unsigned char TxData[12];
@@ -90,12 +90,8 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0xA3: // speed offset ++
         {
-            state_W.aim_R2 ? ++R2_spd_offset : ++basket_spd_offset;
-            break;
-        }
-        case 0xA4: // speed offset --
-        {
-            state_W.aim_R2 ? --R2_spd_offset : --basket_spd_offset;
+            state_W.aim_R2 ? (R2_spd_offset += *(float *)RxData)
+                           : (basket_spd_offset += *(float *)RxData);
             break;
         }
         case 0xA6: // enable gimbal
