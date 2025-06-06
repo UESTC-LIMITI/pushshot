@@ -85,7 +85,7 @@ extern struct ERR_CNT err_cnt;
 struct target_info
 {
     float dist_cm, yaw;
-    MovAvgFltr_t dist_fltr, yaw_fltr;
+    MovAvgFltr_t dist_fltr;
 };
 extern struct target_info basket_info, R2_info;
 

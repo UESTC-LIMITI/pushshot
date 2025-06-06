@@ -55,7 +55,7 @@ struct
 struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
 
 struct target_info basket_info,
-    R2_info = {.dist_fltr.size = 4, .yaw_fltr.size = 4};
+    R2_info = {.dist_fltr.size = 4};
 
 timer_t R2_yaw_time;
 

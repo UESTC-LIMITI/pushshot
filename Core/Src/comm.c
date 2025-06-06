@@ -229,7 +229,7 @@ void R2_Pos_Process(void)
     MovAvgFltr(&R2_info.dist_fltr, R2_info.dist_cm);
 
     R2_yaw_prev = R2_yaw_curr,
-    R2_yaw_curr = MovAvgFltr(&R2_info.yaw_fltr, R2_info.yaw);
+    R2_yaw_curr = R2_info.yaw;
 
     FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA1, (unsigned char *)&R2_pos, 8);
 }
