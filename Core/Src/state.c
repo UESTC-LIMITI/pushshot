@@ -264,7 +264,7 @@ void State(void *argument)
         }
 
         state_R.shot_ready = state_W.ball &&
-                             (MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1) &&                 // yaw ready
+                             (!err.yaw_lim && MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1) && // yaw ready
                                   (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 2) && R2_info.dist_cm <= 750 && state_W.R2_ready // position ready for R2
                                                   : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1.5) && basket_info.dist_cm <= 750) ||       // position ready for basket
                               !state_R.fitting);                                                                                              // test

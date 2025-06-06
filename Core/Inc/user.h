@@ -67,7 +67,8 @@ struct ERR
         HighTorque : 1,
         basket_info : 1,
         pos : 1,
-        R2_pos : 1;
+        R2_pos : 1,
+        yaw_lim : 1;
 };
 extern struct ERR err;
 
@@ -104,8 +105,8 @@ extern unsigned char RxData_D1S2[];
 
 #define Gimbal_GR (14.6875 * 1) // real gear ratio * gain
 
-#define YAW_MIN -(127 - 18)
-#define YAW_MAX (133 - 18)
+#define YAW_MIN -(127 - 12)
+#define YAW_MAX (133 - 12)
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);
