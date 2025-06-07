@@ -10,21 +10,18 @@ void Comm(void *argument)
     while (1)
     {
         // dual robot communication
-        *(float *)&R1_Data[1] = R1_pos_lidar.x,
-                *(float *)&R1_Data[5] = R1_pos_lidar.y,
+        *(float *)&R1_Data[1] = R1_pos_lidar.x + 0.24 * cos(R1_pos_lidar.yaw / R2D),
+                *(float *)&R1_Data[5] = R1_pos_lidar.y + 0.24 * sin(R1_pos_lidar.yaw / R2D),
                 R1_Data[9] = state_W.aim_R2 && state_R.brake;
         UART_SendArray(&UART5_info, R1_Data, 10);
 
-        // @bug restart DMA
+        // restart DMA
         if (UART5->ISR & 0x8)
         {
             UART5->ICR |= 0x8;
 
-            if (!(DMA1_Stream2->CR & 1))
-            {
-                DMA1_Stream2->NDTR = 10;
-                DMA1_Stream2->CR |= 1;
-            }
+            DMA1_Stream2->NDTR = 10;
+            DMA1_Stream2->CR |= 1;
         }
 
         osDelay(20);

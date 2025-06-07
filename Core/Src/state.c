@@ -9,7 +9,7 @@ struct STATE_R state_R = { // internal-change state
 struct STATE_W state_W; // external-change state
 timer_t runtime;
 
-#define DATA_OUTPUT
+#define nDATA_OUTPUT
 #ifdef DATA_OUTPUT
 #include <stdio.h>
 unsigned char VOFA[32];
@@ -48,7 +48,7 @@ struct
     float pos_0, basket_offset, R2_offset;
 } HighTorque_param = {
     .pos_0 = (YAW_MAX + YAW_MIN) / 2,
-    .basket_offset = 15,
+    .basket_offset = 12,
     .R2_offset = 11};
 
 struct pos_info R1_pos_lidar, R1_pos_chassis;
@@ -129,8 +129,7 @@ void State(void *argument)
 #ifdef DATA_OUTPUT
         if (state == SHOT && !state_R.brake)
         {
-            // sprintf((char *)VOFA, "T:%.2f,%d\n", VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd, state_R.spd_ctrl ? 1000 : 0);
-            sprintf((char *)VOFA, "T:%.1f\n", VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.volt);
+            sprintf((char *)VOFA, "T:%.2f,%d\n", VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd, state_R.spd_ctrl ? 1000 : 0);
             UART_SendArray(&UART7_info, VOFA, 16);
         }
 #endif
@@ -252,7 +251,7 @@ void State(void *argument)
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.basket_offset + basket_info.yaw * Gimbal_GR;
             // aim at R2
             else if (state_W.aim_R2)
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.R2_offset + (R2_yaw_prev + (R2_yaw_curr - R2_yaw_prev) * Timer_GetRatio(&R2_yaw_time, 1 / (err.R2_pos ? 20.f : 50.f))) * Gimbal_GR;
+                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.R2_offset + (R2_yaw_prev + (R2_yaw_curr - R2_yaw_prev) * Timer_GetRatio(&R2_yaw_time, err.R2_pos ? 0.05 : 1 / 100.f)) * Gimbal_GR;
             LIMIT_RANGE(HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
         }
 
