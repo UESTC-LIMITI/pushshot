@@ -25,7 +25,7 @@ void FDCAN1_IT0_IRQHandler(void)
                 HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.trq = *(float *)&RxData[10];
 
                 // not over heat
-                if ((HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.temp = *(float *)&RxData[16]) <= 50)
+                if ((HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.temp = *(float *)&RxData[16]) <= 55)
                     err_cnt.HighTorque = err.HighTorque = 0; // clear error flag
                 // over heat
                 else if (HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.temp >= 60)

@@ -48,7 +48,7 @@ struct
     float pos_0, basket_offset, R2_offset;
 } HighTorque_param = {
     .pos_0 = (YAW_MAX + YAW_MIN) / 2,
-    .basket_offset = 16.5,
+    .basket_offset = 15,
     .R2_offset = 11};
 
 struct pos_info R1_pos_lidar, R1_pos_chassis;
@@ -79,43 +79,41 @@ float Fitting_Calc_AccCurr(float spd)
 float Fitting_Calc_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
-        return -0.000018518518518167992 * pow(dist_cm, 3) +
-               0.01692460317434552 * pow(dist_cm, 2) +
-               -4.404100529041898 * dist_cm +
-               974.7142857102483 + basket_spd_offset;
+        return 0.6 * dist_cm +
+               500 + spd_offset;
     else if (dist_cm <= 500)
-        return 0.5022727272727273 * dist_cm +
-               527.1818181818181 + basket_spd_offset;
+        return 0.525 * dist_cm +
+               523 + spd_offset;
     else
-        return 0.44285714285714284 * dist_cm +
-               554.7619047619274 + basket_spd_offset;
+        return 0.55 * dist_cm +
+               510 + spd_offset;
 }
 
 float Fitting_Calc_R2(float dist_cm)
 {
     if (dist_cm <= 350)
         return 0.68 * dist_cm +
-               422 + R2_spd_offset;
+               426 + spd_offset;
     else if (dist_cm <= 450)
         return 5.333331518642126e-7 * pow(dist_cm, 4) +
                -0.0008799997108326352 * pow(dist_cm, 3) +
                0.5428664927603677 * pow(dist_cm, 2) +
                -147.70995393395424 * dist_cm +
-               15583.995539364472 + R2_spd_offset;
+               15587.995539364472 + spd_offset;
     else if (dist_cm <= 550)
         return -0.00007999999999364071 * pow(dist_cm, 3) +
                0.12011428570497173 * pow(dist_cm, 2) +
                -59.484285709564574 * dist_cm +
-               10460.028570601304 + R2_spd_offset;
+               10464.028570601304 + spd_offset;
     else if (dist_cm <= 650)
         return 5.333345618474539e-7 * pow(dist_cm, 4) +
                -0.0011893362825503573 * pow(dist_cm, 3) +
                0.9916693158447742 * pow(dist_cm, 2) +
                -365.85772466659546 * dist_cm +
-               51082.158915299995 + R2_spd_offset;
+               51086.158915299995 + spd_offset;
     else
         return 0.46 * dist_cm +
-               536.8333333333969 + R2_spd_offset;
+               540.8333333333969 + spd_offset;
 }
 
 void State(void *argument)
