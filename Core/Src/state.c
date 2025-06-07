@@ -23,7 +23,7 @@ struct
     } init;
     struct
     {
-        float curr_nball, curr_ball;
+        float curr;
     } lock;
     struct
     {
@@ -34,8 +34,7 @@ struct
     .init.curr_detect = 26,
     .init.OC_time = 0.5,
 
-    .lock.curr_nball = -6.5,
-    .lock.curr_ball = -3.25,
+    .lock.curr = -6.5,
 
     .shot.acc_curr = 40,
     .shot.spd = 800,
@@ -52,7 +51,10 @@ struct
     .basket_offset = 16.5,
     .R2_offset = 11};
 
-struct pos_t R1_pos_lidar, R1_pos_chassis, R2_pos, basket_pos = {.x = 14.05, .y = -4};
+struct pos_info R1_pos_lidar, R1_pos_chassis;
+
+struct pos_t R2_pos = {.x = 12.5, .y = -4},
+             basket_pos = {.x = 14.05, .y = -4};
 
 struct target_info basket_info,
     R2_info = {.dist_fltr.size = 4};
@@ -194,8 +196,7 @@ void State(void *argument)
                 break;
             }
 
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = state_W.ball ? VESC_param.lock.curr_ball
-                                                                        : VESC_param.lock.curr_nball;
+            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.lock.curr;
 
             // control
             {
