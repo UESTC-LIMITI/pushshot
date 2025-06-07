@@ -64,8 +64,7 @@ timer_t R2_yaw_time;
 float R2_yaw_prev = (YAW_MAX + YAW_MIN) / 2,
       R2_yaw_curr = (YAW_MAX + YAW_MIN) / 2;
 
-char basket_spd_offset = 0,
-     R2_spd_offset = 0;
+char spd_offset;
 
 MovAvgFltr_t yaw_fltr;
 

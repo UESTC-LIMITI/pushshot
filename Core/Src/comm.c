@@ -27,12 +27,6 @@ void Comm(void *argument)
             }
         }
 
-        unsigned char TxData[12];
-        *(float *)TxData = R2_info.dist_cm,
-                *(float *)&TxData[4] = basket_spd_offset,
-                *(float *)&TxData[8] = R2_spd_offset;
-        FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA2, TxData, 9);
-
         osDelay(20);
     }
 }
@@ -88,10 +82,9 @@ void FDCAN3_IT0_IRQHandler(void)
             }
             break;
         }
-        case 0xA3: // speed offset ++
+        case 0xA3: // modify speed offset
         {
-            state_W.aim_R2 ? (R2_spd_offset += *(float *)RxData)
-                           : (basket_spd_offset += *(float *)RxData);
+            spd_offset = *(float *)RxData;
             break;
         }
         case 0xA6: // enable gimbal
