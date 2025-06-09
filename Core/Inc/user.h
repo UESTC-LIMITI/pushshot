@@ -105,7 +105,7 @@ extern timer_t runtime, R2_yaw_time;
 
 extern float R2_yaw_prev, R2_yaw_curr;
 
-extern char spd_offset;
+extern char basket_spd_offset, R2_spd_offset;
 
 extern unsigned char RxData_D1S2[];
 
