@@ -59,7 +59,7 @@ void FDCAN2_IT0_IRQHandler(void)
         case (VESC_STATUS_5 << 8 | PUSHSHOT_ID):
         {
             // not under voltage
-            if ((VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.volt = (float)(RxData[4] << 8 | RxData[5]) / VESC_fVOLT) >= 23.4)
+            if ((VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.volt = (float)(RxData[4] << 8 | RxData[5]) / VESC_fVOLT) >= 24)
                 err_cnt.VESC = err.VESC = 0; // clear error flag
             break;
         }

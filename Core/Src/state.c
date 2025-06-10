@@ -9,7 +9,7 @@ struct STATE_R state_R = { // internal-change state
 struct STATE_W state_W; // external-change state
 timer_t runtime;
 
-#define nDATA_OUTPUT
+#define DATA_OUTPUT
 #ifdef DATA_OUTPUT
 #include <stdio.h>
 unsigned char VOFA[32];
@@ -31,15 +31,15 @@ struct
     } shot;
 } VESC_param = {
     .init.spd = -150,
-    .init.curr_detect = 26,
+    .init.curr_detect = 22.625,
     .init.OC_time = 0.5,
 
-    .lock.curr = -6.5,
+    .lock.curr = -5.65625,
 
     .shot.acc_curr = 40,
     .shot.spd = 800,
     .shot.spd_ctrl_err = 50,
-    .shot.brake_curr = 26,
+    .shot.brake_curr = 22.625,
     .shot.timeout = 0.5,
     .shot.brake_time = 0.25};
 
@@ -48,7 +48,7 @@ struct
     float pos_0, basket_offset, R2_offset;
 } HighTorque_param = {
     .pos_0 = (YAW_MAX + YAW_MIN) / 2,
-    .basket_offset = 10,
+    .basket_offset = 11,
     .R2_offset = 11};
 
 struct pos_info R1_pos_lidar, R1_pos_chassis;
@@ -78,7 +78,10 @@ float Fitting_Calc_AccCurr(float spd)
 
 float Fitting_Calc_Basket(float dist_cm)
 {
-    if (dist_cm <= 400)
+    if (dist_cm <= 300)
+        return 0.55 * dist_cm +
+               518 + basket_spd_offset;
+    else if (dist_cm <= 400)
         return 0.6 * dist_cm +
                503 + basket_spd_offset;
     else
@@ -222,7 +225,7 @@ void State(void *argument)
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot.spd; // target speed
 
             VESC_param.shot.acc_curr = Fitting_Calc_AccCurr(VESC_param.shot.spd);
-            LIMIT(VESC_param.shot.acc_curr, 120);                                                     // ESC current limit
+            LIMIT(VESC_param.shot.acc_curr, CUBEMARS_R100_KV90.curr_max);                             // ESC current limit
             VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = state_R.brake ? VESC_param.shot.brake_curr // current for brake
                                                                          : VESC_param.shot.acc_curr;  // current for acceleration
 
@@ -258,10 +261,10 @@ void State(void *argument)
         }
 
         state_R.shot_ready = state_W.ball &&
-                             (!err.yaw_lim && MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1) && // yaw ready
-                                  (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 2) && R2_info.dist_cm <= 750 && state_W.R2_ready // position ready for R2
-                                                  : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1.5) && basket_info.dist_cm <= 750) ||       // position ready for basket
-                              !state_R.fitting);                                                                                              // test
+                             (!err.yaw_lim && MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1) &&       // yaw ready
+                                  (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 2) && R2_info.dist_cm <= 750 /* && state_W.R2_ready */ // position ready for R2
+                                                  : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1.5) && basket_info.dist_cm <= 750) ||             // position ready for basket
+                              !state_R.fitting);                                                                                                    // test
 
         osDelay(1);
     }
