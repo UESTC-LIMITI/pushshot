@@ -121,15 +121,15 @@ void State(void *argument)
     GPIOG->ODR |= 0x400; // fan for lidar
 
     // default param
-    HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kp = 2;
-    HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kd = 1;
+    HighTorque[GIMBAL_arrID].ctrl.Kp = 2;
+    HighTorque[GIMBAL_arrID].ctrl.Kd = 1;
 
     while (1)
     {
 #ifdef DATA_OUTPUT
         if (state == SHOT && !state_R.brake)
         {
-            sprintf((char *)VOFA, "T:%.2f,%d\n", VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd, state_R.spd_ctrl ? 1000 : 0);
+            sprintf((char *)VOFA, "T:%.2f,%d\n", VESC[PUSHSHOT_arrID].fdbk.spd, state_R.spd_ctrl ? 1000 : 0);
             UART_SendArray(&UART7_info, VOFA, 16);
         }
 #endif
@@ -137,11 +137,11 @@ void State(void *argument)
         {
         case IDLE:
         {
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = 0;
+            VESC[PUSHSHOT_arrID].ctrl.curr = 0;
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_CURR, &CUBEMARS_R100_KV90);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_CURR, &MOTOR);
             }
             break;
         }
@@ -151,7 +151,7 @@ void State(void *argument)
             // stall protection
             static MovAvgFltr_t curr_fltr;
             static timer_t OC_time;
-            if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.curr) >= VESC_param.init.curr_detect)
+            if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.init.curr_detect)
             {
                 if (Timer_CheckTimeout(&OC_time, VESC_param.init.OC_time))
                 {
@@ -174,11 +174,11 @@ void State(void *argument)
                 break;
             }
 
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.init.spd;
+            VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.init.spd;
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_SPD, &CUBEMARS_R100_KV90);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_SPD, &MOTOR);
             }
             break;
         }
@@ -192,11 +192,11 @@ void State(void *argument)
                 break;
             }
 
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = VESC_param.lock.curr;
+            VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.lock.curr;
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_CURR, &CUBEMARS_R100_KV90);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_CURR, &MOTOR);
             }
             break;
         }
@@ -217,25 +217,28 @@ void State(void *argument)
                 }
             }
 
-            // use fitting data
-            if (state_R.fitting)
-                VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2(MovAvgFltr_GetData(&R2_info.dist_fltr))
-                                                     : Fitting_Calc_Basket(MovAvgFltr_GetData(&basket_info.dist_fltr));
-            LIMIT(VESC_param.shot.spd, CUBEMARS_R100_KV90.spd_max);            // speed limit
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.spd = VESC_param.shot.spd; // target speed
-
-            VESC_param.shot.acc_curr = Fitting_Calc_AccCurr(VESC_param.shot.spd);
-            LIMIT(VESC_param.shot.acc_curr, CUBEMARS_R100_KV90.curr_max);                             // ESC current limit
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].ctrl.curr = state_R.brake ? VESC_param.shot.brake_curr // current for brake
-                                                                         : VESC_param.shot.acc_curr;  // current for acceleration
-
             // switch control mode
-            if (VESC_param.shot.spd - VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd <= VESC_param.shot.spd_ctrl_err)
+            if (VESC_param.shot.spd - VESC[PUSHSHOT_arrID].fdbk.spd <= VESC_param.shot.spd_ctrl_err)
                 state_R.spd_ctrl = 1;
+
+            if (state_R.brake)
+                VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.brake_curr;
+            else if (!state_R.spd_ctrl)
+            {
+                if (state_R.fitting)
+                    VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2(MovAvgFltr_GetData(&R2_info.dist_fltr))
+                                                         : Fitting_Calc_Basket(MovAvgFltr_GetData(&basket_info.dist_fltr));
+                LIMIT(VESC_param.shot.spd, MOTOR.spd_max);
+                VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.shot.spd;
+
+                VESC_param.shot.acc_curr = Fitting_Calc_AccCurr(VESC_param.shot.spd);
+                LIMIT(VESC_param.shot.acc_curr, MOTOR.curr_max);
+                VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.acc_curr;
+            }
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, state_R.brake ? VESC_SET_CURR_BRAKE : (state_R.spd_ctrl ? VESC_SET_SPD : VESC_SET_CURR), &CUBEMARS_R100_KV90);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, state_R.brake ? VESC_SET_CURR_BRAKE : (state_R.spd_ctrl ? VESC_SET_SPD : VESC_SET_CURR), &MOTOR);
             }
             break;
         }
@@ -245,14 +248,14 @@ void State(void *argument)
         {
             // stay at middle
             if (!state_W.ball && state != SHOT) // no ball and not shooting
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0;
+                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0;
             // aim at basket
             else if (!state_W.aim_R2)
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.basket_offset + basket_info.yaw * Gimbal_GR;
+                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.basket_offset + basket_info.yaw * Gimbal_GR;
             // aim at R2
             else if (state_W.aim_R2)
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.R2_offset + (R2_yaw_prev + (R2_yaw_curr - R2_yaw_prev) * Timer_GetRatio(&R2_yaw_time, err.R2_pos ? 0.05 : 1 / 100.f)) * Gimbal_GR;
-            LIMIT_RANGE(HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
+                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.R2_offset + (R2_yaw_prev + (R2_yaw_curr - R2_yaw_prev) * Timer_GetRatio(&R2_yaw_time, err.R2_pos ? 0.05 : 1 / 100.f)) * Gimbal_GR;
+            LIMIT_RANGE(HighTorque[GIMBAL_arrID].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
         }
 
         // control
@@ -261,10 +264,11 @@ void State(void *argument)
         }
 
         state_R.shot_ready = state_W.ball &&
-                             (!err.yaw_lim && MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos, 1) &&       // yaw ready
+                             (MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_arrID].fdbk.pos, 1) &&                                           // yaw ready
                                   (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 2) && R2_info.dist_cm <= 750 /* && state_W.R2_ready */ // position ready for R2
-                                                  : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1.5) && basket_info.dist_cm <= 750) ||             // position ready for basket
-                              !state_R.fitting);                                                                                                    // test
+                                                  : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1.5) && basket_info.dist_cm <= 750) &&             // position ready for basket
+                                  !err.yaw_lim ||
+                              !state_R.fitting); // test
 
         osDelay(1);
     }

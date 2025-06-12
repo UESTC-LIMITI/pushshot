@@ -132,12 +132,12 @@ void FDCAN3_IT0_IRQHandler(void)
             // R1_pos_chassis.yaw = *(float *)&RxData[16];
 
             // gimbal feedforward associated with angular velocity of chassis
-            HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.spd = state_W.gimbal && state_W.ball ? -*(float *)&RxData[20] * Gimbal_GR *
-                                                                                                         // feedforward gain associated with available angle
-                                                                                                         (-*(float *)&RxData[20] >= 0 ? YAW_MAX - HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos
-                                                                                                                                      : HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos - YAW_MIN) /
-                                                                                                         (YAW_MAX - YAW_MIN)
-                                                                                                   : 0;
+            HighTorque[GIMBAL_arrID].ctrl.spd = state_W.gimbal && state_W.ball ? -*(float *)&RxData[20] * Gimbal_GR *
+                                                                                     // feedforward gain associated with available angle
+                                                                                     (-*(float *)&RxData[20] >= 0 ? YAW_MAX - HighTorque[GIMBAL_arrID].fdbk.pos
+                                                                                                                  : HighTorque[GIMBAL_arrID].fdbk.pos - YAW_MIN) /
+                                                                                     (YAW_MAX - YAW_MIN)
+                                                                               : 0;
 
             if (err.basket_info)
             {

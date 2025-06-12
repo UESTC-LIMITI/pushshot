@@ -24,11 +24,14 @@
 #define VESC_ID_OFFSET 1
 #include "VESC.h"
 #define PUSHSHOT_ID 1
+#define PUSHSHOT_arrID 0
+#define MOTOR CUBEMARS_R100_KV90
 
 #define HIGHTORQUE_NUM 1
 #define HIGHTORQUE_ID_OFFSET 1
 #include "HighTorque.h"
 #define GIMBAL_ID 1
+#define GIMBAL_arrID 0
 
 extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 

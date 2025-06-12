@@ -25,7 +25,7 @@ void Error(void *argument)
             R2_Pos_Process();
         }
 
-        err.yaw_lim = HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos == YAW_MAX || HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.pos == YAW_MIN;
+        err.yaw_lim = HighTorque[GIMBAL_arrID].ctrl.pos == YAW_MAX || HighTorque[GIMBAL_arrID].ctrl.pos == YAW_MIN;
 
         FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 1);
 

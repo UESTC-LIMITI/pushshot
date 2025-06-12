@@ -20,16 +20,16 @@ void FDCAN1_IT0_IRQHandler(void)
                 RxData[14] == (HIGHTORQUE_DATA_RE | HIGHTORQUE_DATA_TYPE_FLOAT | 1) &&
                 RxData[15] == HIGHTORQUE_REG_TEMP)
             {
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.pos = *(float *)&RxData[2] * 360;
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.spd = *(float *)&RxData[6] * 360;
-                HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.trq = *(float *)&RxData[10];
+                HighTorque[GIMBAL_arrID].fdbk.pos = *(float *)&RxData[2] * 360;
+                HighTorque[GIMBAL_arrID].fdbk.spd = *(float *)&RxData[6] * 360;
+                HighTorque[GIMBAL_arrID].fdbk.trq = *(float *)&RxData[10];
 
                 // not over heat
-                if ((HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.temp = *(float *)&RxData[16]) <= 55)
+                if ((HighTorque[GIMBAL_arrID].fdbk.temp = *(float *)&RxData[16]) <= 55)
                     err_cnt.HighTorque = err.HighTorque = 0; // clear error flag
                 // over heat
-                else if (HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].fdbk.temp >= 60)
-                    HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kd = HighTorque[GIMBAL_ID - HIGHTORQUE_ID_OFFSET].ctrl.Kp = 0;
+                else if (HighTorque[GIMBAL_arrID].fdbk.temp >= 60)
+                    HighTorque[GIMBAL_arrID].ctrl.Kd = HighTorque[GIMBAL_arrID].ctrl.Kp = 0;
             }
             break;
         }
@@ -52,14 +52,14 @@ void FDCAN2_IT0_IRQHandler(void)
         {
         case (VESC_STATUS_1 << 8 | PUSHSHOT_ID):
         {
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.spd = (float)(RxData[0] << 24 | RxData[1] << 16 | RxData[2] << 8 | RxData[3]) / CUBEMARS_R100_KV90.PP;
-            VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.curr = (float)(RxData[4] << 8 | RxData[5]) / VESC_fCURR_R;
+            VESC[PUSHSHOT_arrID].fdbk.spd = (float)(RxData[0] << 24 | RxData[1] << 16 | RxData[2] << 8 | RxData[3]) / CUBEMARS_R100_KV90.PP;
+            VESC[PUSHSHOT_arrID].fdbk.curr = (float)(RxData[4] << 8 | RxData[5]) / VESC_fCURR_R;
             break;
         }
         case (VESC_STATUS_5 << 8 | PUSHSHOT_ID):
         {
             // not under voltage
-            if ((VESC[PUSHSHOT_ID - VESC_ID_OFFSET].fdbk.volt = (float)(RxData[4] << 8 | RxData[5]) / VESC_fVOLT) >= 24)
+            if ((VESC[PUSHSHOT_arrID].fdbk.volt = (float)(RxData[4] << 8 | RxData[5]) / VESC_fVOLT) >= 24)
                 err_cnt.VESC = err.VESC = 0; // clear error flag
             break;
         }
