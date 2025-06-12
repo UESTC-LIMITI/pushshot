@@ -70,7 +70,9 @@ MovAvgFltr_t yaw_fltr;
 
 float Fitting_Calc_AccCurr(float spd)
 {
-    if (spd <= 700)
+    if (spd <= 600)
+        return 20;
+    else if (spd <= 700)
         return (spd - 400) * 0.1;
     else
         return (spd - 500) * 0.15;
@@ -80,13 +82,13 @@ float Fitting_Calc_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
         return 0.55 * dist_cm +
-               518 + basket_spd_offset;
+               510 + basket_spd_offset;
     else if (dist_cm <= 400)
         return 0.6 * dist_cm +
-               503 + basket_spd_offset;
+               495 + basket_spd_offset;
     else
         return 0.5 * dist_cm +
-               543 + basket_spd_offset;
+               535 + basket_spd_offset;
 }
 
 float Fitting_Calc_R2(float dist_cm)

@@ -71,7 +71,7 @@ void FDCAN3_IT0_IRQHandler(void)
             state_W.ball = 1;
             break;
         }
-        case 0x14: // manual initialization, for test only
+        case 0x14: // manual initialization
         {
             if (state == IDLE)
             {

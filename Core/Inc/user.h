@@ -119,7 +119,6 @@ void FDCAN1_Init(void);
 void FDCAN2_Init(void);
 void FDCAN3_Init(void);
 void TIM7_Init(void);
-void TIM16_Init(void);
 void UART5_Init(void);
 
 void R2_Pos_Process(void);

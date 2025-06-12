@@ -87,14 +87,6 @@ void TIM7_Init(void)
     TIM7->CR1 |= 1;
 }
 
-// RGB
-void TIM16_Init(void)
-{
-    TIM16->EGR |= 0x1;
-    TIM16->CCER |= 1;
-    TIM16->CR1 |= 1;
-}
-
 void UART5_Init(void)
 {
     UART5->CR1 |= 0x20;
