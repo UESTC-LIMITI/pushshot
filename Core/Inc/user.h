@@ -107,8 +107,6 @@ extern float R2_yaw_prev, R2_yaw_curr;
 
 extern char basket_spd_offset, R2_spd_offset;
 
-extern unsigned char RxData_D1S2[];
-
 #define Gimbal_GR (14.6875 * 1) // real gear ratio * gain
 
 #define YAW_MIN -(127 - 12)

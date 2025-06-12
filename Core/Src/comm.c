@@ -2,8 +2,17 @@
 
 #define CENTRE_OFFSET 0.069
 
-__attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[10] = {0xA5},
-                                                               RxData_D1S2[10];
+__attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[11] = {0xA5};
+
+unsigned char CheckSum(unsigned char *data)
+{
+    unsigned char temp = 0;
+    for (unsigned char cnt = 0; cnt < 10; ++cnt)
+    {
+        temp += data[cnt];
+    }
+    return temp;
+}
 
 void Comm(void *argument)
 {
@@ -12,17 +21,9 @@ void Comm(void *argument)
         // dual robot communication
         *(float *)&R1_Data[1] = R1_pos_lidar.x + 0.24 * cos(R1_pos_lidar.yaw / R2D),
                 *(float *)&R1_Data[5] = R1_pos_lidar.y + 0.24 * sin(R1_pos_lidar.yaw / R2D),
-                R1_Data[9] = state_W.aim_R2 && state_R.brake;
-        UART_SendArray(&UART5_info, R1_Data, 10);
-
-        // restart DMA
-        if (UART5->ISR & 0x8)
-        {
-            UART5->ICR |= 0x8;
-
-            DMA1_Stream2->NDTR = 10;
-            DMA1_Stream2->CR |= 1;
-        }
+                R1_Data[9] = state_W.aim_R2 && state_R.brake,
+                R1_Data[10] = CheckSum(R1_Data);
+        UART_SendArray(&UART5_info, R1_Data, 11);
 
         osDelay(20);
     }
@@ -160,20 +161,27 @@ void FDCAN3_IT0_IRQHandler(void)
 }
 
 // R2 info
-void DMA1_Stream2_IRQHandler(void)
+void UART5_IRQHandler(void)
 {
-    if (DMA1->LISR & 0x20 << 16)
-    {
-        DMA1->LIFCR |= 0x20 << 16;
+    static unsigned char RxData[11], cnt;
 
-        if (RxData_D1S2[0] == 0xAA) // data check
+    if (UART5->ISR & 0x20)
+    {
+        RxData[cnt++] = UART5->RDR;
+
+        if (RxData[0] != 0xAA ||
+            cnt == 11 && RxData[10] != CheckSum(RxData))
+            cnt = 0;
+        else if (cnt == 11)
         {
             err_cnt.R2_pos = err.R2_pos = 0; // clear error flag
 
-            R2_pos.x = *(float *)&RxData_D1S2[1] / 1000,
-            R2_pos.y = *(float *)&RxData_D1S2[5] / 1000;
+            cnt = 0;
 
-            switch (RxData_D1S2[9])
+            R2_pos.x = *(float *)&RxData[1] / 1000,
+            R2_pos.y = *(float *)&RxData[5] / 1000;
+
+            switch (RxData[9])
             {
             case 0:
             {
@@ -194,11 +202,11 @@ void DMA1_Stream2_IRQHandler(void)
 
             R2_Pos_Process();
         }
-        // disable DMA
-        else
-        {
-            DMA1_Stream2->CR &= ~1;
-        }
+    }
+    // error
+    else if (UART5->ISR & 0xA)
+    {
+        UART5->ICR |= 0xA;
     }
 }
 
