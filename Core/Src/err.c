@@ -17,13 +17,7 @@ void Error(void *argument)
         }
 
         if (err.R2_pos)
-        {
-            if (!state_W.R2_ready)
-                R2_pos.x = 12.5,
-                R2_pos.y = -4;
-
             R2_Pos_Process();
-        }
 
         err.yaw_lim = HighTorque[GIMBAL_arrID].ctrl.pos == YAW_MAX || HighTorque[GIMBAL_arrID].ctrl.pos == YAW_MIN;
 

@@ -226,7 +226,8 @@ void State(void *argument)
             else if (!state_R.spd_ctrl)
             {
                 if (state_R.fitting)
-                    VESC_param.shot.spd = state_W.aim_R2 ? Fitting_Calc_R2(MovAvgFltr_GetData(&R2_info.dist_fltr))
+                    VESC_param.shot.spd = state_W.aim_R2 ? state_W.R2_NetUp ? Fitting_Calc_R2_NetUp(MovAvgFltr_GetData(&R2_info.dist_fltr))
+                                                                            : Fitting_Calc_R2_NetDown(MovAvgFltr_GetData(&R2_info.dist_fltr))
                                                          : Fitting_Calc_Basket(MovAvgFltr_GetData(&basket_info.dist_fltr));
                 LIMIT(VESC_param.shot.spd, MOTOR.spd_max);
                 VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.shot.spd;
@@ -264,9 +265,9 @@ void State(void *argument)
         }
 
         state_R.shot_ready = state_W.ball &&
-                             (MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_arrID].fdbk.pos, 1) &&                                           // yaw ready
-                                  (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 2) && R2_info.dist_cm <= 750 /* && state_W.R2_ready */ // position ready for R2
-                                                  : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1.5) && basket_info.dist_cm <= 750) &&             // position ready for basket
+                             (MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_arrID].fdbk.pos, 1) &&                               // yaw ready
+                                  (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 2) && R2_info.dist_cm <= 750               // position ready for R2
+                                                  : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1.5) && basket_info.dist_cm <= 750) && // position ready for basket
                                   !err.yaw_lim ||
                               !state_R.fitting); // test
 

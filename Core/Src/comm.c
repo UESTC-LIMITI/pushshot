@@ -185,17 +185,18 @@ void UART5_IRQHandler(void)
             {
             case 0:
             {
-                state_W.R2_ready = 0;
+                state_W.R2_NetUp = 0;
+                break;
+            }
+            case 1:
+            {
+                state_W.R2_NetUp = 1;
                 break;
             }
             case 2:
             {
                 if (state_W.aim_R2 && state == LOCK && state_R.shot_ready)
                     state = SHOT;
-            }
-            case 1:
-            {
-                state_W.R2_ready = 1;
                 break;
             }
             }

@@ -60,7 +60,7 @@ struct STATE_W
     unsigned char ball : 1,
         gimbal : 1,
         aim_R2 : 1,
-        R2_ready : 1;
+        R2_NetUp : 1;
 };
 extern struct STATE_W state_W;
 
