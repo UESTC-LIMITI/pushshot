@@ -59,7 +59,7 @@ struct pos_t R2_pos = {.x = 12.5, .y = -4},
 struct target_info basket_info,
     R2_info = {.dist_fltr.size = 4};
 
-timer_t R2_yaw_time;
+timer_t R2_yaw_time, R2_yaw_intvl;
 
 float R2_yaw_prev = (YAW_MAX + YAW_MIN) / 2,
       R2_yaw_curr = (YAW_MAX + YAW_MIN) / 2;
@@ -257,7 +257,7 @@ void State(void *argument)
                 HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.basket_offset + basket_info.yaw * Gimbal_GR;
             // aim at R2
             else if (state_W.aim_R2)
-                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.R2_offset + (R2_yaw_prev + (R2_yaw_curr - R2_yaw_prev) * Timer_GetRatio(&R2_yaw_time, err.R2_pos ? 0.05 : 1 / 100.f)) * Gimbal_GR;
+                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.R2_offset + (R2_yaw_prev + (R2_yaw_curr - R2_yaw_prev) * Timer_GetRatio(&R2_yaw_time, R2_yaw_intvl.intvl)) * Gimbal_GR;
             LIMIT_RANGE(HighTorque[GIMBAL_arrID].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
         }
 

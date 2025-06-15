@@ -214,6 +214,7 @@ void UART5_IRQHandler(void)
 void R2_Pos_Process(void)
 {
     Timer_Clear(&R2_yaw_time);
+    Timer_GetIntvl(&R2_yaw_intvl);
 
     float dist_x = R2_pos.x - R1_pos_lidar.x,
           dist_y = R2_pos.y - R1_pos_lidar.y;

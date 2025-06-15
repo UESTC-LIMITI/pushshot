@@ -104,7 +104,7 @@ struct pos_t
 };
 extern struct pos_t R2_pos, basket_pos;
 
-extern timer_t runtime, R2_yaw_time;
+extern timer_t runtime, R2_yaw_time, R2_yaw_intvl;
 
 extern float R2_yaw_prev, R2_yaw_curr;
 

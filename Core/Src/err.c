@@ -3,17 +3,17 @@
 struct ERR err;
 struct ERR_CNT err_cnt;
 
-void Error(void *argument)
+void Err(void *argument)
 {
     while (1)
     {
         for (unsigned char cnt = 0; cnt < 5; cnt++)
         {
-            // max failure, 200ms
-            if (((unsigned char *)&err_cnt)[cnt] == 10)
+            // max failure time, 160~200ms
+            if (((unsigned char *)&err_cnt)[cnt] == 4)
                 *(unsigned char *)&err |= 1 << cnt;
             else
-                ((unsigned char *)&err_cnt)[cnt]++;
+                ++((unsigned char *)&err_cnt)[cnt];
         }
 
         if (err.R2_pos)
@@ -23,6 +23,6 @@ void Error(void *argument)
 
         FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 1);
 
-        osDelay(50);
+        osDelay(40);
     }
 }
