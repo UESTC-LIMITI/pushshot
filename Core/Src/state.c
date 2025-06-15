@@ -151,7 +151,7 @@ void State(void *argument)
         case INIT:
         {
             // stall protection
-            static MovAvgFltr_t curr_fltr;
+            static MovAvgFltr_t curr_fltr = {.size = 48};
             static timer_t OC_time;
             if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.init.curr_detect)
             {
