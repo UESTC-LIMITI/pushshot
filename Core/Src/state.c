@@ -19,7 +19,7 @@ struct
 {
     struct
     {
-        float spd, curr_detect, OC_time;
+        float spd, OC_curr, OC_time;
     } init;
     struct
     {
@@ -31,15 +31,15 @@ struct
     } shot;
 } VESC_param = {
     .init.spd = -150,
-    .init.curr_detect = 22.625,
+    .init.OC_curr = 22.625,
     .init.OC_time = 0.5,
 
     .lock.curr = -5.65625,
 
-    .shot.acc_curr = 40,
-    .shot.spd = 800,
+    .shot.acc_curr = 30.1,
+    .shot.spd = 0,
     .shot.spd_ctrl_err = 50,
-    .shot.brake_curr = 22.625,
+    .shot.brake_curr = 30.1,
     .shot.timeout = 0.5,
     .shot.brake_time = 0.25};
 
@@ -48,7 +48,7 @@ struct
     float pos_0, basket_offset, R2_offset;
 } HighTorque_param = {
     .pos_0 = (YAW_MAX + YAW_MIN) / 2,
-    .basket_offset = 11,
+    .basket_offset = 9,
     .R2_offset = 11};
 
 struct pos_info R1_pos_lidar, R1_pos_chassis;
@@ -82,13 +82,13 @@ float Fitting_Calc_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
         return 0.55 * dist_cm +
-               510 + basket_spd_offset;
+               512 + basket_spd_offset;
     else if (dist_cm <= 400)
         return 0.6 * dist_cm +
-               495 + basket_spd_offset;
+               497 + basket_spd_offset;
     else
         return 0.5 * dist_cm +
-               535 + basket_spd_offset;
+               537 + basket_spd_offset;
 }
 
 float Fitting_Calc_R2(float dist_cm)
@@ -153,7 +153,7 @@ void State(void *argument)
             // stall protection
             static MovAvgFltr_t curr_fltr = {.size = 48};
             static timer_t OC_time;
-            if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.init.curr_detect)
+            if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.init.OC_curr)
             {
                 if (Timer_CheckTimeout(&OC_time, VESC_param.init.OC_time))
                 {
@@ -219,10 +219,6 @@ void State(void *argument)
                 }
             }
 
-            // switch control mode
-            if (VESC_param.shot.spd - VESC[PUSHSHOT_arrID].fdbk.spd <= VESC_param.shot.spd_ctrl_err)
-                state_R.spd_ctrl = 1;
-
             if (state_R.brake)
                 VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.brake_curr;
             else if (!state_R.spd_ctrl)
@@ -237,6 +233,8 @@ void State(void *argument)
                 VESC_param.shot.acc_curr = Fitting_Calc_AccCurr(VESC_param.shot.spd);
                 LIMIT(VESC_param.shot.acc_curr, MOTOR.curr_max);
                 VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.acc_curr;
+
+                state_R.spd_ctrl = VESC_param.shot.spd - VESC[PUSHSHOT_arrID].fdbk.spd <= VESC_param.shot.spd_ctrl_err; // switch control mode
             }
 
             // control

@@ -144,7 +144,7 @@ void FDCAN3_IT0_IRQHandler(void)
                 float dist_x = basket_pos.x - R1_pos_lidar.x,
                       dist_y = basket_pos.y - R1_pos_lidar.y;
 
-                basket_info.dist_cm = sqrt(pow(dist_x, 2) + pow(dist_y, 2)) * 100,
+                basket_info.dist_cm = hypot(dist_x, dist_y) * 100,
                 basket_info.yaw = atan2(dist_y, dist_x) * R2D - R1_pos_lidar.yaw;
 
                 if (basket_info.yaw > 180)
@@ -181,25 +181,7 @@ void UART5_IRQHandler(void)
             R2_pos.x = *(float *)&RxData[1] / 1000,
             R2_pos.y = *(float *)&RxData[5] / 1000;
 
-            switch (RxData[9])
-            {
-            case 0:
-            {
-                state_W.R2_NetUp = 0;
-                break;
-            }
-            case 1:
-            {
-                state_W.R2_NetUp = 1;
-                break;
-            }
-            case 2:
-            {
-                if (state_W.aim_R2 && state == LOCK && state_R.shot_ready)
-                    state = SHOT;
-                break;
-            }
-            }
+            state_W.R2_NetUp = RxData[9];
 
             R2_Pos_Process();
         }
@@ -219,7 +201,7 @@ void R2_Pos_Process(void)
     float dist_x = R2_pos.x - R1_pos_lidar.x,
           dist_y = R2_pos.y - R1_pos_lidar.y;
 
-    R2_info.dist_cm = sqrt(pow(dist_x, 2) + pow(dist_y, 2)) * 100,
+    R2_info.dist_cm = hypot(dist_x, dist_y) * 100,
     R2_info.yaw = atan2(dist_y, dist_x) * R2D - R1_pos_lidar.yaw;
 
     if (R2_info.yaw > 180)
