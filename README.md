@@ -1,0 +1,12 @@
+# 文件结构
+- Core
+    - Inc
+        - [user.h](Core/Inc/user.h) 用户头文件
+    - Src
+        - [IRQHandler.c](Core/Src/IRQHandler.c) 中断
+        - [comm.c](Core/Src/comm.c) 通信
+        - [err.c](Core/Src/err.c) 错误码
+        - [init.c](Core/Src/init.c) 初始化
+        - [state.c](Core/Src/state.c) 状态机
+- [h723_to_zeng.pdf](h723_to_zeng.pdf) 原理图
+- [pushshot.ioc](pushshot.ioc) CubeMX文件
