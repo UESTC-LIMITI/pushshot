@@ -43,7 +43,8 @@ void FDCAN3_IT0_IRQHandler(void)
         {
         case 0xA: // shoot
         {
-            if (state == LOCK && state_R.shot_ready)
+            if (state == LOCK && state_W.ball &&
+                ((state_W.aim_R2 ? R2_info.dist_cm <= 800 : basket_info.dist_cm <= 750) || !state_R.fitting))
                 state = SHOT;
             break;
         }
@@ -61,7 +62,7 @@ void FDCAN3_IT0_IRQHandler(void)
         {
             if (state != SHOT)
             {
-                state_R.shot_ready = state_W.ball = 0;
+                state_W.ball = 0;
                 state = INIT;
             }
             break;
@@ -100,7 +101,7 @@ void FDCAN3_IT0_IRQHandler(void)
         {
             if (state != SHOT)
             {
-                state_R.shot_ready = state_W.ball = 0;
+                state_W.ball = 0;
                 state = IDLE;
             }
             break;

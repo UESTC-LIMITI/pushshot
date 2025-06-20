@@ -65,8 +65,6 @@ float R2_yaw_prev;
 
 char basket_spd_offset, R2_spd_offset;
 
-MovAvgFltr_t yaw_fltr;
-
 float Fitting_Calc_AccCurr(float spd)
 {
     if (spd <= 600)
@@ -158,7 +156,7 @@ void State(void *argument)
                 {
                     MovAvgFltr_Clear(&curr_fltr);
                     Timer_Clear(&OC_time);
-                    state_R.shot_ready = state_W.ball = 0;
+                    state_W.ball = 0;
                     state = IDLE;
                     break;
                 }
@@ -206,7 +204,7 @@ void State(void *argument)
             // timeout
             if (Timer_CheckTimeout(&runtime, VESC_param.shot.timeout))
             {
-                state_R.shot_ready = state_W.ball = state_R.spd_ctrl = 0;
+                state_W.ball = state_R.spd_ctrl = 0;
                 state_R.brake = 1;
 
                 if (runtime.intvl >= VESC_param.shot.timeout + VESC_param.shot.brake_time) // total duration
@@ -262,13 +260,6 @@ void State(void *argument)
         {
             HighTorque_SetMixParam_f(&hfdcan1, GIMBAL_ID);
         }
-
-        state_R.shot_ready = state_W.ball &&
-                             (MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_arrID].fdbk.pos, 2.5) &&                           // yaw ready
-                                  (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 1) && R2_info.dist_cm <= 750             // position ready for R2
-                                                  : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1) && basket_info.dist_cm <= 750) && // position ready for basket
-                                  !err.yaw_lim ||
-                              !state_R.fitting); // test
 
         osDelay(1);
     }

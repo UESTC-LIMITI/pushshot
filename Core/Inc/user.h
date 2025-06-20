@@ -48,8 +48,7 @@ extern enum STATE state;
 
 struct STATE_R
 {
-    unsigned char shot_ready : 1,
-        spd_ctrl : 1,
+    unsigned char spd_ctrl : 1,
         brake : 1,
         fitting : 1;
 };

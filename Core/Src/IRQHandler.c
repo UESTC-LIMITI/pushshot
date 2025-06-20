@@ -73,7 +73,7 @@ void EXTI1_IRQHandler(void)
     EXTI->PR1 |= 0x2;
     if (GPIOF->IDR & 0x2 && state == SHOT)
     {
-        state_R.shot_ready = state_W.ball = state_R.spd_ctrl = 0;
+        state_W.ball = state_R.spd_ctrl = 0;
         state_R.brake = 1;
     }
 }
