@@ -30,14 +30,13 @@ struct
         float acc_curr, spd, spd_ctrl_err, brake_curr, timeout, brake_time;
     } shot;
 } VESC_param = {
-    .init.spd = -150,
+    .init.spd = -200,
     .init.OC_curr = 22.625,
     .init.OC_time = 0.5,
 
     .lock.curr = -5.65625,
 
     .shot.acc_curr = 30.1,
-    .shot.spd = 0,
     .shot.spd_ctrl_err = 50,
     .shot.brake_curr = 30.1,
     .shot.timeout = 0.5,
@@ -51,7 +50,7 @@ struct
     .basket_offset = 9,
     .R2_offset = 11};
 
-struct pos_info R1_pos_lidar, R1_pos_chassis;
+struct pos_info R1_pos;
 
 struct pos_t R2_pos = {.x = 12.5, .y = -4},
              basket_pos = {.x = 14.05, .y = -4};
@@ -120,6 +119,7 @@ void State(void *argument)
     GPIOG->ODR |= 0x400; // fan for lidar
 
     // default param
+    HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0;
     HighTorque[GIMBAL_arrID].ctrl.Kp = 2;
     HighTorque[GIMBAL_arrID].ctrl.Kd = 1;
 
@@ -202,7 +202,8 @@ void State(void *argument)
         case SHOT:
         {
             // timeout
-            if (Timer_CheckTimeout(&runtime, VESC_param.shot.timeout))
+            if (Timer_CheckTimeout(&runtime, VESC_param.shot.timeout) || // timeout
+                GPIOF->IDR & 0x2)                                        // top photogate
             {
                 state_W.ball = state_R.spd_ctrl = 0;
                 state_R.brake = 1;
@@ -249,10 +250,12 @@ void State(void *argument)
                 HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0;
             // aim at basket
             else if (!state_W.aim_R2)
-                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.basket_offset + basket_info.yaw * Gimbal_GR;
+                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.basket_offset +
+                                                    basket_info.yaw * Gimbal_GR;
             // aim at R2
             else if (state_W.aim_R2)
-                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.R2_offset + (R2_yaw_prev + (R2_info.yaw - R2_yaw_prev) * Timer_GetRatio(&R2_yaw_time, R2_yaw_intvl.intvl)) * Gimbal_GR;
+                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.R2_offset +
+                                                    (R2_yaw_prev + (R2_info.yaw - R2_yaw_prev) * Timer_GetRatio(&R2_yaw_time, R2_yaw_intvl.intvl)) * Gimbal_GR;
             LIMIT_RANGE(HighTorque[GIMBAL_arrID].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
         }
 

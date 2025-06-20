@@ -19,8 +19,8 @@ void Comm(void *argument)
     while (1)
     {
         // dual robot communication
-        *(float *)&R1_Data[1] = R1_pos_lidar.x + 0.24 * cos(R1_pos_lidar.yaw / R2D),
-                *(float *)&R1_Data[5] = R1_pos_lidar.y + 0.24 * sin(R1_pos_lidar.yaw / R2D),
+        *(float *)&R1_Data[1] = R1_pos.x + 0.24 * cos(R1_pos.yaw / R2D),
+                *(float *)&R1_Data[5] = R1_pos.y + 0.24 * sin(R1_pos.yaw / R2D),
                 R1_Data[9] = state_W.aim_R2 && state_R.brake,
                 R1_Data[10] = CheckSum(R1_Data);
         UART_SendArray(&UART5_info, R1_Data, 11);
@@ -81,7 +81,7 @@ void FDCAN3_IT0_IRQHandler(void)
             }
             break;
         }
-        case 0xA3: // modify speed offset
+        case 0xA3: // speed offset
         {
             state_W.aim_R2 ? (R2_spd_offset = *(float *)RxData)
                            : (basket_spd_offset = *(float *)RxData);
@@ -108,26 +108,19 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0x105: // basket info from lidar
         {
-            err_cnt.basket_info = err.basket_info = 0; // clear error flag
+            err_cnt.basket_pos = err.basket_pos = 0; // clear error flag
 
             basket_pos.x = *(float *)RxData,
             basket_pos.y = *(float *)&RxData[4];
-
-            basket_info.dist_cm = MovAvgFltr(&basket_info.dist_fltr, *(float *)&RxData[8]) * 100,
-            basket_info.yaw = MovAvgFltr(&basket_info.yaw_fltr, -*(float *)&RxData[12]);
             break;
         }
         case 0x201: // position info from chassis
         {
-            err_cnt.pos = err.pos = 0; // clear error flag
+            err_cnt.R1_pos = err.R1_pos = 0; // clear error flag
 
-            R1_pos_lidar.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D),
-            R1_pos_lidar.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D),
-            R1_pos_lidar.yaw = *(float *)&RxData[16];
-
-            R1_pos_chassis.x = *(float *)&RxData[24] - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D),
-            R1_pos_chassis.y = *(float *)&RxData[28] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D);
-            // R1_pos_chassis.yaw = *(float *)&RxData[16];
+            R1_pos.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D),
+            R1_pos.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D),
+            R1_pos.yaw = *(float *)&RxData[16];
 
             // gimbal feedforward associated with angular velocity of chassis
             HighTorque[GIMBAL_arrID].ctrl.spd = state_W.gimbal && state_W.ball ? -*(float *)&RxData[20] * Gimbal_GR *
@@ -137,21 +130,19 @@ void FDCAN3_IT0_IRQHandler(void)
                                                                                      (YAW_MAX - YAW_MIN)
                                                                                : 0;
 
-            if (err.basket_info)
-            {
-                float dist_x = basket_pos.x - R1_pos_lidar.x,
-                      dist_y = basket_pos.y - R1_pos_lidar.y;
+            float dist_x = basket_pos.x - R1_pos.x,
+                  dist_y = basket_pos.y - R1_pos.y;
 
-                basket_info.dist_cm = MovAvgFltr(&basket_info.dist_fltr, hypot(dist_x, dist_y)) * 100,
-                basket_info.yaw = atan2(dist_y, dist_x) * R2D - R1_pos_lidar.yaw;
+            basket_info.dist_cm = MovAvgFltr(&basket_info.dist_fltr, hypot(dist_x, dist_y)) * 100,
+            basket_info.yaw = atan2(dist_y, dist_x) * R2D - R1_pos.yaw;
 
-                if (basket_info.yaw > 180)
-                    basket_info.yaw -= 360;
-                else if (basket_info.yaw < -180)
-                    basket_info.yaw += 360;
+            if (basket_info.yaw > 180)
+                basket_info.yaw -= 360;
+            else if (basket_info.yaw < -180)
+                basket_info.yaw += 360;
 
-                basket_info.yaw = MovAvgFltr(&basket_info.yaw_fltr, basket_info.yaw);
-            }
+            basket_info.yaw = MovAvgFltr(&basket_info.yaw_fltr, basket_info.yaw);
+
             break;
         }
         }
@@ -198,11 +189,11 @@ void R2_Pos_Process(void)
     Timer_Clear(&R2_yaw_time);
     Timer_GetIntvl(&R2_yaw_intvl);
 
-    float dist_x = R2_pos.x - R1_pos_lidar.x,
-          dist_y = R2_pos.y - R1_pos_lidar.y;
+    float dist_x = R2_pos.x - R1_pos.x,
+          dist_y = R2_pos.y - R1_pos.y;
 
     R2_info.dist_cm = MovAvgFltr(&R2_info.dist_fltr, hypot(dist_x, dist_y)) * 100,
-    R2_info.yaw = atan2(dist_y, dist_x) * R2D - R1_pos_lidar.yaw;
+    R2_info.yaw = atan2(dist_y, dist_x) * R2D - R1_pos.yaw;
 
     if (R2_info.yaw > 180)
         R2_info.yaw -= 360;

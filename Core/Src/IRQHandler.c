@@ -59,21 +59,10 @@ void FDCAN2_IT0_IRQHandler(void)
         case (VESC_STATUS_5 << 8 | PUSHSHOT_ID):
         {
             // not under voltage
-            if ((VESC[PUSHSHOT_arrID].fdbk.volt = (float)(RxData[4] << 8 | RxData[5]) / VESC_fVOLT) >= 24)
+            if ((VESC[PUSHSHOT_arrID].fdbk.volt = (float)(RxData[4] << 8 | RxData[5]) / VESC_fVOLT) >= 24.3)
                 err_cnt.VESC = err.VESC = 0; // clear error flag
             break;
         }
         }
-    }
-}
-
-// top photogate, trigger brake
-void EXTI1_IRQHandler(void)
-{
-    EXTI->PR1 |= 0x2;
-    if (GPIOF->IDR & 0x2 && state == SHOT)
-    {
-        state_W.ball = state_R.spd_ctrl = 0;
-        state_R.brake = 1;
     }
 }

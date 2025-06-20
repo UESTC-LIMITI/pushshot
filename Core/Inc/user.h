@@ -67,8 +67,8 @@ struct ERR
 {
     unsigned char VESC : 1,
         HighTorque : 1,
-        basket_info : 1,
-        pos : 1,
+        basket_pos : 1,
+        R1_pos : 1,
         R2_pos : 1,
         yaw_lim : 1;
 };
@@ -78,8 +78,8 @@ struct ERR_CNT
 {
     unsigned char VESC,
         HighTorque,
-        basket_info,
-        pos,
+        basket_pos,
+        R1_pos,
         R2_pos;
 };
 extern struct ERR_CNT err_cnt;
@@ -95,7 +95,7 @@ struct pos_info
 {
     float x, y, yaw;
 };
-extern struct pos_info R1_pos_lidar, R1_pos_chassis;
+extern struct pos_info R1_pos;
 
 struct pos_t
 {
@@ -111,8 +111,8 @@ extern char basket_spd_offset, R2_spd_offset;
 
 #define Gimbal_GR (14.6875 * 1) // real gear ratio * gain
 
-#define YAW_MIN -(127 - 12)
-#define YAW_MAX (133 - 12)
+#define YAW_MIN -127
+#define YAW_MAX 135
 
 void FDCAN1_Init(void);
 void FDCAN2_Init(void);
