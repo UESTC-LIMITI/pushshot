@@ -56,13 +56,12 @@ struct pos_info R1_pos_lidar, R1_pos_chassis;
 struct pos_t R2_pos = {.x = 12.5, .y = -4},
              basket_pos = {.x = 14.05, .y = -4};
 
-struct target_info basket_info,
-    R2_info = {.dist_fltr.size = 4};
+struct target_info basket_info = {.dist_fltr.size = 16, .yaw_fltr.size = 16},
+                   R2_info = {.dist_fltr.size = 4, .yaw_fltr.size = 4};
 
 timer_t R2_yaw_time, R2_yaw_intvl;
 
-float R2_yaw_prev = (YAW_MAX + YAW_MIN) / 2,
-      R2_yaw_curr = (YAW_MAX + YAW_MIN) / 2;
+float R2_yaw_prev;
 
 char basket_spd_offset, R2_spd_offset;
 
@@ -224,9 +223,9 @@ void State(void *argument)
             else if (!state_R.spd_ctrl)
             {
                 if (state_R.fitting)
-                    VESC_param.shot.spd = state_W.aim_R2 ? state_W.R2_NetUp ? Fitting_Calc_R2_NetUp(MovAvgFltr_GetData(&R2_info.dist_fltr))
-                                                                            : Fitting_Calc_R2_NetDown(MovAvgFltr_GetData(&R2_info.dist_fltr))
-                                                         : Fitting_Calc_Basket(MovAvgFltr_GetData(&basket_info.dist_fltr));
+                    VESC_param.shot.spd = state_W.aim_R2 ? state_W.R2_NetUp ? Fitting_Calc_R2_NetUp(R2_info.dist_cm)
+                                                                            : Fitting_Calc_R2_NetDown(R2_info.dist_cm)
+                                                         : Fitting_Calc_Basket(basket_info.dist_cm);
                 LIMIT(VESC_param.shot.spd, MOTOR.spd_max);
                 VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.shot.spd;
 
@@ -255,7 +254,7 @@ void State(void *argument)
                 HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.basket_offset + basket_info.yaw * Gimbal_GR;
             // aim at R2
             else if (state_W.aim_R2)
-                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.R2_offset + (R2_yaw_prev + (R2_yaw_curr - R2_yaw_prev) * Timer_GetRatio(&R2_yaw_time, R2_yaw_intvl.intvl)) * Gimbal_GR;
+                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.R2_offset + (R2_yaw_prev + (R2_info.yaw - R2_yaw_prev) * Timer_GetRatio(&R2_yaw_time, R2_yaw_intvl.intvl)) * Gimbal_GR;
             LIMIT_RANGE(HighTorque[GIMBAL_arrID].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
         }
 
@@ -265,9 +264,9 @@ void State(void *argument)
         }
 
         state_R.shot_ready = state_W.ball &&
-                             (MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_arrID].fdbk.pos, 1) &&                               // yaw ready
-                                  (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 2) && R2_info.dist_cm <= 750               // position ready for R2
-                                                  : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1.5) && basket_info.dist_cm <= 750) && // position ready for basket
+                             (MovAvgFltr_GetNewStatus(&yaw_fltr, HighTorque[GIMBAL_arrID].fdbk.pos, 2.5) &&                           // yaw ready
+                                  (state_W.aim_R2 ? MovAvgFltr_GetStatus(&R2_info.dist_fltr, 1) && R2_info.dist_cm <= 750             // position ready for R2
+                                                  : MovAvgFltr_GetStatus(&basket_info.dist_fltr, 1) && basket_info.dist_cm <= 750) && // position ready for basket
                                   !err.yaw_lim ||
                               !state_R.fitting); // test
 

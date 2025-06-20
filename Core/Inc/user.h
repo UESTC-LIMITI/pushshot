@@ -88,7 +88,7 @@ extern struct ERR_CNT err_cnt;
 struct target_info
 {
     float dist_cm, yaw;
-    MovAvgFltr_t dist_fltr;
+    MovAvgFltr_t dist_fltr, yaw_fltr;
 };
 extern struct target_info basket_info, R2_info;
 
@@ -106,7 +106,7 @@ extern struct pos_t R2_pos, basket_pos;
 
 extern timer_t runtime, R2_yaw_time, R2_yaw_intvl;
 
-extern float R2_yaw_prev, R2_yaw_curr;
+extern float R2_yaw_prev;
 
 extern char basket_spd_offset, R2_spd_offset;
 
