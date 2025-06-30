@@ -108,17 +108,17 @@ float Fitting_Calc_R2_NetDown(float dist_cm)
     //     return 0.56 * dist_cm +
     //            480 + R2_spd_offset;
 
-    return 77.4901 * pow(dist_cm, 0.3681) - 8 + R2_spd_offset;
+    return 77.4901 * pow(dist_cm, 0.3681) - 28 + R2_spd_offset;
 }
 
 float Fitting_Calc_R2_NetUp(float dist_cm)
 {
     if (dist_cm <= 450)
         return 0.64 * dist_cm +
-               464 + R2_spd_offset;
+               444 + R2_spd_offset;
     else
         return 0.44 * dist_cm +
-               554 + R2_spd_offset;
+               534 + R2_spd_offset;
 }
 
 void State(void *argument)

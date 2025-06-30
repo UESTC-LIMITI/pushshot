@@ -1,0 +1,57 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Program & Verify Flash (OpenOCD)",
+            "type": "shell",
+            "command": "openocd",
+            "args": [
+                "-f",
+                "interface/stlink.cfg",
+                "-f",
+                "target/stm32h7x.cfg",
+                // default reset method unavailable for STM32H7 series        
+                "-c",
+                "reset_config none",
+                "-c",
+                "init",
+                "-c",
+                "reset halt",
+                "-c",
+                "flash erase_sector 0 0 last", // erase command: flash erase_sector <bank> <first_sector> <last_sector>
+                "-c",
+                "program ./build/Debug/${workspaceFolderBasename}.elf verify reset exit",
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "Erase Flash (OpenOCD)",
+            "type": "shell",
+            "command": "openocd",
+            "args": [
+                "-f",
+                "interface/stlink.cfg",
+                "-f",
+                "target/stm32h7x.cfg",
+                // default reset method unavailable for STM32H7 series        
+                // "-c",
+                // "reset_config none",
+                "-c",
+                "init",
+                "-c",
+                "reset halt",
+                "-c",
+                "flash erase_sector 0 0 last", // erase command: flash erase_sector <bank> <first_sector> <last_sector>
+                "-c",
+                "shutdown",
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug (OpenOCD)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "runToEntryPoint": "main",
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            },
+            "executable": "./build/Debug/${workspaceFolderBasename}.elf", // ELF file path
+            "device": "STM32H723ZG", // MCU model
+            "interface": "swd", // debug interface
+            "configFiles": [
+                "/usr/share/openocd/scripts/interface/stlink.cfg", // STLink interface configuration
+                "/usr/share/openocd/scripts/target/stm32h7x.cfg" // MCU target configuration
+            ],
+            "svdFile": "STM32H723.svd", // optional: for peripheral check
+            "serverArgs": [
+                // default reset method unavailable for STM32H7 series        
+                "-c",
+                "reset_config none"
+            ],
+            // "showDevDebugOutput": "raw",
+            // "showDevDebugTimestamps": true
+        }
+    ]
+}
