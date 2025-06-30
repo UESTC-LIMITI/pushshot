@@ -7,7 +7,7 @@ enum STATE state;
 struct STATE_R state_R = { // internal-change state
     .fitting = 1};
 struct STATE_W state_W; // external-change state
-timer_t runtime;
+TIMsw_t runtime;
 
 #define DATA_OUTPUT
 #ifdef DATA_OUTPUT
@@ -58,7 +58,7 @@ struct pos_t R2_pos = {.x = 12.5, .y = -4},
 struct target_info basket_info = {.dist_fltr.size = 16, .yaw_fltr.size = 16},
                    R2_info = {.dist_fltr.size = 4, .yaw_fltr.size = 4};
 
-timer_t R2_yaw_time, R2_yaw_intvl;
+TIMsw_t R2_yaw_time, R2_yaw_intvl;
 
 float R2_yaw_prev;
 
@@ -149,26 +149,26 @@ void State(void *argument)
         {
             // stall protection
             static MovAvgFltr_t curr_fltr = {.size = 48};
-            static timer_t OC_time;
+            static TIMsw_t OC_time;
             if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.init.OC_curr)
             {
-                if (Timer_CheckTimeout(&OC_time, VESC_param.init.OC_time))
+                if (TIMsw_CheckTimeout(&OC_time, VESC_param.init.OC_time))
                 {
                     MovAvgFltr_Clear(&curr_fltr);
-                    Timer_Clear(&OC_time);
+                    TIMsw_Clear(&OC_time);
                     state_W.ball = 0;
                     state = IDLE;
                     break;
                 }
             }
             else
-                Timer_Clear(&OC_time);
+                TIMsw_Clear(&OC_time);
 
             // bottom photogate
             if (GPIOE->IDR & 0x4)
             {
                 MovAvgFltr_Clear(&curr_fltr);
-                Timer_Clear(&OC_time);
+                TIMsw_Clear(&OC_time);
                 state = LOCK;
                 break;
             }
@@ -202,7 +202,7 @@ void State(void *argument)
         case SHOT:
         {
             // timeout
-            if (Timer_CheckTimeout(&runtime, VESC_param.shot.timeout) || // timeout
+            if (TIMsw_CheckTimeout(&runtime, VESC_param.shot.timeout) || // timeout
                 GPIOF->IDR & 0x2)                                        // top photogate
             {
                 state_W.ball = state_R.spd_ctrl = 0;
@@ -210,7 +210,7 @@ void State(void *argument)
 
                 if (runtime.intvl >= VESC_param.shot.timeout + VESC_param.shot.brake_time) // total duration
                 {
-                    Timer_Clear(&runtime);
+                    TIMsw_Clear(&runtime);
                     state_R.brake = 0;
                     state = IDLE;
                     break;
@@ -255,7 +255,7 @@ void State(void *argument)
             // aim at R2
             else if (state_W.aim_R2)
                 HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.R2_offset +
-                                                    (R2_yaw_prev + (R2_info.yaw - R2_yaw_prev) * Timer_GetRatio(&R2_yaw_time, R2_yaw_intvl.intvl)) * Gimbal_GR;
+                                                    (R2_yaw_prev + (R2_info.yaw - R2_yaw_prev) * TIMsw_GetRatio(&R2_yaw_time, R2_yaw_intvl.intvl)) * Gimbal_GR;
             LIMIT_RANGE(HighTorque[GIMBAL_arrID].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
         }
 

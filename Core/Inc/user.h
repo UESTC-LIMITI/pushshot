@@ -5,7 +5,7 @@
 #include "cmsis_os.h"
 #include "arm_math.h"
 
-#define TIMER TIM7
+#define TIMsw TIM7
 #define FDCAN_SUPPORT
 
 // all the following file can be found at https://github.com/Chosen-Zeng/lib
@@ -103,7 +103,7 @@ struct pos_t
 };
 extern struct pos_t R2_pos, basket_pos;
 
-extern timer_t runtime, R2_yaw_time, R2_yaw_intvl;
+extern TIMsw_t runtime, R2_yaw_time, R2_yaw_intvl;
 
 extern float R2_yaw_prev;
 

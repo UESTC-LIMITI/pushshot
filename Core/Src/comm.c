@@ -186,8 +186,8 @@ void R2_Pos_Process(void)
 {
     R2_yaw_prev = R2_info.yaw;
 
-    Timer_Clear(&R2_yaw_time);
-    Timer_GetIntvl(&R2_yaw_intvl);
+    TIMsw_Clear(&R2_yaw_time);
+    TIMsw_GetIntvl(&R2_yaw_intvl);
 
     float dist_x = R2_pos.x - R1_pos.x,
           dist_y = R2_pos.y - R1_pos.y;
