@@ -97,7 +97,9 @@ void FDCAN3_IT0_IRQHandler(void)
             state_W.gimbal = 0;
             break;
         }
-        case 0xDF: // reset
+        // reset
+        case 0xDF:
+        case 0x21F:
         {
             if (state != SHOT)
             {
