@@ -83,8 +83,7 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0xA3: // speed offset
         {
-            state_W.aim_R2 ? (R2_spd_offset = *(float *)RxData)
-                           : (basket_spd_offset = *(float *)RxData);
+            spd_offset = *(float *)RxData;
             break;
         }
         case 0xA6: // enable gimbal

@@ -107,7 +107,7 @@ extern TIMsw_t runtime, R2_yaw_time, R2_yaw_intvl;
 
 extern float R2_yaw_prev;
 
-extern char basket_spd_offset, R2_spd_offset;
+extern char spd_offset;
 
 #define Gimbal_GR (14.6875 * 1) // real gear ratio * gain
 

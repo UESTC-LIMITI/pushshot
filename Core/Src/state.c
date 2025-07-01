@@ -47,7 +47,7 @@ struct
     float pos_0, basket_offset, R2_offset;
 } HighTorque_param = {
     .pos_0 = (YAW_MAX + YAW_MIN) / 2,
-    .basket_offset = 13,
+    .basket_offset = 15,
     .R2_offset = 9};
 
 struct pos_info R1_pos;
@@ -62,7 +62,7 @@ TIMsw_t R2_yaw_time, R2_yaw_intvl;
 
 float R2_yaw_prev;
 
-char basket_spd_offset, R2_spd_offset;
+char spd_offset;
 
 float Fitting_Calc_AccCurr(float spd)
 {
@@ -78,47 +78,42 @@ float Fitting_Calc_Basket(float dist_cm)
 {
     if (dist_cm <= 260)
         return 0.45 * dist_cm +
-               527 + basket_spd_offset;
+               527 + spd_offset;
     else if (dist_cm <= 360)
         return 0.6 * dist_cm +
-               488 + basket_spd_offset;
-    else if (dist_cm <= 460)
-        return 0.45 * dist_cm +
-               542 + basket_spd_offset;
+               488 + spd_offset;
     else
-        return 0.5 * dist_cm +
-               519 + basket_spd_offset;
+        return 0.45 * dist_cm +
+               542 + spd_offset;
 }
 
 float Fitting_Calc_R2_NetDown(float dist_cm)
 {
-    // if (dist_cm <= 250)
-    //     return 1.04 * dist_cm +
-    //            334.0 + R2_spd_offset;
-    // else if (dist_cm <= 350)
-    //     return 0.000032000000000032 * pow(dist_cm, 3) +
-    //            -0.030171428571520664 * pow(dist_cm, 2) +
-    //            10.162857142902794 * dist_cm +
-    //            -560.9142857204777 + R2_spd_offset;
-    // else if (dist_cm <= 450)
-    //     return -0.0006857142857145115 * pow(dist_cm, 2) +
-    //            1.148571428571472 * dist_cm +
-    //            353.9428571428761 + R2_spd_offset;
-    // else
-    //     return 0.56 * dist_cm +
-    //            480 + R2_spd_offset;
+    return -3.599108629466605e-13 * pow(dist_cm, 5) +
+           2.943988910292239e-9 * pow(dist_cm, 4) +
+           -0.000002883321724933552 * pow(dist_cm, 3) +
+           -0.00007963478594774642 * pow(dist_cm, 2) +
+           1.352410664607305 * dist_cm +
+           267.5709730689714 + spd_offset;
 
-    return 77.4901 * pow(dist_cm, 0.3681) - 28 + R2_spd_offset;
+    // return 77.4901 * pow(dist_cm, 0.3681) + spd_offset;
 }
 
 float Fitting_Calc_R2_NetUp(float dist_cm)
 {
-    if (dist_cm <= 450)
-        return 0.64 * dist_cm +
-               444 + R2_spd_offset;
-    else
-        return 0.44 * dist_cm +
-               534 + R2_spd_offset;
+    return -5.750327304436271e-11 * pow(dist_cm, 5) +
+           1.4975612224951695e-7 * pow(dist_cm, 4) +
+           -0.0001507099019644187 * pow(dist_cm, 3) +
+           0.07246624426352355 * pow(dist_cm, 2) +
+           -15.975384144345298 * dist_cm +
+           1895.5957471418012 + spd_offset;
+
+    // if (dist_cm <= 400)
+    //     return 0.64 * dist_cm +
+    //            494 + spd_offset;
+    // else
+    //     return 0.44 * dist_cm +
+    //            554 + spd_offset;
 }
 
 void State(void *argument)
