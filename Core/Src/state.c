@@ -47,7 +47,7 @@ struct
     float pos_0, basket_offset, R2_offset;
 } HighTorque_param = {
     .pos_0 = (YAW_MAX + YAW_MIN) / 2,
-    .basket_offset = 15,
+    .basket_offset = 16,
     .R2_offset = 9};
 
 struct pos_info R1_pos;
@@ -77,14 +77,17 @@ float Fitting_Calc_AccCurr(float spd)
 float Fitting_Calc_Basket(float dist_cm)
 {
     if (dist_cm <= 260)
-        return 0.45 * dist_cm +
-               527 + spd_offset;
+        return 0.5 * dist_cm +
+               513 + spd_offset;
     else if (dist_cm <= 360)
         return 0.6 * dist_cm +
-               488 + spd_offset;
+               487 + spd_offset;
+    else if (dist_cm <= 460)
+        return 0.5 * dist_cm +
+               523 + spd_offset;
     else
         return 0.45 * dist_cm +
-               542 + spd_offset;
+               546 + spd_offset;
 }
 
 float Fitting_Calc_R2_NetDown(float dist_cm)
@@ -118,7 +121,7 @@ float Fitting_Calc_R2_NetUp(float dist_cm)
 
 void State(void *argument)
 {
-    GPIOG->ODR |= 0x400; // fan for lidar
+    cyl3_GPIO_Port->ODR |= cyl3_Pin; // fan for lidar
 
     // default param
     HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0;
@@ -223,11 +226,11 @@ void State(void *argument)
                 VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.brake_curr;
             else if (!state_R.spd_ctrl)
             {
-                if (state_R.fitting)
-                    VESC_param.shot.spd = state_W.aim_R2 ? state_W.R2_NetUp ? Fitting_Calc_R2_NetUp(R2_info.dist_cm)
-                                                                            : Fitting_Calc_R2_NetDown(R2_info.dist_cm)
-                                                         : Fitting_Calc_Basket(basket_info.dist_cm);
-                LIMIT(VESC_param.shot.spd, MOTOR.spd_max);
+                if (state_R.fitting &&
+                    (VESC_param.shot.spd = state_W.aim_R2 ? state_W.R2_NetUp ? Fitting_Calc_R2_NetUp(R2_info.dist_cm)
+                                                                             : Fitting_Calc_R2_NetDown(R2_info.dist_cm)
+                                                          : Fitting_Calc_Basket(basket_info.dist_cm)) < 0)
+                    VESC_param.shot.spd = 0;
                 VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.shot.spd;
 
                 VESC_param.shot.acc_curr = Fitting_Calc_AccCurr(VESC_param.shot.spd);
