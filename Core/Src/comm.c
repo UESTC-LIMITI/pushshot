@@ -18,9 +18,11 @@ void Comm(void *argument)
 {
     while (1)
     {
+        float temp;
+
         // dual robot communication
-        *(float *)&R1_Data[1] = R1_pos.x + 0.24 * cos(R1_pos.yaw / R2D),
-                *(float *)&R1_Data[5] = R1_pos.y + 0.24 * sin(R1_pos.yaw / R2D),
+        *(float *)&R1_Data[1] = temp = R1_pos.x + 0.24 * cos(R1_pos.yaw / R2D),
+                *(float *)&R1_Data[5] = temp = R1_pos.y + 0.24 * sin(R1_pos.yaw / R2D),
                 R1_Data[9] = state_W.aim_R2 && state_R.brake,
                 R1_Data[10] = CheckSum(R1_Data);
         UART_SendArray(&UART5_info, R1_Data, 11);
