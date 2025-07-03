@@ -33,6 +33,21 @@
 #define GIMBAL_ID 1
 #define GIMBAL_arrID 0
 
+#define PG_BTM_PORT GPIOE
+#define PG_BTM_PIN GPIO_PIN_2
+#define PG_MID_PORT
+#define PG_MID_PIN
+#define PG_TOP_PORT
+#define PG_TOP_PIN
+#define PG_BREAK_PORT GPIOF
+#define PG_BREAK_PIN GPIO_PIN_1
+#define CYL1_PORT GPIOD
+#define CYL1_PIN GPIO_PIN_7
+#define CYL2_PORT GPIOG
+#define CYL2_PIN GPIO_PIN_9
+#define CYL3_PORT GPIOG
+#define CYL3_PIN GPIO_PIN_10
+
 extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 
 extern USART_info_t UART7_info, UART5_info;

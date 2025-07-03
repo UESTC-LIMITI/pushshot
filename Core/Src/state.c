@@ -19,24 +19,27 @@ struct
 {
     struct
     {
-        float spd, OC_curr, OC_time;
+        const float high_spd, high_spd_time, low_spd, decelerate_time, OC_curr, OC_time;
     } init;
     struct
     {
-        float curr;
+        const float curr;
     } lock;
     struct
     {
-        float acc_curr, spd, spd_ctrl_err, brake_curr, timeout, brake_time;
+        float acc_curr, spd;
+        const float spd_ctrl_err, brake_curr, timeout, brake_time;
     } shot;
 } VESC_param = {
-    .init.spd = -200,
-    .init.OC_curr = 22.625,
+    .init.high_spd = -250,
+    .init.high_spd_time = 0.375,
+    .init.low_spd = -100,
+    .init.decelerate_time = 0.25,
+    .init.OC_curr = 30.1,
     .init.OC_time = 0.5,
 
     .lock.curr = -5.65625,
 
-    .shot.acc_curr = 30.1,
     .shot.spd_ctrl_err = 50,
     .shot.brake_curr = 30.1,
     .shot.timeout = 0.5,
@@ -44,7 +47,7 @@ struct
 
 struct
 {
-    float pos0, basket_offset, R2_offset;
+    const float pos0, basket_offset, R2_offset;
 } HighTorque_param = {
     .pos0 = (YAW_MAX + YAW_MIN) / 2,
     .basket_offset = 18,
@@ -77,11 +80,11 @@ float Fitting_Calc_AccCurr(float spd)
 float Fitting_Calc_Basket(float dist_cm)
 {
     if (dist_cm <= 260)
-        return 0.5 * dist_cm +
-               513 + spd_offset;
+        return 0.55 * dist_cm +
+               510 + spd_offset;
     else if (dist_cm <= 360)
-        return 0.6 * dist_cm +
-               487 + spd_offset;
+        return 0.5 * dist_cm +
+               523 + spd_offset;
     else if (dist_cm <= 460)
         return 0.5 * dist_cm +
                523 + spd_offset;
@@ -121,7 +124,7 @@ float Fitting_Calc_R2_NetUp(float dist_cm)
 
 void State(void *argument)
 {
-    cyl3_GPIO_Port->ODR |= cyl3_Pin; // fan for lidar
+    CYL3_PORT->ODR |= CYL3_PIN; // fan for lidar
 
     // default param
     HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0;
@@ -152,15 +155,17 @@ void State(void *argument)
         // spin to bottom
         case INIT:
         {
-            // stall protection
             static MovAvgFltr_t curr_fltr = {.size = 48};
-            static TIMsw_t OC_time;
+            static TIMsw_t OC_time, spd_time;
+
+            // stall protection
             if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.init.OC_curr)
             {
                 if (TIMsw_CheckTimeout(&OC_time, VESC_param.init.OC_time))
                 {
                     MovAvgFltr_Clear(&curr_fltr);
                     TIMsw_Clear(&OC_time);
+                    TIMsw_Clear(&spd_time);
                     state_W.ball = 0;
                     state = IDLE;
                     break;
@@ -170,15 +175,26 @@ void State(void *argument)
                 TIMsw_Clear(&OC_time);
 
             // bottom photogate
-            if (GPIOE->IDR & 0x4)
+            if (PG_BTM_PORT->IDR & PG_BTM_PIN)
             {
                 MovAvgFltr_Clear(&curr_fltr);
                 TIMsw_Clear(&OC_time);
+                TIMsw_Clear(&spd_time);
                 state = LOCK;
                 break;
             }
-
-            VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.init.spd;
+            // low speed
+            else if (TIMsw_CheckTimeout(&spd_time, VESC_param.init.high_spd_time))
+            {
+                VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.init.high_spd + (VESC_param.init.low_spd - VESC_param.init.high_spd) *
+                                                                               (spd_time.intvl - VESC_param.init.high_spd_time < VESC_param.init.decelerate_time ? (spd_time.intvl - VESC_param.init.high_spd_time) / VESC_param.init.decelerate_time
+                                                                                                                                                                 : 1);
+            }
+            // high speed
+            else
+            {
+                VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.init.high_spd;
+            }
 
             // control
             {
@@ -190,7 +206,7 @@ void State(void *argument)
         case LOCK:
         {
             // ball plate go up itself
-            if (state_W.ball && !(GPIOE->IDR & 0x4))
+            if (state_W.ball && !(PG_BTM_PORT->IDR & PG_BTM_PIN))
             {
                 state = INIT;
                 break;
@@ -208,7 +224,7 @@ void State(void *argument)
         {
             // timeout
             if (TIMsw_CheckTimeout(&runtime, VESC_param.shot.timeout) || // timeout
-                GPIOF->IDR & 0x2)                                        // top photogate
+                PG_BREAK_PORT->IDR & PG_BREAK_PIN)                       // top photogate
             {
                 state_W.ball = state_R.spd_ctrl = 0;
                 state_R.brake = 1;

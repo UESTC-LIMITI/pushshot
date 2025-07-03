@@ -52,14 +52,15 @@ void FDCAN2_IT0_IRQHandler(void)
         {
         case (VESC_STATUS_1 << 8 | PUSHSHOT_ID):
         {
-            VESC[PUSHSHOT_arrID].fdbk.spd = (float)(RxData[0] << 24 | RxData[1] << 16 | RxData[2] << 8 | RxData[3]) / MOTOR.PP;
-            VESC[PUSHSHOT_arrID].fdbk.curr = (float)(RxData[4] << 8 | RxData[5]) / VESC_fCURR_R;
+            VESC[PUSHSHOT_arrID].fdbk.spd = (float)(int)(RxData[0] << 24 | RxData[1] << 16 | RxData[2] << 8 | RxData[3]) / MOTOR.PP;
+            VESC[PUSHSHOT_arrID].fdbk.curr = (float)(short)(RxData[4] << 8 | RxData[5]) / VESC_fCURR_R;
+            VESC[PUSHSHOT_arrID].fdbk.dutycycle = (float)(short)(RxData[6] << 8 | RxData[7]) / VESC_fPCT_R;
             break;
         }
         case (VESC_STATUS_5 << 8 | PUSHSHOT_ID):
         {
             // not under voltage
-            if ((VESC[PUSHSHOT_arrID].fdbk.volt = (float)(RxData[4] << 8 | RxData[5]) / VESC_fVOLT) >= 24.3)
+            if ((VESC[PUSHSHOT_arrID].fdbk.volt = (float)(short)(RxData[4] << 8 | RxData[5]) / VESC_fVOLT) >= 24.3)
                 err_cnt.VESC = err.VESC = 0; // clear error flag
             break;
         }
