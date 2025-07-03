@@ -44,16 +44,16 @@ struct
 
 struct
 {
-    float pos_0, basket_offset, R2_offset;
+    float pos0, basket_offset, R2_offset;
 } HighTorque_param = {
-    .pos_0 = (YAW_MAX + YAW_MIN) / 2,
-    .basket_offset = 16,
+    .pos0 = (YAW_MAX + YAW_MIN) / 2,
+    .basket_offset = 18,
     .R2_offset = 9};
 
 struct pos_info R1_pos;
 
 struct pos_t R2_pos = {.x = 12.5, .y = -4},
-             basket_pos = {.x = 14.05, .y = -4};
+             basket_pos = {.x = 14, .y = -4};
 
 struct target_info basket_info = {.dist_fltr.size = 16, .yaw_fltr.size = 16},
                    R2_info = {.dist_fltr.size = 4, .yaw_fltr.size = 4};
@@ -124,7 +124,7 @@ void State(void *argument)
     cyl3_GPIO_Port->ODR |= cyl3_Pin; // fan for lidar
 
     // default param
-    HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0;
+    HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0;
     HighTorque[GIMBAL_arrID].ctrl.Kp = 2;
     HighTorque[GIMBAL_arrID].ctrl.Kd = 1;
 
@@ -250,17 +250,14 @@ void State(void *argument)
 
         if (state_W.gimbal) // gimbal enabled
         {
-            // stay at middle
-            if (!state_W.ball && state != SHOT) // no ball and not shooting
-                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0;
-            // aim at basket
-            else if (!state_W.aim_R2)
-                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.basket_offset +
-                                                    basket_info.yaw * Gimbal_GR;
             // aim at R2
-            else if (state_W.aim_R2)
-                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos_0 + HighTorque_param.R2_offset +
+            if (state_W.aim_R2 && R2_info.dist_cm <= 900)
+                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0 + HighTorque_param.R2_offset +
                                                     (R2_yaw_prev + (R2_info.yaw - R2_yaw_prev) * TIMsw_GetRatio(&R2_yaw_time, R2_yaw_intvl.intvl)) * Gimbal_GR;
+            // aim at basket
+            else if (!state_W.aim_R2 && basket_info.dist_cm <= 900)
+                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0 + HighTorque_param.basket_offset +
+                                                    basket_info.yaw * Gimbal_GR;
             LIMIT_RANGE(HighTorque[GIMBAL_arrID].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
         }
 

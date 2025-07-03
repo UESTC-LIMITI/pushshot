@@ -9,12 +9,15 @@ void Err(void *argument)
     {
         for (unsigned char cnt = 0; cnt < 5; cnt++)
         {
-            // max failure time, 160~200ms
+            // maximum communication failure time, 160~200ms
             if (((unsigned char *)&err_cnt)[cnt] == 4)
                 *(unsigned char *)&err |= 1 << cnt;
             else
                 ++((unsigned char *)&err_cnt)[cnt];
         }
+
+        if (err.R1_pos)
+            HighTorque[GIMBAL_arrID].ctrl.spd = 0;
 
         if (err.R2_pos)
             R2_Pos_Process();

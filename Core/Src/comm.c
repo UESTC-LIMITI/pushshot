@@ -52,12 +52,14 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0xB: // switch target to basket
         {
-            state_W.aim_R2 = 0;
+            if (state != SHOT)
+                state_W.aim_R2 = 0;
             break;
         }
         case 0xC: // switch target to R2
         {
-            state_W.aim_R2 = 1;
+            if (state != SHOT)
+                state_W.aim_R2 = 1;
             break;
         }
         case 0x12: // dribble start
