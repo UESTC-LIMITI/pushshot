@@ -33,14 +33,11 @@
 #define GIMBAL_ID 1
 #define GIMBAL_arrID 0
 
-#define PG_BTM_PORT GPIOE
-#define PG_BTM_PIN GPIO_PIN_2
-#define PG_MID_PORT
-#define PG_MID_PIN
-#define PG_TOP_PORT
-#define PG_TOP_PIN
-#define PG_BREAK_PORT GPIOF
-#define PG_BREAK_PIN GPIO_PIN_1
+#define PG_BTM (GPIOE->IDR & GPIO_PIN_2)
+// #define PG_MID (GPIO->IDR & GPIO_PIN)
+// #define PG_TOP (GPIO->IDR & GPIO_PIN)
+#define PG_BREAK (GPIOF->IDR & GPIO_PIN_1)
+
 #define CYL1_PORT GPIOD
 #define CYL1_PIN GPIO_PIN_7
 #define CYL2_PORT GPIOG
@@ -50,12 +47,12 @@
 
 extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 
-extern USART_info_t UART7_info, UART5_info;
-
 enum STATE
 {
     IDLE,
-    INIT,
+    MID,
+    INIT_SLOW,
+    INIT_FAST,
     LOCK,
     SHOT
 };
@@ -78,6 +75,23 @@ struct STATE_W
 };
 extern struct STATE_W state_W;
 
+struct pos_info
+{
+    float x, y, yaw;
+};
+
+struct pos_t
+{
+    float x, y;
+};
+
+struct target_info
+{
+    float dist_cm, yaw;
+    MovAvgFltr_t dist_fltr, yaw_fltr;
+};
+extern struct target_info basket_info, R2_info;
+
 struct ERR
 {
     unsigned char VESC : 1,
@@ -99,26 +113,7 @@ struct ERR_CNT
 };
 extern struct ERR_CNT err_cnt;
 
-struct target_info
-{
-    float dist_cm, yaw;
-    MovAvgFltr_t dist_fltr, yaw_fltr;
-};
-extern struct target_info basket_info, R2_info;
-
-struct pos_info
-{
-    float x, y, yaw;
-};
-extern struct pos_info R1_pos;
-
-struct pos_t
-{
-    float x, y;
-};
-extern struct pos_t R2_pos, basket_pos;
-
-extern TIMsw_t runtime, R2_yaw_time, R2_yaw_intvl;
+extern TIMsw_t R2_yaw_time, R2_msg_intvl;
 
 extern float R2_yaw_prev;
 

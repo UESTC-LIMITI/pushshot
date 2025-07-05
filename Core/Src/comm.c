@@ -1,6 +1,13 @@
-#include "user.h"
+#include "usr.h"
 
 #define CENTRE_OFFSET 0.069
+
+USART_info_t UART5_info = {.USART_handle = UART5, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream1, .DMA_ID = 1}; // dual robot communication Tx
+
+struct pos_info R1_pos;
+
+struct pos_t R2_pos = {.x = 12.5, .y = -4},
+             basket_pos = {.x = 14, .y = -4};
 
 __attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[11] = {0xA5};
 
@@ -46,7 +53,8 @@ void FDCAN3_IT0_IRQHandler(void)
         case 0xA: // shoot
         {
             if (state == LOCK && state_W.ball &&
-                ((state_W.aim_R2 ? R2_info.dist_cm <= 800 : basket_info.dist_cm <= 750) || !state_R.fitting))
+                ((state_W.aim_R2 ? R2_info.dist_cm <= 800 : basket_info.dist_cm <= 750) ||
+                 !state_R.fitting))
                 state = SHOT;
             break;
         }
@@ -64,24 +72,24 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0xE: // dribble end
         {
-            if (state != SHOT)
-            {
-                state_W.ball = 0;
-                state = INIT;
-            }
+            if (state == IDLE)
+                state = INIT_FAST;
+            else if (state == MID)
+                state = INIT_SLOW;
             break;
         }
         case 0xF: // pass ball
         {
-            state_W.ball = 1;
+            if (PG_BTM)
+                state_W.ball = 1;
             break;
         }
         case 0x14: // manual initialization
         {
-            if (state == IDLE)
+            if (state != SHOT)
             {
                 state_W.ball = 1;
-                state = INIT;
+                state = INIT_SLOW;
             }
             break;
         }
@@ -192,7 +200,7 @@ void R2_Pos_Process(void)
     R2_yaw_prev = R2_info.yaw;
 
     TIMsw_Clear(&R2_yaw_time);
-    TIMsw_GetIntvl(&R2_yaw_intvl);
+    TIMsw_GetIntvl(&R2_msg_intvl);
 
     float dist_x = R2_pos.x - R1_pos.x,
           dist_y = R2_pos.y - R1_pos.y;

@@ -1,13 +1,22 @@
-#include "user.h"
+#include "usr.h"
 
-USART_info_t UART7_info = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream0, .DMA_ID = 0}, // USB to TTL
-    UART5_info = {.USART_handle = UART5, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream1, .DMA_ID = 1};          // dual robot communication Tx
+USART_info_t UART7_info = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream0, .DMA_ID = 0}; // USB to TTL
 
-enum STATE state;
+enum STATE state, state_last;
 struct STATE_R state_R = { // internal-change state
     .fitting = 1};
 struct STATE_W state_W; // external-change state
-TIMsw_t runtime;
+
+struct target_info basket_info = {.dist_fltr.size = 16, .yaw_fltr.size = 16},
+                   R2_info = {.dist_fltr.size = 4, .yaw_fltr.size = 4};
+
+TIMsw_t R2_yaw_time, R2_msg_intvl, OC_time, runtime;
+
+MovAvgFltr_t curr_fltr = {.size = 48};
+
+float R2_yaw_prev;
+
+char spd_offset;
 
 #define DATA_OUTPUT
 #ifdef DATA_OUTPUT
@@ -17,9 +26,14 @@ unsigned char VOFA[32];
 
 struct
 {
+    const float high_spd, low_spd, OC_curr, OC_time;
     struct
     {
-        const float high_spd, high_spd_time, low_spd, decelerate_time, OC_curr, OC_time;
+        const float time;
+    } mid;
+    struct
+    {
+        const float high_spd_time, decelerate_time;
     } init;
     struct
     {
@@ -31,12 +45,15 @@ struct
         const float spd_ctrl_err, brake_curr, timeout, brake_time;
     } shot;
 } VESC_param = {
-    .init.high_spd = -250,
+    .high_spd = -300,
+    .low_spd = -150,
+    .OC_curr = 30.1,
+    .OC_time = 0.5,
+
+    .mid.time = 1,
+
     .init.high_spd_time = 0.375,
-    .init.low_spd = -100,
     .init.decelerate_time = 0.25,
-    .init.OC_curr = 30.1,
-    .init.OC_time = 0.5,
 
     .lock.curr = -5.65625,
 
@@ -50,22 +67,8 @@ struct
     const float pos0, basket_offset, R2_offset;
 } HighTorque_param = {
     .pos0 = (YAW_MAX + YAW_MIN) / 2,
-    .basket_offset = 18,
+    .basket_offset = 14,
     .R2_offset = 9};
-
-struct pos_info R1_pos;
-
-struct pos_t R2_pos = {.x = 12.5, .y = -4},
-             basket_pos = {.x = 14, .y = -4};
-
-struct target_info basket_info = {.dist_fltr.size = 16, .yaw_fltr.size = 16},
-                   R2_info = {.dist_fltr.size = 4, .yaw_fltr.size = 4};
-
-TIMsw_t R2_yaw_time, R2_yaw_intvl;
-
-float R2_yaw_prev;
-
-char spd_offset;
 
 float Fitting_Calc_AccCurr(float spd)
 {
@@ -144,6 +147,12 @@ void State(void *argument)
         {
         case IDLE:
         {
+            // state initialization
+            if (state_last != IDLE)
+            {
+                state_last = IDLE;
+            }
+
             VESC[PUSHSHOT_arrID].ctrl.curr = 0;
 
             // control
@@ -152,21 +161,71 @@ void State(void *argument)
             }
             break;
         }
-        // spin to bottom
-        case INIT:
+        // stay at middle
+        case MID:
         {
-            static MovAvgFltr_t curr_fltr = {.size = 48};
-            static TIMsw_t OC_time, spd_time;
+            static bool revert;
+
+            // state initialization
+            if (state_last != MID)
+            {
+                MovAvgFltr_Clear(&curr_fltr);
+                TIMsw_Clear(&OC_time);
+                TIMsw_Clear(&runtime);
+                revert = false;
+                state_last = MID;
+            }
 
             // stall protection
-            if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.init.OC_curr)
+            if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.OC_curr)
             {
-                if (TIMsw_CheckTimeout(&OC_time, VESC_param.init.OC_time))
+                if (TIMsw_CheckTimeout(&OC_time, VESC_param.OC_time))
                 {
-                    MovAvgFltr_Clear(&curr_fltr);
-                    TIMsw_Clear(&OC_time);
-                    TIMsw_Clear(&spd_time);
-                    state_W.ball = 0;
+                    state = IDLE;
+                    break;
+                }
+            }
+            else
+                TIMsw_Clear(&OC_time);
+
+            if (TIMsw_CheckTimeout(&runtime, VESC_param.mid.time))
+            {
+                state = LOCK;
+                break;
+            }
+
+            if (PG_BTM)
+            {
+                TIMsw_Clear(&runtime);
+                revert = true;
+            }
+
+            VESC[PUSHSHOT_arrID].ctrl.spd = revert ? -VESC_param.low_spd
+                                                   : VESC_param.low_spd;
+
+            // control
+            {
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_SPD, &MOTOR);
+            }
+            break;
+        }
+        // spin to bottom fast
+        case INIT_FAST:
+        {
+            // state initialization
+            if (state_last != INIT_FAST)
+            {
+                MovAvgFltr_Clear(&curr_fltr);
+                TIMsw_Clear(&OC_time);
+                TIMsw_Clear(&runtime);
+                state_last = INIT_FAST;
+            }
+
+            // stall protection
+            if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.OC_curr)
+            {
+                if (TIMsw_CheckTimeout(&OC_time, VESC_param.OC_time))
+                {
                     state = IDLE;
                     break;
                 }
@@ -175,26 +234,62 @@ void State(void *argument)
                 TIMsw_Clear(&OC_time);
 
             // bottom photogate
-            if (PG_BTM_PORT->IDR & PG_BTM_PIN)
+            if (PG_BTM)
             {
-                MovAvgFltr_Clear(&curr_fltr);
-                TIMsw_Clear(&OC_time);
-                TIMsw_Clear(&spd_time);
                 state = LOCK;
                 break;
             }
-            // low speed
-            else if (TIMsw_CheckTimeout(&spd_time, VESC_param.init.high_spd_time))
+
+            // low speed initialization
+            if (TIMsw_CheckTimeout(&runtime, VESC_param.init.high_spd_time))
             {
-                VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.init.high_spd + (VESC_param.init.low_spd - VESC_param.init.high_spd) *
-                                                                               (spd_time.intvl - VESC_param.init.high_spd_time < VESC_param.init.decelerate_time ? (spd_time.intvl - VESC_param.init.high_spd_time) / VESC_param.init.decelerate_time
-                                                                                                                                                                 : 1);
+                VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.high_spd + (VESC_param.low_spd - VESC_param.high_spd) *
+                                                                          (runtime.intvl - VESC_param.init.high_spd_time < VESC_param.init.decelerate_time ? (runtime.intvl - VESC_param.init.high_spd_time) / VESC_param.init.decelerate_time
+                                                                                                                                                           : 1);
             }
-            // high speed
+            // high speed initialization
             else
             {
-                VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.init.high_spd;
+                VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.high_spd;
             }
+
+            // control
+            {
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_SPD, &MOTOR);
+            }
+            break;
+        }
+        // spin to bottom slowly
+        case INIT_SLOW:
+        {
+            // state initialization
+            if (state_last != INIT_SLOW)
+            {
+                MovAvgFltr_Clear(&curr_fltr);
+                TIMsw_Clear(&OC_time);
+                state_last = INIT_SLOW;
+            }
+
+            // stall protection
+            if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.OC_curr)
+            {
+                if (TIMsw_CheckTimeout(&OC_time, VESC_param.OC_time))
+                {
+                    state = IDLE;
+                    break;
+                }
+            }
+            else
+                TIMsw_Clear(&OC_time);
+
+            // bottom photogate
+            if (PG_BTM)
+            {
+                state = LOCK;
+                break;
+            }
+
+            VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.low_spd;
 
             // control
             {
@@ -205,10 +300,16 @@ void State(void *argument)
         // stay at position
         case LOCK:
         {
-            // ball plate go up itself
-            if (state_W.ball && !(PG_BTM_PORT->IDR & PG_BTM_PIN))
+            // state initialization
+            if (state_last != LOCK)
             {
-                state = INIT;
+                state_last = LOCK;
+            }
+
+            // ball plate go up
+            if (state_W.ball && !PG_BTM)
+            {
+                state = INIT_SLOW;
                 break;
             }
 
@@ -222,22 +323,31 @@ void State(void *argument)
         }
         case SHOT:
         {
+            // state initialization
+            if (state_last != SHOT)
+            {
+                MovAvgFltr_Clear(&curr_fltr);
+                TIMsw_Clear(&OC_time);
+                TIMsw_Clear(&runtime);
+                state_last = SHOT;
+            }
+
             // timeout
             if (TIMsw_CheckTimeout(&runtime, VESC_param.shot.timeout) || // timeout
-                PG_BREAK_PORT->IDR & PG_BREAK_PIN)                       // top photogate
+                PG_BREAK)                                                // top photogate
             {
                 state_W.ball = state_R.spd_ctrl = 0;
                 state_R.brake = 1;
 
                 if (runtime.intvl >= VESC_param.shot.timeout + VESC_param.shot.brake_time) // total duration
                 {
-                    TIMsw_Clear(&runtime);
                     state_R.brake = 0;
                     state = IDLE;
                     break;
                 }
             }
 
+            // shot parameter calculation
             if (state_R.brake)
                 VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.brake_curr;
             else if (!state_R.spd_ctrl)
@@ -269,7 +379,7 @@ void State(void *argument)
             // aim at R2
             if (state_W.aim_R2 && R2_info.dist_cm <= 900)
                 HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0 + HighTorque_param.R2_offset +
-                                                    (R2_yaw_prev + (R2_info.yaw - R2_yaw_prev) * TIMsw_GetRatio(&R2_yaw_time, R2_yaw_intvl.intvl)) * Gimbal_GR;
+                                                    (R2_yaw_prev + (R2_info.yaw - R2_yaw_prev) * TIMsw_GetRatio(&R2_yaw_time, R2_msg_intvl.intvl)) * Gimbal_GR;
             // aim at basket
             else if (!state_W.aim_R2 && basket_info.dist_cm <= 900)
                 HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0 + HighTorque_param.basket_offset +
