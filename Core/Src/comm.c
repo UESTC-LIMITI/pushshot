@@ -62,7 +62,7 @@ void FDCAN3_IT0_IRQHandler(void)
                 state_W.aim_R2 = 1;
             break;
         }
-        case 0x12: // dribble start
+        case 0xE: // dribble end
         {
             if (state != SHOT)
             {
