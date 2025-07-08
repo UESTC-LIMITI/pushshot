@@ -1,7 +1,10 @@
 #include "usr.h"
 
 HighTorque_t HighTorque[HIGHTORQUE_NUM + 1] = {
-    {.ID = 1},
+    {.ID = 1,
+     .ctrl.pos = (YAW_MAX + YAW_MIN) / 2,
+     .ctrl.Kp = 2,
+     .ctrl.Kd = 1},
     {.ID = HIGHTORQUE_ID_BCAST},
 };
 
@@ -70,11 +73,13 @@ void FDCAN3_Init(void)
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
     FDCAN_Filter.FilterIndex = 3;
-    FDCAN_Filter.FilterID1 = 0xA6;
+    FDCAN_Filter.FilterType = FDCAN_FILTER_RANGE;
+    FDCAN_Filter.FilterID1 = 0xA5;
     FDCAN_Filter.FilterID2 = 0xA7;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
     FDCAN_Filter.FilterIndex = 4;
+    FDCAN_Filter.FilterType = FDCAN_FILTER_DUAL;
     FDCAN_Filter.FilterID1 = 0xDF;
     FDCAN_Filter.FilterID2 = 0x105;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);

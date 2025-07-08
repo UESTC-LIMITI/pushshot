@@ -10,7 +10,7 @@ struct STATE_W state_W; // external-change state
 struct target_info basket_info = {.dist_fltr.size = 16, .yaw_fltr.size = 16},
                    R2_info = {.dist_fltr.size = 4, .yaw_fltr.size = 4};
 
-TIMsw_t R2_yaw_time, R2_msg_intvl, OC_time, runtime;
+TIMsw_t runtime, OC_time, R2_yaw_time, R2_msg_intvl;
 
 MovAvgFltr_t curr_fltr = {.size = 48};
 
@@ -128,11 +128,6 @@ float Fitting_Calc_R2_NetUp(float dist_cm)
 void State(void *argument)
 {
     CYL3_PORT->ODR |= CYL3_PIN; // fan for lidar
-
-    // default param
-    HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0;
-    HighTorque[GIMBAL_arrID].ctrl.Kp = 2;
-    HighTorque[GIMBAL_arrID].ctrl.Kd = 1;
 
     while (1)
     {

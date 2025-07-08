@@ -95,7 +95,8 @@ struct ERR
         basket_pos : 1,
         R1_pos : 1,
         R2_pos : 1,
-        yaw_lim : 1;
+        yaw_lim : 1,
+        coor : 1;
 };
 extern struct ERR err;
 
@@ -109,7 +110,7 @@ struct ERR_CNT
 };
 extern struct ERR_CNT err_cnt;
 
-extern TIMsw_t R2_yaw_time, R2_msg_intvl;
+extern TIMsw_t runtime, R2_yaw_time, R2_msg_intvl;
 
 extern float R2_yaw_prev;
 

@@ -7,9 +7,10 @@ USART_handle_t UART5_handle = {.USART_handle = UART5, .DMA_handle = DMA1, .DMA_s
 struct pos_info R1_pos;
 
 struct pos_t R2_pos = {.x = 12.5, .y = -4},
-             basket_pos = {.x = 14, .y = -4};
+             basket_pos = {.x = 14, .y = -4},
+             basket_pos_R2 = {.x = 14, .y = -4};
 
-__attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[15] = {0xA5};
+__attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[19] = {0xA5};
 
 unsigned char CheckSum(unsigned char *data, unsigned char len)
 {
@@ -30,13 +31,22 @@ void Comm(void *argument)
         // dual robot communication
         *(float *)&R1_Data[1] = temp = R1_pos.x + 0.24 * cos(R1_pos.yaw / R2D),
                 *(float *)&R1_Data[5] = temp = R1_pos.y + 0.24 * sin(R1_pos.yaw / R2D);
-        if (PG_BREAK && state == SHOT)
-            *(float *)&R1_Data[9] = VESC[PUSHSHOT_arrID].fdbk.spd;
-        R1_Data[13] = state_W.aim_R2 && state_R.brake,
-        R1_Data[14] = CheckSum(R1_Data, 14);
-        UART_SendArray(&UART5_handle, R1_Data, 15);
+        R1_Data[17] = state_W.aim_R2 && state_R.brake,
+        R1_Data[18] = CheckSum(R1_Data, 14);
+        UART_SendArray(&UART5_handle, R1_Data, 19);
 
         osDelay(20);
+    }
+}
+
+// top photogate
+void EXTI1_IRQHandler(void)
+{
+    EXTI->PR1 |= 0x2;
+    if (PG_BREAK && state == SHOT)
+    {
+        *(float *)&R1_Data[9] = VESC[PUSHSHOT_arrID].fdbk.spd;
+        *(float *)&R1_Data[13] = runtime.intvl;
     }
 }
 
@@ -98,6 +108,17 @@ void FDCAN3_IT0_IRQHandler(void)
         case 0xA3: // speed offset
         {
             spd_offset = *(float *)RxData;
+            break;
+        }
+        case 0xA5: // automatic initialization for skill competition
+        {
+#ifdef PG_TOP
+            if (state == IDLE && PG_TOP)
+            {
+                state_W.ball = 1;
+                state == INIT_FAST;
+            }
+#endif
             break;
         }
         case 0xA6: // enable gimbal
@@ -174,7 +195,7 @@ void UART5_IRQHandler(void)
         RxData[cnt++] = UART5->RDR;
 
         if (RxData[0] != 0xAA ||
-            cnt == 11 && RxData[10] != CheckSum(RxData, 10))
+            cnt == 11 && CheckSum(RxData, 10) != RxData[10])
             cnt = 0;
         else if (cnt == 11)
         {
@@ -184,6 +205,10 @@ void UART5_IRQHandler(void)
 
             R2_pos.x = *(float *)&RxData[1] / 1000,
             R2_pos.y = *(float *)&RxData[5] / 1000;
+            // basket_pos_R2.x = *(float *)&RxData[9] / 1000,
+            // basket_pos_R2.y = *(float *)&RxData[13] / 1000;
+
+            // err.coor = hypot(basket_pos.x - basket_pos_R2.x, basket_pos.y - basket_pos_R2.y) >= 0.05;
 
             state_W.R2_NetUp = RxData[9];
 
