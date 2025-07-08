@@ -8,32 +8,29 @@ void FDCAN1_IT0_IRQHandler(void)
         FDCAN1->IR |= 0x1;
 
         FDCAN_RxHeaderTypeDef FDCAN_RxHeader;
-        unsigned char RxData[32];
+        unsigned char RxData[20];
         HAL_FDCAN_GetRxMessage(&hfdcan1, FDCAN_RX_FIFO0, &FDCAN_RxHeader, RxData);
 
-        switch (FDCAN_RxHeader.Identifier)
-        {
-        case (GIMBAL_ID << 8):
-        {
-            if (RxData[0] == (HIGHTORQUE_DATA_RE | HIGHTORQUE_DATA_TYPE_FLOAT | 3) &&
-                RxData[1] == HIGHTORQUE_REG_POS_FDBK &&
-                RxData[14] == (HIGHTORQUE_DATA_RE | HIGHTORQUE_DATA_TYPE_FLOAT | 1) &&
-                RxData[15] == HIGHTORQUE_REG_TEMP)
-            {
-                HighTorque[GIMBAL_arrID].fdbk.pos = *(float *)&RxData[2] * 360;
-                HighTorque[GIMBAL_arrID].fdbk.spd = *(float *)&RxData[6] * 360;
-                HighTorque[GIMBAL_arrID].fdbk.trq = *(float *)&RxData[10];
+        // HighTorque_MsgHandler(FDCAN_RxHeader.Identifier, GIMBAL_arrID, RxData);
 
-                // not over heat
-                if ((HighTorque[GIMBAL_arrID].fdbk.temp = *(float *)&RxData[16]) <= 55)
-                    err_cnt.HighTorque = err.HighTorque = 0; // clear error flag
-                // over heat
-                else if (HighTorque[GIMBAL_arrID].fdbk.temp >= 60)
-                    HighTorque[GIMBAL_arrID].ctrl.Kd = HighTorque[GIMBAL_arrID].ctrl.Kp = 0;
-            }
-            break;
+        if (FDCAN_RxHeader.Identifier == (HighTorque[GIMBAL_arrID].ID << 8 | HIGHTORQUE_ID_SRC) &&
+            RxData[0] == (HIGHTORQUE_DATA_RE | HIGHTORQUE_DATA_TYPE_FLOAT | 3) &&
+            RxData[1] == HIGHTORQUE_REG_POS_FDBK &&
+            RxData[14] == (HIGHTORQUE_DATA_RE | HIGHTORQUE_DATA_TYPE_FLOAT | 1) &&
+            RxData[15] == HIGHTORQUE_REG_TEMP)
+        {
+            HighTorque[GIMBAL_arrID].fdbk.pos = *(float *)&RxData[2] * 360;
+            HighTorque[GIMBAL_arrID].fdbk.spd = *(float *)&RxData[6] * 360;
+            HighTorque[GIMBAL_arrID].fdbk.trq = *(float *)&RxData[10];
+            HighTorque[GIMBAL_arrID].fdbk.temp = *(float *)&RxData[16];
         }
-        }
+
+        // gimbal not over heat
+        if (HighTorque[GIMBAL_arrID].fdbk.temp <= 55)
+            err_cnt.HighTorque = err.HighTorque = 0; // clear error flag
+        // gimbal over heat
+        else if (HighTorque[GIMBAL_arrID].fdbk.temp >= 60)
+            HighTorque[GIMBAL_arrID].ctrl.Kd = HighTorque[GIMBAL_arrID].ctrl.Kp = 0;
     }
 }
 
@@ -48,22 +45,10 @@ void FDCAN2_IT0_IRQHandler(void)
         unsigned char RxData[8];
         HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0, &FDCAN_RxHeader, RxData);
 
-        switch (FDCAN_RxHeader.Identifier)
-        {
-        case (VESC_STATUS_1 << 8 | PUSHSHOT_ID):
-        {
-            VESC[PUSHSHOT_arrID].fdbk.spd = (float)(int)(RxData[0] << 24 | RxData[1] << 16 | RxData[2] << 8 | RxData[3]) / MOTOR.PP;
-            VESC[PUSHSHOT_arrID].fdbk.curr = (float)(short)(RxData[4] << 8 | RxData[5]) / VESC_fCURR_R;
-            VESC[PUSHSHOT_arrID].fdbk.dutycycle = (float)(short)(RxData[6] << 8 | RxData[7]) / VESC_fPCT_R;
-            break;
-        }
-        case (VESC_STATUS_5 << 8 | PUSHSHOT_ID):
-        {
-            // not under voltage
-            if ((VESC[PUSHSHOT_arrID].fdbk.volt = (float)(short)(RxData[4] << 8 | RxData[5]) / VESC_fVOLT) >= 24.3)
-                err_cnt.VESC = err.VESC = 0; // clear error flag
-            break;
-        }
-        }
+        VESC_MsgHandler(FDCAN_RxHeader.Identifier, PUSHSHOT_arrID, RxData);
+
+        // ESC not under voltage
+        if (VESC[PUSHSHOT_arrID].fdbk.volt >= 24.3)
+            err_cnt.VESC = err.VESC = 0; // clear error flag
     }
 }

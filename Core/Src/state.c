@@ -1,6 +1,6 @@
 #include "usr.h"
 
-USART_info_t UART7_info = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream0, .DMA_ID = 0}; // USB to TTL
+USART_handle_t UART7_handle = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream0, .DMA_ID = 0}; // USB to TTL
 
 enum STATE state, state_last;
 struct STATE_R state_R = { // internal-change state
@@ -140,7 +140,7 @@ void State(void *argument)
         if (state == SHOT && !state_R.brake)
         {
             sprintf((char *)VOFA, "T:%.2f,%d\n", VESC[PUSHSHOT_arrID].fdbk.spd, state_R.spd_ctrl ? 1000 : 0);
-            UART_SendArray(&UART7_info, VOFA, 16);
+            UART_SendArray(&UART7_handle, VOFA, 16);
         }
 #endif
         switch (state)
@@ -157,7 +157,7 @@ void State(void *argument)
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_CURR, &MOTOR);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_CURR);
             }
             break;
         }
@@ -205,7 +205,7 @@ void State(void *argument)
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_SPD, &MOTOR);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_SPD);
             }
             break;
         }
@@ -255,7 +255,7 @@ void State(void *argument)
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_SPD, &MOTOR);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_SPD);
             }
             break;
         }
@@ -293,7 +293,7 @@ void State(void *argument)
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_SPD, &MOTOR);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_SPD);
             }
             break;
         }
@@ -317,7 +317,7 @@ void State(void *argument)
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, VESC_SET_CURR, &MOTOR);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_CURR);
             }
             break;
         }
@@ -360,7 +360,7 @@ void State(void *argument)
                 VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.shot.spd;
 
                 VESC_param.shot.acc_curr = Fitting_Calc_AccCurr(VESC_param.shot.spd);
-                LIMIT(VESC_param.shot.acc_curr, MOTOR.curr_max);
+                LIMIT(VESC_param.shot.acc_curr, PUSHSHOT_MOTOR.curr_max);
                 VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.acc_curr;
 
                 state_R.spd_ctrl = VESC_param.shot.spd - VESC[PUSHSHOT_arrID].fdbk.spd <= VESC_param.shot.spd_ctrl_err; // switch control mode
@@ -368,7 +368,7 @@ void State(void *argument)
 
             // control
             {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_ID, state_R.brake ? VESC_SET_CURR_BRAKE : (state_R.spd_ctrl ? VESC_SET_SPD : VESC_SET_CURR), &MOTOR);
+                VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, state_R.brake ? VESC_SET_CURR_BRAKE : (state_R.spd_ctrl ? VESC_SET_SPD : VESC_SET_CURR));
             }
             break;
         }
@@ -389,7 +389,7 @@ void State(void *argument)
 
         // control
         {
-            HighTorque_SetMixParam_f(&hfdcan1, GIMBAL_ID);
+            HighTorque_SetMixParam_f(&hfdcan1, GIMBAL_arrID);
         }
 
         osDelay(1);

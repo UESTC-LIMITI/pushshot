@@ -1,5 +1,14 @@
 #include "usr.h"
 
+HighTorque_t HighTorque[HIGHTORQUE_NUM + 1] = {
+    {.ID = 1},
+    {.ID = HIGHTORQUE_ID_BCAST},
+};
+
+VESC_t VESC[VESC_NUM] = {
+    {.ID = 1, .motor = &PUSHSHOT_MOTOR},
+};
+
 // call each function under corresponding init function created by CubeMX
 
 void FDCAN1_Init(void)

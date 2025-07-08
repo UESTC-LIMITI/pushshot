@@ -21,16 +21,12 @@
 
 // from periph
 #define VESC_NUM 1
-#define VESC_ID_OFFSET 1
 #include "VESC.h"
-#define PUSHSHOT_ID 1
 #define PUSHSHOT_arrID 0
-#define MOTOR CUBEMARS_R100_KV90
+#define PUSHSHOT_MOTOR CUBEMARS_R100_KV90
 
 #define HIGHTORQUE_NUM 1
-#define HIGHTORQUE_ID_OFFSET 1
 #include "HighTorque.h"
-#define GIMBAL_ID 1
 #define GIMBAL_arrID 0
 
 #define PG_BTM (GPIOE->IDR & GPIO_PIN_2)

@@ -2,19 +2,19 @@
 
 #define CENTRE_OFFSET 0.069
 
-USART_info_t UART5_info = {.USART_handle = UART5, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream1, .DMA_ID = 1}; // dual robot communication Tx
+USART_handle_t UART5_handle = {.USART_handle = UART5, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream1, .DMA_ID = 1}; // dual robot communication Tx
 
 struct pos_info R1_pos;
 
 struct pos_t R2_pos = {.x = 12.5, .y = -4},
              basket_pos = {.x = 14, .y = -4};
 
-__attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[11] = {0xA5};
+__attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[15] = {0xA5};
 
-unsigned char CheckSum(unsigned char *data)
+unsigned char CheckSum(unsigned char *data, unsigned char len)
 {
     unsigned char temp = 0;
-    for (unsigned char cnt = 0; cnt < 10; ++cnt)
+    for (unsigned char cnt = 0; cnt < len; ++cnt)
     {
         temp += data[cnt];
     }
@@ -29,10 +29,12 @@ void Comm(void *argument)
 
         // dual robot communication
         *(float *)&R1_Data[1] = temp = R1_pos.x + 0.24 * cos(R1_pos.yaw / R2D),
-                *(float *)&R1_Data[5] = temp = R1_pos.y + 0.24 * sin(R1_pos.yaw / R2D),
-                R1_Data[9] = state_W.aim_R2 && state_R.brake,
-                R1_Data[10] = CheckSum(R1_Data);
-        UART_SendArray(&UART5_info, R1_Data, 11);
+                *(float *)&R1_Data[5] = temp = R1_pos.y + 0.24 * sin(R1_pos.yaw / R2D);
+        if (PG_BREAK && state == SHOT)
+            *(float *)&R1_Data[9] = VESC[PUSHSHOT_arrID].fdbk.spd;
+        R1_Data[13] = state_W.aim_R2 && state_R.brake,
+        R1_Data[14] = CheckSum(R1_Data, 14);
+        UART_SendArray(&UART5_handle, R1_Data, 15);
 
         osDelay(20);
     }
@@ -172,7 +174,7 @@ void UART5_IRQHandler(void)
         RxData[cnt++] = UART5->RDR;
 
         if (RxData[0] != 0xAA ||
-            cnt == 11 && RxData[10] != CheckSum(RxData))
+            cnt == 11 && RxData[10] != CheckSum(RxData, 10))
             cnt = 0;
         else if (cnt == 11)
         {

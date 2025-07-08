@@ -38,8 +38,8 @@
                 "-f",
                 "target/stm32h7x.cfg",
                 // default reset method unavailable for STM32H7 series        
-                // "-c",
-                // "reset_config none",
+                "-c",
+                "reset_config none",
                 "-c",
                 "init",
                 "-c",
