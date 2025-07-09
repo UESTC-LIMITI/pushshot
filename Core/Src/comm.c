@@ -110,15 +110,13 @@ void FDCAN3_IT0_IRQHandler(void)
             spd_offset = *(float *)RxData;
             break;
         }
-        case 0xA5: // automatic initialization for skill competition
+        case 0xA5: // skill competition: automatic initialization
         {
-#ifdef PG_TOP
             if (state == IDLE && PG_TOP)
             {
                 state_W.ball = 1;
-                state == INIT_FAST;
+                state = INIT_FAST;
             }
-#endif
             break;
         }
         case 0xA6: // enable gimbal

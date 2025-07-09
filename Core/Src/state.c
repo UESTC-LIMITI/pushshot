@@ -67,10 +67,10 @@ struct
     const float pos0, basket_offset, R2_offset;
 } HighTorque_param = {
     .pos0 = (YAW_MAX + YAW_MIN) / 2,
-    .basket_offset = 14,
+    .basket_offset = 11,
     .R2_offset = -8};
 
-float Fitting_Calc_AccCurr_Basket(float spd)
+float Fitting_AccCurr_Basket(float spd)
 {
     if (spd <= 600)
         return 20;
@@ -80,7 +80,7 @@ float Fitting_Calc_AccCurr_Basket(float spd)
         return (spd - 500) * 0.15;
 }
 
-float Fitting_Calc_AccCurr_R2(float spd)
+float Fitting_AccCurr_R2(float spd)
 {
     if (spd <= 600)
         return 22;
@@ -90,14 +90,14 @@ float Fitting_Calc_AccCurr_R2(float spd)
         return (spd - 495) * 0.15;
 }
 
-float Fitting_Calc_Basket(float dist_cm)
+float Fitting_Spd_Basket(float dist_cm)
 {
     if (dist_cm <= 260)
         return 0.55 * dist_cm +
-               510 + spd_offset;
+               505 + spd_offset;
     else if (dist_cm <= 360)
-        return 0.5 * dist_cm +
-               523 + spd_offset;
+        return 0.55 * dist_cm +
+               505 + spd_offset;
     else if (dist_cm <= 460)
         return 0.5 * dist_cm +
                523 + spd_offset;
@@ -106,7 +106,7 @@ float Fitting_Calc_Basket(float dist_cm)
                546 + spd_offset;
 }
 
-float Fitting_Calc_R2_NetDown(float dist_cm)
+float Fitting_Spd_R2_NetDown(float dist_cm)
 {
     if (dist_cm <= 275)
         return dist_cm + 325 + spd_offset;
@@ -118,11 +118,9 @@ float Fitting_Calc_R2_NetDown(float dist_cm)
         return 0.6 * dist_cm + 450 + spd_offset;
     else
         return 0.48 * dist_cm + 516 + spd_offset;
-
-    // return 77.4901 * pow(dist_cm, 0.3681) + spd_offset;
 }
 
-float Fitting_Calc_R2_NetUp(float dist_cm)
+float Fitting_Spd_R2_NetUp(float dist_cm)
 {
     return -5.750327304436271e-11 * pow(dist_cm, 5) +
            1.4975612224951695e-7 * pow(dist_cm, 4) +
@@ -130,13 +128,25 @@ float Fitting_Calc_R2_NetUp(float dist_cm)
            0.07246624426352355 * pow(dist_cm, 2) +
            -15.975384144345298 * dist_cm +
            1895.5957471418012 + spd_offset;
+}
 
-    // if (dist_cm <= 400)
-    //     return 0.64 * dist_cm +
-    //            494 + spd_offset;
-    // else
-    //     return 0.44 * dist_cm +
-    //            554 + spd_offset;
+bool VESC_Stall(void)
+{
+    if (state != state_last)
+    {
+        MovAvgFltr_Clear(&curr_fltr);
+        TIMsw_Clear(&OC_time);
+    }
+
+    if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.OC_curr)
+    {
+        if (TIMsw_CheckTimeout(&OC_time, VESC_param.OC_time))
+            return true;
+    }
+    else
+        TIMsw_Clear(&OC_time);
+
+    return false;
 }
 
 void State(void *argument)
@@ -157,9 +167,9 @@ void State(void *argument)
         case IDLE:
         {
             // state initialization
-            if (state_last != IDLE)
+            if (state != state_last)
             {
-                state_last = IDLE;
+                state_last = state;
             }
 
             VESC[PUSHSHOT_arrID].ctrl.curr = 0;
@@ -176,26 +186,20 @@ void State(void *argument)
             static bool revert;
 
             // state initialization
-            if (state_last != MID)
+            if (state != state_last)
             {
-                MovAvgFltr_Clear(&curr_fltr);
-                TIMsw_Clear(&OC_time);
+                state_last = state;
+
                 TIMsw_Clear(&runtime);
                 revert = false;
-                state_last = MID;
             }
 
             // stall protection
-            if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.OC_curr)
+            if (VESC_Stall())
             {
-                if (TIMsw_CheckTimeout(&OC_time, VESC_param.OC_time))
-                {
-                    state = IDLE;
-                    break;
-                }
+                state = IDLE;
+                break;
             }
-            else
-                TIMsw_Clear(&OC_time);
 
             if (TIMsw_CheckTimeout(&runtime, VESC_param.mid.time))
             {
@@ -222,25 +226,19 @@ void State(void *argument)
         case INIT_FAST:
         {
             // state initialization
-            if (state_last != INIT_FAST)
+            if (state != state_last)
             {
-                MovAvgFltr_Clear(&curr_fltr);
-                TIMsw_Clear(&OC_time);
+                state_last = state;
+
                 TIMsw_Clear(&runtime);
-                state_last = INIT_FAST;
             }
 
             // stall protection
-            if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.OC_curr)
+            if (VESC_Stall())
             {
-                if (TIMsw_CheckTimeout(&OC_time, VESC_param.OC_time))
-                {
-                    state = IDLE;
-                    break;
-                }
+                state = IDLE;
+                break;
             }
-            else
-                TIMsw_Clear(&OC_time);
 
             // bottom photogate
             if (PG_BTM)
@@ -272,24 +270,17 @@ void State(void *argument)
         case INIT_SLOW:
         {
             // state initialization
-            if (state_last != INIT_SLOW)
+            if (state != state_last)
             {
-                MovAvgFltr_Clear(&curr_fltr);
-                TIMsw_Clear(&OC_time);
-                state_last = INIT_SLOW;
+                state_last = state;
             }
 
             // stall protection
-            if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.OC_curr)
+            if (VESC_Stall())
             {
-                if (TIMsw_CheckTimeout(&OC_time, VESC_param.OC_time))
-                {
-                    state = IDLE;
-                    break;
-                }
+                state = IDLE;
+                break;
             }
-            else
-                TIMsw_Clear(&OC_time);
 
             // bottom photogate
             if (PG_BTM)
@@ -310,9 +301,9 @@ void State(void *argument)
         case LOCK:
         {
             // state initialization
-            if (state_last != LOCK)
+            if (state != state_last)
             {
-                state_last = LOCK;
+                state_last = state;
             }
 
             // ball plate go up
@@ -333,12 +324,11 @@ void State(void *argument)
         case SHOT:
         {
             // state initialization
-            if (state_last != SHOT)
+            if (state != state_last)
             {
-                MovAvgFltr_Clear(&curr_fltr);
-                TIMsw_Clear(&OC_time);
+                state_last = state;
+
                 TIMsw_Clear(&runtime);
-                state_last = SHOT;
             }
 
             // timeout
@@ -362,14 +352,14 @@ void State(void *argument)
             else if (!state_R.spd_ctrl)
             {
                 if (state_R.fitting &&
-                    (VESC_param.shot.spd = state_W.aim_R2 ? state_W.R2_NetUp ? Fitting_Calc_R2_NetUp(R2_info.dist_cm)
-                                                                             : Fitting_Calc_R2_NetDown(R2_info.dist_cm)
-                                                          : Fitting_Calc_Basket(basket_info.dist_cm)) < 0)
+                    (VESC_param.shot.spd = state_W.aim_R2 ? state_W.R2_NetUp ? Fitting_Spd_R2_NetUp(R2_info.dist_cm)
+                                                                             : Fitting_Spd_R2_NetDown(R2_info.dist_cm)
+                                                          : Fitting_Spd_Basket(basket_info.dist_cm)) < 0)
                     VESC_param.shot.spd = 0;
                 VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.shot.spd;
 
-                VESC_param.shot.acc_curr = state_W.aim_R2 ? Fitting_Calc_AccCurr_R2(VESC_param.shot.spd)
-                                                          : Fitting_Calc_AccCurr_Basket(VESC_param.shot.spd);
+                VESC_param.shot.acc_curr = state_W.aim_R2 ? Fitting_AccCurr_R2(VESC_param.shot.spd)
+                                                          : Fitting_AccCurr_Basket(VESC_param.shot.spd);
                 LIMIT(VESC_param.shot.acc_curr, PUSHSHOT_MOTOR.curr_max);
                 VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.acc_curr;
 

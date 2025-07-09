@@ -31,7 +31,7 @@
 
 #define PG_BTM (GPIOE->IDR & GPIO_PIN_2)
 // #define PG_MID (GPIO->IDR & GPIO_PIN)
-// #define PG_TOP (GPIO->IDR & GPIO_PIN)
+#define PG_TOP (GPIOB->IDR & GPIO_PIN_7)
 #define PG_BREAK (GPIOF->IDR & GPIO_PIN_1)
 
 #define CYL1_PORT GPIOD
@@ -95,8 +95,8 @@ struct ERR
         basket_pos : 1,
         R1_pos : 1,
         R2_pos : 1,
-        yaw_lim : 1,
-        coor : 1;
+        yaw_lim : 1;
+    // coor : 1;
 };
 extern struct ERR err;
 
