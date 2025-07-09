@@ -68,9 +68,9 @@ struct
 } HighTorque_param = {
     .pos0 = (YAW_MAX + YAW_MIN) / 2,
     .basket_offset = 14,
-    .R2_offset = 9};
+    .R2_offset = -8};
 
-float Fitting_Calc_AccCurr(float spd)
+float Fitting_Calc_AccCurr_Basket(float spd)
 {
     if (spd <= 600)
         return 20;
@@ -78,6 +78,16 @@ float Fitting_Calc_AccCurr(float spd)
         return (spd - 400) * 0.1;
     else
         return (spd - 500) * 0.15;
+}
+
+float Fitting_Calc_AccCurr_R2(float spd)
+{
+    if (spd <= 600)
+        return 22;
+    else if (spd <= 700)
+        return (spd - 393) * 0.1;
+    else
+        return (spd - 495) * 0.15;
 }
 
 float Fitting_Calc_Basket(float dist_cm)
@@ -98,12 +108,16 @@ float Fitting_Calc_Basket(float dist_cm)
 
 float Fitting_Calc_R2_NetDown(float dist_cm)
 {
-    return -3.599108629466605e-13 * pow(dist_cm, 5) +
-           2.943988910292239e-9 * pow(dist_cm, 4) +
-           -0.000002883321724933552 * pow(dist_cm, 3) +
-           -0.00007963478594774642 * pow(dist_cm, 2) +
-           1.352410664607305 * dist_cm +
-           267.5709730689714 + spd_offset;
+    if (dist_cm <= 275)
+        return dist_cm + 325 + spd_offset;
+    else if (dist_cm <= 350)
+        return -0.0056000000000007155 * pow(dist_cm, 2) +
+               4.3800000000003365 * dist_cm +
+               -187.00000000003354 + spd_offset;
+    else if (dist_cm <= 550)
+        return 0.6 * dist_cm + 450 + spd_offset;
+    else
+        return 0.48 * dist_cm + 516 + spd_offset;
 
     // return 77.4901 * pow(dist_cm, 0.3681) + spd_offset;
 }
@@ -354,7 +368,8 @@ void State(void *argument)
                     VESC_param.shot.spd = 0;
                 VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.shot.spd;
 
-                VESC_param.shot.acc_curr = Fitting_Calc_AccCurr(VESC_param.shot.spd);
+                VESC_param.shot.acc_curr = state_W.aim_R2 ? Fitting_Calc_AccCurr_R2(VESC_param.shot.spd)
+                                                          : Fitting_Calc_AccCurr_Basket(VESC_param.shot.spd);
                 LIMIT(VESC_param.shot.acc_curr, PUSHSHOT_MOTOR.curr_max);
                 VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.acc_curr;
 
