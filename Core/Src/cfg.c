@@ -32,6 +32,8 @@ float R2_yaw_prev;
 
 char spd_offset;
 
+__attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[19] = {0xA5};
+
 // call each function under corresponding init function created by CubeMX
 
 void FDCAN1_Init(void)

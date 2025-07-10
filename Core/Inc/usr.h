@@ -108,6 +108,8 @@ extern float R2_yaw_prev;
 
 extern char spd_offset;
 
+extern unsigned char R1_Data[19];
+
 #define Gimbal_GR (14.6875 * 1) // real gear ratio * gain
 
 #define YAW_MIN -127
@@ -120,5 +122,7 @@ void TIM7_Init(void);
 void UART5_Init(void);
 
 void R2_Pos_Process(void); // at Core/Src/comm.c
+
+void Brake_Trigger(void); // at Core/Src/state.c
 
 #endif

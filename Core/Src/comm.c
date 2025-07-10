@@ -14,8 +14,6 @@ struct
   basket_pos = {.x = 14, .y = -4},
   basket_pos_R2 = {.x = 14, .y = -4};
 
-__attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[19] = {0xA5};
-
 unsigned char CheckSum_1B(unsigned char *data, unsigned char len)
 {
     unsigned char temp = 0;
@@ -41,17 +39,6 @@ void Comm(void *argument)
         UART_SendArray(&UART5_handle, R1_Data, sizeof(R1_Data));
 
         osDelay(20);
-    }
-}
-
-// top photogate
-void EXTI1_IRQHandler(void)
-{
-    EXTI->PR1 |= 0x2;
-    if (PG_TOP && state == SHOT)
-    {
-        *(float *)&R1_Data[9] = VESC[PUSHSHOT_arrID].fdbk.spd;
-        *(float *)&R1_Data[13] = runtime.intvl;
     }
 }
 

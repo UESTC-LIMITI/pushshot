@@ -49,3 +49,11 @@ void FDCAN2_IT0_IRQHandler(void)
             err_cnt.VESC = err.VESC = 0; // clear error flag
     }
 }
+
+// top photogate
+void EXTI1_IRQHandler(void)
+{
+    EXTI->PR1 |= 0x2;
+    if (PG_TOP && state == SHOT)
+        Brake_Trigger();
+}

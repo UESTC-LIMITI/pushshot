@@ -135,6 +135,17 @@ bool VESC_Stall(void)
     return false;
 }
 
+static float brake_trigger_time;
+void Brake_Trigger(void)
+{
+    brake_trigger_time = runtime.intvl;
+    state_W.ball = state_R.spd_ctrl = 0;
+    state_R.brake = 1;
+
+    *(float *)&R1_Data[9] = VESC[PUSHSHOT_arrID].fdbk.spd;
+    *(float *)&R1_Data[13] = brake_trigger_time;
+}
+
 void State(void *argument)
 {
     CYL3_PORT->ODR |= CYL3_PIN; // fan for lidar
@@ -323,18 +334,13 @@ void State(void *argument)
                 pg_abuse = false;
             }
 
-            // timeout
             if (TIMsw_CheckTimeout(&runtime, VESC_param.shot.timeout) || // timeout
+                state_R.brake ||                                         // brake
                 PG_TOP && !pg_abuse && runtime.intvl >= 0.1875)          // top photogate not abuse
             {
-                static float break_trigger_time;
-
                 if (!state_R.brake)
-                    break_trigger_time = runtime.intvl;
-                state_W.ball = state_R.spd_ctrl = 0;
-                state_R.brake = 1;
-
-                if (runtime.intvl >= break_trigger_time + VESC_param.shot.brake_time) // total duration
+                    Brake_Trigger();
+                else if (runtime.intvl >= brake_trigger_time + VESC_param.shot.brake_time) // total duration
                 {
                     state_R.brake = 0;
                     state = IDLE;
