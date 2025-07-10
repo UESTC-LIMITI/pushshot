@@ -12,6 +12,26 @@ VESC_t VESC[VESC_NUM] = {
     {.ID = 1, .motor = &PUSHSHOT_MOTOR},
 };
 
+enum STATE state;
+
+struct STATE_R state_R = { // internal-change state
+    .fitting = 1};
+
+struct STATE_W state_W; // external-change state
+
+struct target_info basket_info = {.dist_fltr.size = 16, .yaw_fltr.size = 16},
+                   R2_info = {.dist_fltr.size = 4, .yaw_fltr.size = 4};
+
+struct ERR err;
+
+struct ERR_CNT err_cnt;
+
+TIMsw_t runtime, R2_yaw_time, R2_msg_intvl;
+
+float R2_yaw_prev;
+
+char spd_offset;
+
 // call each function under corresponding init function created by CubeMX
 
 void FDCAN1_Init(void)

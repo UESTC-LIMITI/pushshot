@@ -8,31 +8,30 @@
 #define TIMsw TIM7
 #define FDCAN_SUPPORT
 
-// all the following file can be found at https://github.com/Chosen-Zeng/lib
+// following file at https://github.com/Chosen-Zeng/lib
 
-// from hw
+// hw
 #include "TIM.h"
 #include "USART.h"
 #include "CAN.h"
 
-// from algorithm
+// algorithm
 #include "algorithm.h"
 #include "fltr.h"
 
-// from periph
+// periph
 #define VESC_NUM 1
 #include "VESC.h"
-#define PUSHSHOT_arrID 0
-#define PUSHSHOT_MOTOR CUBEMARS_R100_KV90
-
 #define HIGHTORQUE_NUM 1
 #include "HighTorque.h"
+
+#define PUSHSHOT_arrID 0
+#define PUSHSHOT_MOTOR CUBEMARS_R100_KV90
 #define GIMBAL_arrID 0
 
 #define PG_BTM (GPIOE->IDR & GPIO_PIN_2)
 // #define PG_MID (GPIO->IDR & GPIO_PIN)
-#define PG_TOP (GPIOB->IDR & GPIO_PIN_7)
-#define PG_BREAK (GPIOF->IDR & GPIO_PIN_1)
+#define PG_TOP (GPIOF->IDR & GPIO_PIN_1)
 
 #define CYL1_PORT GPIOD
 #define CYL1_PIN GPIO_PIN_7
@@ -42,6 +41,8 @@
 #define CYL3_PIN GPIO_PIN_10
 
 extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
+
+// following variable and function at Core/Src/cfg.c
 
 enum STATE
 {
@@ -70,16 +71,6 @@ struct STATE_W
         R2_NetUp : 1;
 };
 extern struct STATE_W state_W;
-
-struct pos_info
-{
-    float x, y, yaw;
-};
-
-struct pos_t
-{
-    float x, y;
-};
 
 struct target_info
 {
@@ -127,6 +118,6 @@ void FDCAN3_Init(void);
 void TIM7_Init(void);
 void UART5_Init(void);
 
-void R2_Pos_Process(void);
+void R2_Pos_Process(void); // at Core/Src/comm.c
 
 #endif

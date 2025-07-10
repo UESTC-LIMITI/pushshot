@@ -1,8 +1,5 @@
 #include "usr.h"
 
-struct ERR err;
-struct ERR_CNT err_cnt;
-
 void Err(void *argument)
 {
     while (1)

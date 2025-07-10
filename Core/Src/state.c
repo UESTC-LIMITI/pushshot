@@ -1,27 +1,10 @@
 #include "usr.h"
 
-USART_handle_t UART7_handle = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream0, .DMA_ID = 0}; // USB to TTL
-
-enum STATE state, state_last;
-struct STATE_R state_R = { // internal-change state
-    .fitting = 1};
-struct STATE_W state_W; // external-change state
-
-struct target_info basket_info = {.dist_fltr.size = 16, .yaw_fltr.size = 16},
-                   R2_info = {.dist_fltr.size = 4, .yaw_fltr.size = 4};
-
-TIMsw_t runtime, OC_time, R2_yaw_time, R2_msg_intvl;
-
-MovAvgFltr_t curr_fltr = {.size = 48};
-
-float R2_yaw_prev;
-
-char spd_offset;
+static enum STATE state_last;
 
 #define DATA_OUTPUT
 #ifdef DATA_OUTPUT
 #include <stdio.h>
-unsigned char VOFA[32];
 #endif
 
 struct
@@ -48,7 +31,7 @@ struct
     .high_spd = -300,
     .low_spd = -150,
     .OC_curr = 30.1,
-    .OC_time = 0.5,
+    .OC_time = 0.25,
 
     .mid.time = 1,
 
@@ -132,6 +115,9 @@ float Fitting_Spd_R2_NetUp(float dist_cm)
 
 bool VESC_Stall(void)
 {
+    static MovAvgFltr_t curr_fltr = {.size = 48};
+    static TIMsw_t OC_time;
+
     if (state != state_last)
     {
         MovAvgFltr_Clear(&curr_fltr);
@@ -158,6 +144,9 @@ void State(void *argument)
 #ifdef DATA_OUTPUT
         if (state == SHOT && !state_R.brake)
         {
+            static unsigned char VOFA[32];
+            static USART_handle_t UART7_handle = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream0, .DMA_ID = 0}; // USB to TTL
+
             sprintf((char *)VOFA, "T:%.2f,%d\n", VESC[PUSHSHOT_arrID].fdbk.spd, state_R.spd_ctrl ? 1000 : 0);
             UART_SendArray(&UART7_handle, VOFA, 16);
         }
@@ -323,28 +312,37 @@ void State(void *argument)
         }
         case SHOT:
         {
+            static bool pg_abuse;
+
             // state initialization
             if (state != state_last)
             {
                 state_last = state;
 
                 TIMsw_Clear(&runtime);
+                pg_abuse = false;
             }
 
             // timeout
             if (TIMsw_CheckTimeout(&runtime, VESC_param.shot.timeout) || // timeout
-                PG_BREAK)                                                // top photogate
+                PG_TOP && !pg_abuse && runtime.intvl >= 0.1875)          // top photogate not abuse
             {
+                static float break_trigger_time;
+
+                if (!state_R.brake)
+                    break_trigger_time = runtime.intvl;
                 state_W.ball = state_R.spd_ctrl = 0;
                 state_R.brake = 1;
 
-                if (runtime.intvl >= VESC_param.shot.timeout + VESC_param.shot.brake_time) // total duration
+                if (runtime.intvl >= break_trigger_time + VESC_param.shot.brake_time) // total duration
                 {
                     state_R.brake = 0;
                     state = IDLE;
                     break;
                 }
             }
+            else if (PG_TOP)
+                pg_abuse = true;
 
             // shot parameter calculation
             if (state_R.brake)

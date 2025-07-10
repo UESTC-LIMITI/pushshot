@@ -2,13 +2,17 @@
 
 #define CENTRE_OFFSET 0.069
 
-USART_handle_t UART5_handle = {.USART_handle = UART5, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream1, .DMA_ID = 1}; // dual robot communication Tx
+struct
+{
+    float x, y, yaw;
+} R1_pos;
 
-struct pos_info R1_pos;
-
-struct pos_t R2_pos = {.x = 12.5, .y = -4},
-             basket_pos = {.x = 14, .y = -4},
-             basket_pos_R2 = {.x = 14, .y = -4};
+struct
+{
+    float x, y;
+} R2_pos = {.x = 12.5, .y = -4},
+  basket_pos = {.x = 14, .y = -4},
+  basket_pos_R2 = {.x = 14, .y = -4};
 
 __attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[19] = {0xA5};
 
@@ -26,6 +30,7 @@ void Comm(void *argument)
 {
     while (1)
     {
+        static USART_handle_t UART5_handle = {.USART_handle = UART5, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream1, .DMA_ID = 1}; // dual robot communication Tx
         float temp;
 
         // dual robot communication
@@ -43,7 +48,7 @@ void Comm(void *argument)
 void EXTI1_IRQHandler(void)
 {
     EXTI->PR1 |= 0x2;
-    if (PG_BREAK && state == SHOT)
+    if (PG_TOP && state == SHOT)
     {
         *(float *)&R1_Data[9] = VESC[PUSHSHOT_arrID].fdbk.spd;
         *(float *)&R1_Data[13] = runtime.intvl;
