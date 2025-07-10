@@ -55,12 +55,21 @@ struct
 
 float Fitting_AccCurr_Basket(float spd)
 {
-    if (spd <= 600)
-        return 20;
-    else if (spd <= 700)
+    // 10A, 400RPM
+    if (spd <= 400)
+        return 10;
+    // 15A, 500RPM
+    // 20A, 600RPM
+    else if (spd <= 600)
+        return (spd - 200) * 0.05;
+    // 30A, 700RPM
+    // 40A, 800RPM
+    else if (spd <= 800)
         return (spd - 400) * 0.1;
+    // 50A, 850RPM
+    // 60A, 900RPM
     else
-        return (spd - 500) * 0.15;
+        return (spd - 600) * 0.2;
 }
 
 float Fitting_AccCurr_R2(float spd)
@@ -77,16 +86,19 @@ float Fitting_Spd_Basket(float dist_cm)
 {
     if (dist_cm <= 260)
         return 0.55 * dist_cm +
-               505 + spd_offset;
+               495 + spd_offset;
     else if (dist_cm <= 360)
         return 0.55 * dist_cm +
-               505 + spd_offset;
+               495 + spd_offset;
     else if (dist_cm <= 460)
+        return 0.6 * dist_cm +
+               477 + spd_offset;
+    else if (dist_cm <= 560)
         return 0.5 * dist_cm +
                523 + spd_offset;
     else
-        return 0.45 * dist_cm +
-               546 + spd_offset;
+        return 0.6 * dist_cm +
+               467 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
@@ -158,7 +170,7 @@ void State(void *argument)
             static unsigned char VOFA[32];
             static USART_handle_t UART7_handle = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream0, .DMA_ID = 0}; // USB to TTL
 
-            sprintf((char *)VOFA, "T:%.2f,%d\n", VESC[PUSHSHOT_arrID].fdbk.spd, state_R.spd_ctrl ? 1000 : 0);
+            sprintf((char *)VOFA, "T:%.2f,%d\n", VESC[PUSHSHOT_arrID].fdbk.spd, state_R.spd_ctrl ? 500 : 0);
             UART_SendArray(&UART7_handle, VOFA, 16);
         }
 #endif
