@@ -16,10 +16,10 @@ struct
 
 __attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[19] = {0xA5};
 
-unsigned char CheckSum(unsigned char *data, unsigned char len)
+unsigned char CheckSum_1B(unsigned char *data, unsigned char len)
 {
     unsigned char temp = 0;
-    for (unsigned char cnt = 0; cnt < len; ++cnt)
+    for (unsigned char cnt = 0; cnt < len - 1; ++cnt)
     {
         temp += data[cnt];
     }
@@ -37,8 +37,8 @@ void Comm(void *argument)
         *(float *)&R1_Data[1] = temp = R1_pos.x + 0.24 * cos(R1_pos.yaw / R2D),
                 *(float *)&R1_Data[5] = temp = R1_pos.y + 0.24 * sin(R1_pos.yaw / R2D);
         R1_Data[17] = state_W.aim_R2 && state_R.brake,
-        R1_Data[18] = CheckSum(R1_Data, 14);
-        UART_SendArray(&UART5_handle, R1_Data, 19);
+        R1_Data[sizeof(R1_Data) - 1] = CheckSum_1B(R1_Data, sizeof(R1_Data));
+        UART_SendArray(&UART5_handle, R1_Data, sizeof(R1_Data));
 
         osDelay(20);
     }
@@ -191,16 +191,16 @@ void FDCAN3_IT0_IRQHandler(void)
 // R2 info
 void UART5_IRQHandler(void)
 {
-    static unsigned char RxData[11], cnt;
+    static unsigned char RxData[19], cnt;
 
     if (UART5->ISR & 0x20)
     {
         RxData[cnt++] = UART5->RDR;
 
         if (RxData[0] != 0xAA ||
-            cnt == 11 && CheckSum(RxData, 10) != RxData[10])
+            cnt == sizeof(RxData) && CheckSum_1B(RxData, sizeof(RxData)) != RxData[sizeof(RxData) - 1])
             cnt = 0;
-        else if (cnt == 11)
+        else if (cnt == sizeof(RxData))
         {
             err_cnt.R2_pos = err.R2_pos = 0; // clear error flag
 
@@ -208,12 +208,12 @@ void UART5_IRQHandler(void)
 
             R2_pos.x = *(float *)&RxData[1] / 1000,
             R2_pos.y = *(float *)&RxData[5] / 1000;
-            // basket_pos_R2.x = *(float *)&RxData[9] / 1000,
-            // basket_pos_R2.y = *(float *)&RxData[13] / 1000;
+            basket_pos_R2.x = *(float *)&RxData[9] / 1000,
+            basket_pos_R2.y = *(float *)&RxData[13] / 1000;
 
-            // err.coor = hypot(basket_pos.x - basket_pos_R2.x, basket_pos.y - basket_pos_R2.y) >= 0.05;
+            err.coor_unmatch = hypot(basket_pos.x - basket_pos_R2.x, basket_pos.y - basket_pos_R2.y) >= 0.05;
 
-            state_W.R2_NetUp = RxData[9];
+            state_W.R2_NetUp = RxData[17];
 
             R2_Pos_Process();
         }

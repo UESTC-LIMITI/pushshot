@@ -12,7 +12,7 @@ VESC_t VESC[VESC_NUM] = {
     {.ID = 1, .motor = &PUSHSHOT_MOTOR},
 };
 
-enum STATE state;
+enum STATE volatile state;
 
 struct STATE_R state_R = { // internal-change state
     .fitting = 1};

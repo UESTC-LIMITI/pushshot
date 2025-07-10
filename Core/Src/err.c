@@ -19,7 +19,9 @@ void Err(void *argument)
         if (err.R2_pos)
             R2_Pos_Process();
 
-        err.yaw_lim = HighTorque[GIMBAL_arrID].ctrl.pos == YAW_MAX || HighTorque[GIMBAL_arrID].ctrl.pos == YAW_MIN;
+        err.yaw_lim_exceed = HighTorque[GIMBAL_arrID].ctrl.pos == YAW_MAX || HighTorque[GIMBAL_arrID].ctrl.pos == YAW_MIN;
+
+        err.UV = VESC[PUSHSHOT_arrID].fdbk.volt < 24.3; // under voltage
 
         FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 1);
 

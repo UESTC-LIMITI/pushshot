@@ -45,10 +45,7 @@ void FDCAN2_IT0_IRQHandler(void)
         unsigned char RxData[8];
         HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0, &FDCAN_RxHeader, RxData);
 
-        VESC_MsgHandler(FDCAN_RxHeader.Identifier, PUSHSHOT_arrID, RxData);
-
-        // ESC not under voltage
-        if (VESC[PUSHSHOT_arrID].fdbk.volt >= 24.3)
+        if (VESC_MsgHandler(FDCAN_RxHeader.Identifier, PUSHSHOT_arrID, RxData))
             err_cnt.VESC = err.VESC = 0; // clear error flag
     }
 }

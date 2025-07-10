@@ -51,7 +51,7 @@ struct
 } HighTorque_param = {
     .pos0 = (YAW_MAX + YAW_MIN) / 2,
     .basket_offset = 11,
-    .R2_offset = -8};
+    .R2_offset = -4};
 
 float Fitting_AccCurr_Basket(float spd)
 {

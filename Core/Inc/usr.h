@@ -53,7 +53,7 @@ enum STATE
     LOCK,
     SHOT
 };
-extern enum STATE state;
+extern enum STATE volatile state;
 
 struct STATE_R
 {
@@ -86,8 +86,9 @@ struct ERR
         basket_pos : 1,
         R1_pos : 1,
         R2_pos : 1,
-        yaw_lim : 1;
-    // coor : 1;
+        yaw_lim_exceed : 1,
+        coor_unmatch : 1,
+        UV : 1;
 };
 extern struct ERR err;
 
