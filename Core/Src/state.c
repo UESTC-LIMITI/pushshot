@@ -50,7 +50,7 @@ struct
     const float pos0, basket_offset, R2_offset;
 } HighTorque_param = {
     .pos0 = (YAW_MAX + YAW_MIN) / 2,
-    .basket_offset = 11,
+    .basket_offset = 4,
     .R2_offset = -4};
 
 float Fitting_AccCurr_Basket(float spd)
@@ -74,12 +74,21 @@ float Fitting_AccCurr_Basket(float spd)
 
 float Fitting_AccCurr_R2(float spd)
 {
-    if (spd <= 600)
-        return 22;
-    else if (spd <= 700)
-        return (spd - 393) * 0.1;
+    // 10A, 400RPM
+    if (spd <= 400)
+        return 10;
+    // 15A, 500RPM
+    // 20A, 600RPM
+    else if (spd <= 600)
+        return (spd - 200) * 0.05;
+    // 30A, 700RPM
+    // 40A, 800RPM
+    else if (spd <= 800)
+        return (spd - 400) * 0.1;
+    // 50A, 850RPM
+    // 60A, 900RPM
     else
-        return (spd - 495) * 0.15;
+        return (spd - 600) * 0.2;
 }
 
 float Fitting_Spd_Basket(float dist_cm)
@@ -97,22 +106,21 @@ float Fitting_Spd_Basket(float dist_cm)
         return 0.5 * dist_cm +
                523 + spd_offset;
     else
-        return 0.6 * dist_cm +
-               467 + spd_offset;
+        return 0.55 * dist_cm +
+               495 + spd_offset;
+
+    return 0.55 * dist_cm +
+           495 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
 {
     if (dist_cm <= 275)
-        return dist_cm + 325 + spd_offset;
-    else if (dist_cm <= 350)
-        return -0.0056000000000007155 * pow(dist_cm, 2) +
-               4.3800000000003365 * dist_cm +
-               -187.00000000003354 + spd_offset;
-    else if (dist_cm <= 550)
-        return 0.6 * dist_cm + 450 + spd_offset;
+        return 0.92 * dist_cm + 340 + spd_offset;
+    else if (dist_cm <= 375)
+        return 0.76 * dist_cm + 384 + spd_offset;
     else
-        return 0.48 * dist_cm + 516 + spd_offset;
+        return 0.6 * dist_cm + 444 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetUp(float dist_cm)
