@@ -1,6 +1,8 @@
 #ifndef __USER_H
 #define __USER_H
 
+#include <stdbool.h>
+
 #include "main.h"
 #include "cmsis_os.h"
 #include "arm_math.h"

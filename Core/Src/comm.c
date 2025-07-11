@@ -76,10 +76,10 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0xE: // dribble end
         {
-            if (state == IDLE)
-                state = INIT_FAST;
-            else if (state == MID)
+            if (state == LOCK)
                 state = INIT_SLOW;
+            else if (state == IDLE || state == MID)
+                state = INIT_FAST;
             break;
         }
         case 0xF: // pass ball

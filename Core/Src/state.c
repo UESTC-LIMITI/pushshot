@@ -25,7 +25,7 @@ struct
     struct
     {
         float acc_curr, spd;
-        const float spd_ctrl_err, brake_curr, timeout, brake_time;
+        const float spd_ctrl_err, brake_curr, timeout, pg_abuse_detection_time, brake_time;
     } shot;
 } VESC_param = {
     .high_spd = -300,
@@ -43,6 +43,7 @@ struct
     .shot.spd_ctrl_err = 50,
     .shot.brake_curr = 30.1,
     .shot.timeout = 0.5,
+    .shot.pg_abuse_detection_time = 0.125,
     .shot.brake_time = 0.25};
 
 struct
@@ -93,24 +94,21 @@ float Fitting_AccCurr_R2(float spd)
 
 float Fitting_Spd_Basket(float dist_cm)
 {
-    if (dist_cm <= 260)
+    if (dist_cm <= 300)
         return 0.55 * dist_cm +
                495 + spd_offset;
-    else if (dist_cm <= 360)
+    else if (dist_cm <= 400)
+        return 0.65 * dist_cm +
+               465 + spd_offset;
+    else if (dist_cm <= 500)
         return 0.55 * dist_cm +
-               495 + spd_offset;
-    else if (dist_cm <= 460)
-        return 0.6 * dist_cm +
-               477 + spd_offset;
-    else if (dist_cm <= 560)
+               505 + spd_offset;
+    else if (dist_cm <= 600)
         return 0.5 * dist_cm +
-               523 + spd_offset;
+               530 + spd_offset;
     else
         return 0.55 * dist_cm +
-               495 + spd_offset;
-
-    return 0.55 * dist_cm +
-           495 + spd_offset;
+               500 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
@@ -320,14 +318,18 @@ void State(void *argument)
         // stay at position
         case LOCK:
         {
+            static bool stay_mid;
+
             // state initialization
             if (state != state_last)
             {
+                stay_mid = state_last == MID;
+
                 state_last = state;
             }
 
             // ball plate go up
-            if (state_W.ball && !PG_BTM)
+            if (!stay_mid && !PG_BTM)
             {
                 state = INIT_SLOW;
                 break;
@@ -354,9 +356,9 @@ void State(void *argument)
                 pg_abuse = false;
             }
 
-            if (TIMsw_CheckTimeout(&runtime, VESC_param.shot.timeout) || // timeout
-                state_R.brake ||                                         // brake
-                PG_TOP && !pg_abuse && runtime.intvl >= 0.1875)          // top photogate not abuse
+            if (TIMsw_CheckTimeout(&runtime, VESC_param.shot.timeout) ||                         // timeout
+                state_R.brake ||                                                                 // brake
+                PG_TOP && !pg_abuse && runtime.intvl >= VESC_param.shot.pg_abuse_detection_time) // top photogate not abuse
             {
                 if (!state_R.brake)
                     Brake_Trigger();
