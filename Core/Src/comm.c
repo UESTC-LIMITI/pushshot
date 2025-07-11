@@ -198,7 +198,7 @@ void UART5_IRQHandler(void)
             basket_pos_R2.x = *(float *)&RxData[9] / 1000,
             basket_pos_R2.y = *(float *)&RxData[13] / 1000;
 
-            err.coor_unmatch = hypot(basket_pos.x - basket_pos_R2.x, basket_pos.y - basket_pos_R2.y) >= 0.05;
+            err.coor_unmatch = ABS(basket_pos.x - basket_pos_R2.x) >= 0.07;
 
             state_W.R2_NetUp = RxData[17];
 

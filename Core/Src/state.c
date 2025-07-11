@@ -156,6 +156,9 @@ bool VESC_Stall(void)
 static float brake_trigger_time;
 void Brake_Trigger(void)
 {
+    if (state_R.brake)
+        return;
+
     brake_trigger_time = runtime.intvl;
     state_W.ball = state_R.spd_ctrl = 0;
     state_R.brake = 1;
@@ -360,9 +363,9 @@ void State(void *argument)
                 state_R.brake ||                                                                 // brake
                 PG_TOP && !pg_abuse && runtime.intvl >= VESC_param.shot.pg_abuse_detection_time) // top photogate not abuse
             {
-                if (!state_R.brake)
-                    Brake_Trigger();
-                else if (runtime.intvl >= brake_trigger_time + VESC_param.shot.brake_time) // total duration
+                Brake_Trigger();
+
+                if (runtime.intvl >= brake_trigger_time + VESC_param.shot.brake_time) // total duration
                 {
                     state_R.brake = 0;
                     state = IDLE;
