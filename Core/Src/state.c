@@ -2,6 +2,9 @@
 
 static enum STATE state_last;
 
+static MovAvgFltr_t curr_fltr = {.size = 48};
+static TIMsw_t OC_time;
+
 #define DATA_OUTPUT
 #ifdef DATA_OUTPUT
 #include <stdio.h>
@@ -31,7 +34,7 @@ struct
     .high_spd = -300,
     .low_spd = -150,
     .OC_curr = 30.1,
-    .OC_time = 0.25,
+    .OC_time = 0.125,
 
     .mid.time = 1,
 
@@ -119,8 +122,8 @@ float Fitting_Spd_R2_NetDown(float dist_cm)
         return 0.76 * dist_cm + 385 + spd_offset;
     else if (dist_cm <= 600)
         return 0.6 * dist_cm + 445 + spd_offset;
-		else 
-				return 0.6 * dist_cm + 439 + spd_offset;
+    else
+        return 0.6 * dist_cm + 439 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetUp(float dist_cm)
@@ -141,17 +144,14 @@ float Fitting_Spd_R2_NetUp(float dist_cm)
                16702.07294531602 + spd_offset;
 }
 
+void VESC_Stall_Init(void)
+{
+    MovAvgFltr_Clear(&curr_fltr);
+    TIMsw_Clear(&OC_time);
+}
+
 bool VESC_Stall(void)
 {
-    static MovAvgFltr_t curr_fltr = {.size = 48};
-    static TIMsw_t OC_time;
-
-    if (state != state_last)
-    {
-        MovAvgFltr_Clear(&curr_fltr);
-        TIMsw_Clear(&OC_time);
-    }
-
     if (MovAvgFltr(&curr_fltr, VESC[PUSHSHOT_arrID].fdbk.curr) >= VESC_param.OC_curr)
     {
         if (TIMsw_CheckTimeout(&OC_time, VESC_param.OC_time))
@@ -221,6 +221,7 @@ void State(void *argument)
             {
                 state_last = state;
 
+                VESC_Stall_Init();
                 TIMsw_Clear(&runtime);
                 revert = false;
             }
@@ -261,6 +262,7 @@ void State(void *argument)
             {
                 state_last = state;
 
+                VESC_Stall_Init();
                 TIMsw_Clear(&runtime);
             }
 
@@ -304,6 +306,8 @@ void State(void *argument)
             if (state != state_last)
             {
                 state_last = state;
+
+                VESC_Stall_Init();
             }
 
             // stall protection

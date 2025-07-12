@@ -12,7 +12,7 @@ struct
     float x, y;
 } R2_pos = {.x = 12.5, .y = -4},
   basket_pos = {.x = 14, .y = -4},
-  basket_pos_R2 = {.x = 14, .y = -4};
+  basket_pos_R2;
 
 unsigned char CheckSum_1B(unsigned char *data, unsigned char len)
 {
