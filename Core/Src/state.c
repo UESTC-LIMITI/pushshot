@@ -95,11 +95,11 @@ float Fitting_AccCurr_R2(float spd)
 float Fitting_Spd_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
-        return 0.55 * dist_cm +
-               495 + spd_offset;
+        return 0.6 * dist_cm +
+               485 + spd_offset;
     else if (dist_cm <= 400)
-        return 0.65 * dist_cm +
-               465 + spd_offset;
+        return 0.6 * dist_cm +
+               485 + spd_offset;
     else if (dist_cm <= 500)
         return 0.55 * dist_cm +
                505 + spd_offset;
@@ -114,21 +114,29 @@ float Fitting_Spd_Basket(float dist_cm)
 float Fitting_Spd_R2_NetDown(float dist_cm)
 {
     if (dist_cm <= 275)
-        return 0.92 * dist_cm + 340 + spd_offset;
+        return 0.92 * dist_cm + 334 + spd_offset;
     else if (dist_cm <= 375)
-        return 0.76 * dist_cm + 384 + spd_offset;
+        return 0.76 * dist_cm + 378 + spd_offset;
     else
-        return 0.6 * dist_cm + 444 + spd_offset;
+        return 0.6 * dist_cm + 438 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetUp(float dist_cm)
 {
-    return -5.750327304436271e-11 * pow(dist_cm, 5) +
-           1.4975612224951695e-7 * pow(dist_cm, 4) +
-           -0.0001507099019644187 * pow(dist_cm, 3) +
-           0.07246624426352355 * pow(dist_cm, 2) +
-           -15.975384144345298 * dist_cm +
-           1895.5957471418012 + spd_offset;
+    if (dist_cm >= 425)
+        return -5.251303860070305e-10 * pow(dist_cm, 5) +
+               0.0000013456466172456771 * pow(dist_cm, 4) +
+               -0.0013608635085802234 * pow(dist_cm, 3) +
+               0.6785576650872827 * pow(dist_cm, 2) +
+               -166.35306251049042 * dist_cm +
+               16712.07294531602 + spd_offset;
+    else
+        return -5.251303860070305e-10 * pow(dist_cm, 5) +
+               0.0000013456466172456771 * pow(dist_cm, 4) +
+               -0.0013608635085802234 * pow(dist_cm, 3) +
+               0.6785576650872827 * pow(dist_cm, 2) +
+               -166.35306251049042 * dist_cm +
+               16702.07294531602 + spd_offset;
 }
 
 bool VESC_Stall(void)
