@@ -117,11 +117,7 @@ extern unsigned char R1_Data[19];
 #define YAW_MIN -127
 #define YAW_MAX 135
 
-void FDCAN1_Init(void);
-void FDCAN2_Init(void);
-void FDCAN3_Init(void);
-void TIM7_Init(void);
-void UART5_Init(void);
+void PeriphInit(void);
 
 void R2_Pos_Process(void); // at Core/Src/comm.c
 

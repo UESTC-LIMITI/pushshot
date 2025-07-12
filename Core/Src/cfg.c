@@ -34,8 +34,6 @@ char spd_offset;
 
 __attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[19] = {0xA5};
 
-// call each function under corresponding init function created by CubeMX
-
 void FDCAN1_Init(void)
 {
     FDCAN_FilterTypeDef FDCAN_Filter;
@@ -117,8 +115,7 @@ void FDCAN3_Init(void)
     HAL_FDCAN_Start(&hfdcan3);
 }
 
-// TIMER
-void TIM7_Init(void)
+void TIMsw_Init(void)
 {
     TIM7->CR1 |= 1;
 }
@@ -127,4 +124,16 @@ void UART5_Init(void)
 {
     UART5->CR1 |= 0x20;
     UART5->CR3 |= 0x1;
+}
+
+// call after initialization function created by CubeMX
+void PeriphInit(void)
+{
+    FDCAN1_Init();
+    FDCAN2_Init();
+    FDCAN3_Init();
+    TIMsw_Init();
+    UART5_Init();
+
+    HAL_Delay(1000);
 }
