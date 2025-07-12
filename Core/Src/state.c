@@ -107,18 +107,20 @@ float Fitting_Spd_Basket(float dist_cm)
         return 0.5 * dist_cm +
                530 + spd_offset;
     else
-        return 0.55 * dist_cm +
-               500 + spd_offset;
+        return 0.5 * dist_cm +
+               530 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
 {
     if (dist_cm <= 275)
-        return 0.92 * dist_cm + 346 + spd_offset;
+        return 0.92 * dist_cm + 337 + spd_offset;
     else if (dist_cm <= 375)
-        return 0.76 * dist_cm + 390 + spd_offset;
-    else
-        return 0.6 * dist_cm + 450 + spd_offset;
+        return 0.76 * dist_cm + 385 + spd_offset;
+    else if (dist_cm <= 600)
+        return 0.6 * dist_cm + 445 + spd_offset;
+		else 
+				return 0.6 * dist_cm + 439 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetUp(float dist_cm)
