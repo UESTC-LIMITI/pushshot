@@ -134,7 +134,7 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0x105: // basket info from lidar
         {
-            err_cnt.basket_pos = err.basket_pos = 0; // clear error flag
+            err_cnt.basket_pos = 0; // clear error flag
 
             basket_pos.x = *(float *)RxData,
             basket_pos.y = *(float *)&RxData[4];
@@ -142,7 +142,7 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0x201: // position info from chassis
         {
-            err_cnt.R1_pos = err.R1_pos = 0; // clear error flag
+            err_cnt.R1_pos = 0; // clear error flag
 
             R1_pos.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D),
             R1_pos.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D),
@@ -189,7 +189,7 @@ void UART5_IRQHandler(void)
             cnt = 0;
         else if (cnt == sizeof(RxData))
         {
-            err_cnt.R2_pos = err.R2_pos = 0; // clear error flag
+            err_cnt.R2_pos = 0; // clear error flag
 
             cnt = 0;
 

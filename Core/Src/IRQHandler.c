@@ -27,7 +27,7 @@ void FDCAN1_IT0_IRQHandler(void)
 
         // gimbal not over heat
         if (HighTorque[GIMBAL_arrID].fdbk.temp <= 55)
-            err_cnt.HighTorque = err.HighTorque = 0; // clear error flag
+            err_cnt.HighTorque = 0; // clear error flag
         // gimbal over heat
         else if (HighTorque[GIMBAL_arrID].fdbk.temp >= 60)
             HighTorque[GIMBAL_arrID].ctrl.Kd = HighTorque[GIMBAL_arrID].ctrl.Kp = 0;
@@ -46,7 +46,7 @@ void FDCAN2_IT0_IRQHandler(void)
         HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0, &FDCAN_RxHeader, RxData);
 
         if (VESC_MsgHandler(FDCAN_RxHeader.Identifier, PUSHSHOT_arrID, RxData))
-            err_cnt.VESC = err.VESC = 0; // clear error flag
+            err_cnt.VESC = 0; // clear error flag
     }
 }
 

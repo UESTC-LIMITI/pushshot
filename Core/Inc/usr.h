@@ -96,7 +96,7 @@ extern struct ERR err;
 
 struct ERR_CNT
 {
-    unsigned char VESC,
+    unsigned short VESC,
         HighTorque,
         basket_pos,
         R1_pos,
