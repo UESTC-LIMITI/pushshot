@@ -5,7 +5,6 @@
 
 #include "main.h"
 #include "cmsis_os.h"
-#include "arm_math.h"
 
 #define TIMsw TIM7
 #define FDCAN_SUPPORT

@@ -1,4 +1,5 @@
 #include "usr.h"
+#include <stdlib.h>
 
 HighTorque_t HighTorque[HIGHTORQUE_NUM + 1] = {
     {.ID = 1,
@@ -126,6 +127,11 @@ void UART5_Init(void)
     UART5->CR3 |= 0x1;
 }
 
+void TIM6_Init(void)
+{
+    TIM6->CR1 |= 1;
+}
+
 // call after initialization function created by CubeMX
 void PeriphInit(void)
 {
@@ -134,6 +140,12 @@ void PeriphInit(void)
     FDCAN3_Init();
     TIMsw_Init();
     UART5_Init();
+    TIM6_Init();
 
-    HAL_Delay(1000);
+    {
+        TIMsw_t *init_time = malloc(sizeof(TIMsw_t));
+        while (!TIMsw_CheckTimeout(init_time, 1))
+            ;
+        free(init_time);
+    }
 }

@@ -1,4 +1,5 @@
 #include "usr.h"
+#include "arm_math.h"
 
 #define CENTRE_OFFSET 0.069
 
