@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "main.h"
-#include "cmsis_os.h"
+extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 
 #define TIMsw TIM7
 #define FDCAN_SUPPORT
@@ -21,10 +21,10 @@
 #include "fltr.h"
 
 // periph
-#define VESC_NUM 1
-#include "VESC.h"
 #define HIGHTORQUE_NUM 1
 #include "HighTorque.h"
+#define VESC_NUM 1
+#include "VESC.h"
 
 #define PUSHSHOT_arrID 0
 #define PUSHSHOT_MOTOR CUBEMARS_R100_KV90
@@ -41,9 +41,16 @@
 #define CYL3_PORT GPIOG
 #define CYL3_PIN GPIO_PIN_10
 
-extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
-
 // following variable and function at Core/Src/cfg.c
+
+extern unsigned char task_intvl_ms_cnt_State, task_intvl_ms_cnt_Err, task_intvl_ms_cnt_Comm;
+#define TASK_INTVL_ms_State 1
+#define TASK_INTVL_ms_Err 1
+#define TASK_INTVL_ms_Comm 20
+
+extern bool task_timeout;
+
+#define ERR_CODE_INTVL_ms 100
 
 enum STATE
 {
@@ -116,7 +123,13 @@ extern unsigned char R1_Data[19];
 #define YAW_MIN -127
 #define YAW_MAX 135
 
-void PeriphInit(void);
+void PeriphInit(void); // call after initialization function created by CubeMX
+void Scheduler(void);  // call in loop in main.c
+
+// task function
+void State(void);
+void Err(void);
+void Comm(void);
 
 void R2_Pos_Process(void); // at Core/Src/comm.c
 

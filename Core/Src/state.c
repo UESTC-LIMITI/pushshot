@@ -5,7 +5,6 @@ static enum STATE state_last;
 static MovAvgFltr_t curr_fltr = {.size = 48};
 static TIMsw_t OC_time;
 
-#define DATA_OUTPUT
 #ifdef DATA_OUTPUT
 #include <stdio.h>
 #endif
@@ -47,7 +46,8 @@ struct
     .shot.brake_curr = 30.1,
     .shot.timeout = 0.5,
     .shot.pg_abuse_detection_time = 0.125,
-    .shot.brake_time = 0.25};
+    .shot.brake_time = 0.25,
+};
 
 struct
 {
@@ -55,7 +55,8 @@ struct
 } HighTorque_param = {
     .pos0 = (YAW_MAX + YAW_MIN) / 2,
     .basket_offset = 4,
-    .R2_offset = -4};
+    .R2_offset = -4,
+};
 
 float Fitting_AccCurr_Basket(float spd)
 {
@@ -177,264 +178,258 @@ void Brake_Trigger(void)
     *(float *)&R1_Data[13] = brake_trigger_time;
 }
 
-void State(void *argument)
+void State(void)
 {
-    CYL3_PORT->ODR |= CYL3_PIN; // fan for lidar
-
-    while (1)
-    {
 #ifdef DATA_OUTPUT
-        if (state == SHOT && !state_R.brake)
-        {
-            static unsigned char VOFA[32];
-            static USART_handle_t UART7_handle = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream0, .DMA_ID = 0}; // USB to TTL
+    if (state == SHOT && !state_R.brake)
+    {
+        static unsigned char VOFA[32];
+        static USART_handle_t UART7_handle = {.USART_handle = UART7, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream0, .DMA_ID = 0}; // USB to TTL
 
-            sprintf((char *)VOFA, "T:%.2f,%d\n", VESC[PUSHSHOT_arrID].fdbk.spd, state_R.spd_ctrl ? 500 : 0);
-            UART_SendArray(&UART7_handle, VOFA, 16);
-        }
+        sprintf((char *)VOFA, "T:%.2f,%d\n", VESC[PUSHSHOT_arrID].fdbk.spd, state_R.spd_ctrl ? 500 : 0);
+        UART_SendArray(&UART7_handle, VOFA, 16);
+    }
 #endif
-        switch (state)
-        {
-        case IDLE:
-        {
-            // state initialization
-            if (state != state_last)
-            {
-                state_last = state;
-            }
 
-            VESC[PUSHSHOT_arrID].ctrl.curr = 0;
+    switch (state)
+    {
+    case IDLE:
+    {
+        // state initialization
+        if (state != state_last)
+        {
+            state_last = state;
+        }
 
-            // control
-            {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_CURR);
-            }
+        VESC[PUSHSHOT_arrID].ctrl.curr = 0;
+
+        // control
+        {
+            VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_CURR);
+        }
+        break;
+    }
+    // stay at middle
+    case MID:
+    {
+        static bool revert;
+
+        // state initialization
+        if (state != state_last)
+        {
+            state_last = state;
+
+            VESC_Stall_Init();
+            TIMsw_Clear(&runtime);
+            revert = false;
+        }
+
+        // stall protection
+        if (VESC_Stall())
+        {
+            state = IDLE;
             break;
         }
-        // stay at middle
-        case MID:
+
+        if (TIMsw_CheckTimeout(&runtime, VESC_param.mid.time))
         {
-            static bool revert;
-
-            // state initialization
-            if (state != state_last)
-            {
-                state_last = state;
-
-                VESC_Stall_Init();
-                TIMsw_Clear(&runtime);
-                revert = false;
-            }
-
-            // stall protection
-            if (VESC_Stall())
-            {
-                state = IDLE;
-                break;
-            }
-
-            if (TIMsw_CheckTimeout(&runtime, VESC_param.mid.time))
-            {
-                state = LOCK;
-                break;
-            }
-
-            if (PG_BTM)
-            {
-                TIMsw_Clear(&runtime);
-                revert = true;
-            }
-
-            VESC[PUSHSHOT_arrID].ctrl.spd = revert ? -VESC_param.low_spd
-                                                   : VESC_param.low_spd;
-
-            // control
-            {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_SPD);
-            }
+            state = LOCK;
             break;
         }
-        // spin to bottom fast
-        case INIT_FAST:
+
+        if (PG_BTM)
         {
-            // state initialization
-            if (state != state_last)
-            {
-                state_last = state;
+            TIMsw_Clear(&runtime);
+            revert = true;
+        }
 
-                VESC_Stall_Init();
-                TIMsw_Clear(&runtime);
-            }
+        VESC[PUSHSHOT_arrID].ctrl.spd = revert ? -VESC_param.low_spd
+                                               : VESC_param.low_spd;
 
-            // stall protection
-            if (VESC_Stall())
-            {
-                state = IDLE;
-                break;
-            }
+        // control
+        {
+            VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_SPD);
+        }
+        break;
+    }
+    // spin to bottom fast
+    case INIT_FAST:
+    {
+        // state initialization
+        if (state != state_last)
+        {
+            state_last = state;
 
-            // bottom photogate
-            if (PG_BTM)
-            {
-                state = LOCK;
-                break;
-            }
+            VESC_Stall_Init();
+            TIMsw_Clear(&runtime);
+        }
 
-            // low speed initialization
-            if (TIMsw_CheckTimeout(&runtime, VESC_param.init.high_spd_time))
-            {
-                VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.high_spd + (VESC_param.low_spd - VESC_param.high_spd) *
-                                                                          (runtime.intvl - VESC_param.init.high_spd_time < VESC_param.init.decelerate_time ? (runtime.intvl - VESC_param.init.high_spd_time) / VESC_param.init.decelerate_time
-                                                                                                                                                           : 1);
-            }
-            // high speed initialization
-            else
-            {
-                VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.high_spd;
-            }
-
-            // control
-            {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_SPD);
-            }
+        // stall protection
+        if (VESC_Stall())
+        {
+            state = IDLE;
             break;
         }
-        // spin to bottom slowly
-        case INIT_SLOW:
+
+        // bottom photogate
+        if (PG_BTM)
         {
-            // state initialization
-            if (state != state_last)
-            {
-                state_last = state;
-
-                VESC_Stall_Init();
-            }
-
-            // stall protection
-            if (VESC_Stall())
-            {
-                state = IDLE;
-                break;
-            }
-
-            // bottom photogate
-            if (PG_BTM)
-            {
-                state = LOCK;
-                break;
-            }
-
-            VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.low_spd;
-
-            // control
-            {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_SPD);
-            }
+            state = LOCK;
             break;
         }
-        // stay at position
-        case LOCK:
+
+        // low speed initialization
+        if (TIMsw_CheckTimeout(&runtime, VESC_param.init.high_spd_time))
         {
-            static bool stay_mid;
-
-            // state initialization
-            if (state != state_last)
-            {
-                stay_mid = state_last == MID;
-
-                state_last = state;
-            }
-
-            // ball plate go up
-            if (!stay_mid && !PG_BTM)
-            {
-                state = INIT_SLOW;
-                break;
-            }
-
-            VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.lock.curr;
-
-            // control
-            {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_CURR);
-            }
-            break;
+            VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.high_spd + (VESC_param.low_spd - VESC_param.high_spd) *
+                                                                      (runtime.intvl - VESC_param.init.high_spd_time < VESC_param.init.decelerate_time ? (runtime.intvl - VESC_param.init.high_spd_time) / VESC_param.init.decelerate_time
+                                                                                                                                                       : 1);
         }
-        case SHOT:
+        // high speed initialization
+        else
         {
-            static bool pg_abuse;
-
-            // state initialization
-            if (state != state_last)
-            {
-                state_last = state;
-
-                TIMsw_Clear(&runtime);
-                pg_abuse = false;
-            }
-
-            if (TIMsw_CheckTimeout(&runtime, VESC_param.shot.timeout) ||                         // timeout
-                state_R.brake ||                                                                 // brake
-                PG_TOP && !pg_abuse && runtime.intvl >= VESC_param.shot.pg_abuse_detection_time) // top photogate not abuse
-            {
-                Brake_Trigger();
-
-                if (runtime.intvl >= brake_trigger_time + VESC_param.shot.brake_time) // total duration
-                {
-                    state_R.brake = 0;
-                    state = IDLE;
-                    break;
-                }
-            }
-            else if (PG_TOP)
-                pg_abuse = true;
-
-            // shot parameter calculation
-            if (state_R.brake)
-                VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.brake_curr;
-            else if (!state_R.spd_ctrl)
-            {
-                if (state_R.fitting &&
-                    (VESC_param.shot.spd = state_W.aim_R2 ? state_W.R2_NetUp ? Fitting_Spd_R2_NetUp(R2_info.dist_cm)
-                                                                             : Fitting_Spd_R2_NetDown(R2_info.dist_cm)
-                                                          : Fitting_Spd_Basket(basket_info.dist_cm)) < 0)
-                    VESC_param.shot.spd = 0;
-                VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.shot.spd;
-
-                VESC_param.shot.acc_curr = state_W.aim_R2 ? Fitting_AccCurr_R2(VESC_param.shot.spd)
-                                                          : Fitting_AccCurr_Basket(VESC_param.shot.spd);
-                LIMIT(VESC_param.shot.acc_curr, PUSHSHOT_MOTOR.curr_max);
-                VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.acc_curr;
-
-                state_R.spd_ctrl = VESC_param.shot.spd - VESC[PUSHSHOT_arrID].fdbk.spd <= VESC_param.shot.spd_ctrl_err; // switch control mode
-            }
-
-            // control
-            {
-                VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, state_R.brake ? VESC_SET_CURR_BRAKE : (state_R.spd_ctrl ? VESC_SET_SPD : VESC_SET_CURR));
-            }
-            break;
-        }
-        }
-
-        if (state_W.gimbal) // gimbal enabled
-        {
-            // aim at R2
-            if (state_W.aim_R2 && R2_info.dist_cm <= 900)
-                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0 + HighTorque_param.R2_offset +
-                                                    (R2_yaw_prev + (R2_info.yaw - R2_yaw_prev) * TIMsw_GetRatio(&R2_yaw_time, R2_msg_intvl.intvl)) * Gimbal_GR;
-            // aim at basket
-            else if (!state_W.aim_R2 && basket_info.dist_cm <= 900)
-                HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0 + HighTorque_param.basket_offset +
-                                                    basket_info.yaw * Gimbal_GR;
-            LIMIT_RANGE(HighTorque[GIMBAL_arrID].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
+            VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.high_spd;
         }
 
         // control
         {
-            HighTorque_SetMixParam_f(&hfdcan1, GIMBAL_arrID);
+            VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_SPD);
+        }
+        break;
+    }
+    // spin to bottom slowly
+    case INIT_SLOW:
+    {
+        // state initialization
+        if (state != state_last)
+        {
+            state_last = state;
+
+            VESC_Stall_Init();
         }
 
-        osDelay(1);
+        // stall protection
+        if (VESC_Stall())
+        {
+            state = IDLE;
+            break;
+        }
+
+        // bottom photogate
+        if (PG_BTM)
+        {
+            state = LOCK;
+            break;
+        }
+
+        VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.low_spd;
+
+        // control
+        {
+            VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_SPD);
+        }
+        break;
+    }
+    // stay at position
+    case LOCK:
+    {
+        static bool stay_mid;
+
+        // state initialization
+        if (state != state_last)
+        {
+            stay_mid = state_last == MID;
+
+            state_last = state;
+        }
+
+        // ball plate go up
+        if (!stay_mid && !PG_BTM)
+        {
+            state = INIT_SLOW;
+            break;
+        }
+
+        VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.lock.curr;
+
+        // control
+        {
+            VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, VESC_SET_CURR);
+        }
+        break;
+    }
+    case SHOT:
+    {
+        static bool pg_abuse;
+
+        // state initialization
+        if (state != state_last)
+        {
+            state_last = state;
+
+            TIMsw_Clear(&runtime);
+            pg_abuse = false;
+        }
+
+        if (TIMsw_CheckTimeout(&runtime, VESC_param.shot.timeout) ||                         // timeout
+            state_R.brake ||                                                                 // brake
+            PG_TOP && !pg_abuse && runtime.intvl >= VESC_param.shot.pg_abuse_detection_time) // top photogate not abuse
+        {
+            Brake_Trigger();
+
+            if (runtime.intvl >= brake_trigger_time + VESC_param.shot.brake_time) // total duration
+            {
+                state_R.brake = 0;
+                state = IDLE;
+                break;
+            }
+        }
+        else if (PG_TOP)
+            pg_abuse = true;
+
+        // shot parameter calculation
+        if (state_R.brake)
+            VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.brake_curr;
+        else if (!state_R.spd_ctrl)
+        {
+            if (state_R.fitting &&
+                (VESC_param.shot.spd = state_W.aim_R2 ? state_W.R2_NetUp ? Fitting_Spd_R2_NetUp(R2_info.dist_cm)
+                                                                         : Fitting_Spd_R2_NetDown(R2_info.dist_cm)
+                                                      : Fitting_Spd_Basket(basket_info.dist_cm)) < 0)
+                VESC_param.shot.spd = 0;
+            VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.shot.spd;
+
+            VESC_param.shot.acc_curr = state_W.aim_R2 ? Fitting_AccCurr_R2(VESC_param.shot.spd)
+                                                      : Fitting_AccCurr_Basket(VESC_param.shot.spd);
+            LIMIT(VESC_param.shot.acc_curr, PUSHSHOT_MOTOR.curr_max);
+            VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.acc_curr;
+
+            state_R.spd_ctrl = VESC_param.shot.spd - VESC[PUSHSHOT_arrID].fdbk.spd <= VESC_param.shot.spd_ctrl_err; // switch control mode
+        }
+
+        // control
+        {
+            VESC_SendCmd(&hfdcan2, PUSHSHOT_arrID, state_R.brake ? VESC_SET_CURR_BRAKE : (state_R.spd_ctrl ? VESC_SET_SPD : VESC_SET_CURR));
+        }
+        break;
+    }
+    }
+
+    if (state_W.gimbal) // gimbal enabled
+    {
+        // aim at R2
+        if (state_W.aim_R2 && R2_info.dist_cm <= 900)
+            HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0 + HighTorque_param.R2_offset +
+                                                (R2_yaw_prev + (R2_info.yaw - R2_yaw_prev) * TIMsw_GetRatio(&R2_yaw_time, R2_msg_intvl.intvl)) * Gimbal_GR;
+        // aim at basket
+        else if (!state_W.aim_R2 && basket_info.dist_cm <= 900)
+            HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0 + HighTorque_param.basket_offset +
+                                                basket_info.yaw * Gimbal_GR;
+        LIMIT_RANGE(HighTorque[GIMBAL_arrID].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
+    }
+
+    // control
+    {
+        HighTorque_SetMixParam_f(&hfdcan1, GIMBAL_arrID);
     }
 }

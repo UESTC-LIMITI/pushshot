@@ -2,10 +2,12 @@
 #include <stdlib.h>
 
 HighTorque_t HighTorque[HIGHTORQUE_NUM + 1] = {
-    {.ID = 1,
-     .ctrl.pos = (YAW_MAX + YAW_MIN) / 2,
-     .ctrl.Kp = 2,
-     .ctrl.Kd = 1},
+    {
+        .ID = 1,
+        .ctrl.pos = (YAW_MAX + YAW_MIN) / 2,
+        .ctrl.Kp = 2,
+        .ctrl.Kd = 1,
+    },
     {.ID = HIGHTORQUE_ID_BCAST},
 };
 
@@ -13,17 +15,26 @@ VESC_t VESC[VESC_NUM] = {
     {.ID = 1, .motor = &PUSHSHOT_MOTOR},
 };
 
+unsigned char task_intvl_ms_cnt_State = TASK_INTVL_ms_State, task_intvl_ms_cnt_Err = TASK_INTVL_ms_Err, task_intvl_ms_cnt_Comm = TASK_INTVL_ms_Comm;
+
+bool task_timeout;
+
 enum STATE volatile state;
 
-struct STATE_R state_R = { // internal-change state
-    .fitting = 1};
+struct STATE_R state_R = {.fitting = 1}; // internal-change state
 
 struct STATE_W state_W; // external-change state
 
 struct target_info basket_info = {.dist_fltr.size = 16, .yaw_fltr.size = 16},
                    R2_info = {.dist_fltr.size = 4, .yaw_fltr.size = 4};
 
-struct ERR err;
+struct ERR err = {
+    .VESC = 1,
+    .HighTorque = 1,
+    .basket_pos = 1,
+    .R1_pos = 1,
+    .R2_pos = 1,
+};
 
 struct ERR_CNT err_cnt;
 
@@ -118,7 +129,7 @@ void FDCAN3_Init(void)
 
 void TIMsw_Init(void)
 {
-    TIM7->CR1 |= 1;
+    TIM7->CR1 |= 0x1;
 }
 
 void UART5_Init(void)
@@ -129,10 +140,10 @@ void UART5_Init(void)
 
 void TIM6_Init(void)
 {
-    TIM6->CR1 |= 1;
+    TIM6->DIER |= 0x1;
+    TIM6->CR1 |= 0x5;
 }
 
-// call after initialization function created by CubeMX
 void PeriphInit(void)
 {
     FDCAN1_Init();
@@ -140,12 +151,39 @@ void PeriphInit(void)
     FDCAN3_Init();
     TIMsw_Init();
     UART5_Init();
-    TIM6_Init();
 
     {
         TIMsw_t *init_time = malloc(sizeof(TIMsw_t));
         while (!TIMsw_CheckTimeout(init_time, 1))
             ;
         free(init_time);
+    }
+}
+
+void Scheduler(void)
+{
+    CYL3_PORT->ODR |= CYL3_PIN; // fan for lidar
+
+    TIM6_Init();
+
+    while (1)
+    {
+        if (task_intvl_ms_cnt_State == TASK_INTVL_ms_State)
+        {
+            task_intvl_ms_cnt_State = 0;
+            State();
+        }
+
+        if (task_intvl_ms_cnt_Err == TASK_INTVL_ms_Err)
+        {
+            task_intvl_ms_cnt_Err = 0;
+            Err();
+        }
+
+        if (task_intvl_ms_cnt_Comm == TASK_INTVL_ms_Comm)
+        {
+            task_intvl_ms_cnt_Comm = 0;
+            Comm();
+        }
     }
 }

@@ -57,3 +57,24 @@ void EXTI1_IRQHandler(void)
     if (PG_TOP && state == SHOT)
         Brake_Trigger();
 }
+
+// timer for scheduler
+void TIM6_DAC_IRQHandler(void)
+{
+    TIM6->SR &= ~0x1;
+
+    if (task_intvl_ms_cnt_State == TASK_INTVL_ms_State)
+        task_timeout = true;
+    else
+        ++task_intvl_ms_cnt_State;
+
+    if (task_intvl_ms_cnt_Err == TASK_INTVL_ms_Err)
+        task_timeout = true;
+    else
+        ++task_intvl_ms_cnt_Err;
+
+    if (task_intvl_ms_cnt_Comm == TASK_INTVL_ms_Comm)
+        task_timeout = true;
+    else
+        ++task_intvl_ms_cnt_Comm;
+}

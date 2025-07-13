@@ -25,22 +25,17 @@ unsigned char CheckSum_1B(unsigned char *data, unsigned char len)
     return temp;
 }
 
-void Comm(void *argument)
+void Comm(void)
 {
-    while (1)
-    {
-        static USART_handle_t UART5_handle = {.USART_handle = UART5, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream1, .DMA_ID = 1}; // dual robot communication Tx
-        float temp;
+    static USART_handle_t UART5_handle = {.USART_handle = UART5, .DMA_handle = DMA1, .DMA_subhandle = DMA1_Stream1, .DMA_ID = 1}; // dual robot communication Tx
 
-        // dual robot communication
-        *(float *)&R1_Data[1] = temp = R1_pos.x + 0.24 * cos(R1_pos.yaw / R2D),
-                *(float *)&R1_Data[5] = temp = R1_pos.y + 0.24 * sin(R1_pos.yaw / R2D);
-        R1_Data[17] = state_W.aim_R2 && state_R.brake,
-        R1_Data[sizeof(R1_Data) - 1] = CheckSum_1B(R1_Data, sizeof(R1_Data));
-        UART_SendArray(&UART5_handle, R1_Data, sizeof(R1_Data));
-
-        osDelay(20);
-    }
+    // dual robot communication
+    float temp;
+    *(float *)&R1_Data[1] = temp = R1_pos.x + 0.24 * cos(R1_pos.yaw / R2D),
+            *(float *)&R1_Data[5] = temp = R1_pos.y + 0.24 * sin(R1_pos.yaw / R2D);
+    R1_Data[17] = state_W.aim_R2 && state_R.brake,
+    R1_Data[sizeof(R1_Data) - 1] = CheckSum_1B(R1_Data, sizeof(R1_Data));
+    UART_SendArray(&UART5_handle, R1_Data, sizeof(R1_Data));
 }
 
 void FDCAN3_IT0_IRQHandler(void)
