@@ -402,11 +402,11 @@ void State(void)
         // aim at R2
         if (state_W.aim_R2 && R2_info.dist_cm <= 900)
             HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0 + HighTorque_param.R2_offset +
-                                                (R2_yaw_prev + (R2_info.yaw - R2_yaw_prev) * TIMsw_GetRatio(&R2_yaw_time, R2_msg_intvl.intvl)) * Gimbal_GR;
+                                                (R2_yaw_prev + (R2_info.yaw - R2_yaw_prev) * TIMsw_GetRatio(&R2_yaw_time, R2_msg_intvl.intvl)) * GIMBAL_GR;
         // aim at basket
         else if (!state_W.aim_R2 && basket_info.dist_cm <= 900)
             HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0 + HighTorque_param.basket_offset +
-                                                basket_info.yaw * Gimbal_GR;
+                                                basket_info.yaw * GIMBAL_GR;
         LIMIT_RANGE(HighTorque[GIMBAL_arrID].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
     }
 

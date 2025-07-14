@@ -1,7 +1,7 @@
 #include "usr.h"
 #include "arm_math.h"
 
-#define CENTRE_OFFSET 0.069
+#define CENTRE_OFFSET 0.138
 
 struct
 {
@@ -145,7 +145,7 @@ void FDCAN3_IT0_IRQHandler(void)
             R1_pos.yaw = *(float *)&RxData[16];
 
             // gimbal feedforward associated with angular velocity of chassis
-            HighTorque[GIMBAL_arrID].ctrl.spd = state_W.gimbal && state_W.ball ? -*(float *)&RxData[20] * Gimbal_GR *
+            HighTorque[GIMBAL_arrID].ctrl.spd = state_W.gimbal && state_W.ball ? -*(float *)&RxData[20] * GIMBAL_GR *
                                                                                      // feedforward gain associated with available angle
                                                                                      (-*(float *)&RxData[20] >= 0 ? YAW_MAX - HighTorque[GIMBAL_arrID].fdbk.pos
                                                                                                                   : HighTorque[GIMBAL_arrID].fdbk.pos - YAW_MIN) /

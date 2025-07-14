@@ -118,7 +118,7 @@ extern char spd_offset;
 
 extern unsigned char R1_Data[19];
 
-#define Gimbal_GR (14.6875 * 1) // real gear ratio * gain
+#define GIMBAL_GR (507/23.f)
 
 #define YAW_MIN -127
 #define YAW_MAX 135
