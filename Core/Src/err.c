@@ -11,10 +11,10 @@ void Err(void)
             R2_pos;
     } timeout_ms = {
         .VESC = 2,
-        .HighTorque = 5,
-        .basket_pos = 100,
-        .R1_pos = 5,
-        .R2_pos = 50,
+        .HighTorque = 4,
+        .basket_pos = 125,
+        .R1_pos = 2,
+        .R2_pos = 40,
     };
 
     for (unsigned char cnt = 0; cnt < 5; cnt++) // 5 timeout error

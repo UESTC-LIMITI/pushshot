@@ -50,7 +50,7 @@ extern unsigned char task_intvl_ms_cnt_State, task_intvl_ms_cnt_Err, task_intvl_
 
 extern bool task_timeout;
 
-#define ERR_CODE_INTVL_ms 100
+#define ERR_CODE_INTVL_ms 10
 
 enum STATE
 {

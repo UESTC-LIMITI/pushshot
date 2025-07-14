@@ -54,30 +54,14 @@ struct
     const float pos0, basket_offset, R2_offset;
 } HighTorque_param = {
     .pos0 = (YAW_MAX + YAW_MIN) / 2,
-    .basket_offset = 4,
+    .basket_offset = 7,
     .R2_offset = -4,
 };
 
-float Fitting_AccCurr_Basket(float spd)
-{
-    // 10A, 400RPM
-    if (spd <= 400)
-        return 10;
-    // 15A, 500RPM
-    // 20A, 600RPM
-    else if (spd <= 600)
-        return (spd - 200) * 0.05;
-    // 30A, 700RPM
-    // 40A, 800RPM
-    else if (spd <= 800)
-        return (spd - 400) * 0.1;
-    // 50A, 850RPM
-    // 60A, 900RPM
-    else
-        return (spd - 600) * 0.2;
-}
+static float brake_trigger_time;
+float end_spd;
 
-float Fitting_AccCurr_R2(float spd)
+float Fitting_AccCurr(float spd)
 {
     // 10A, 400RPM
     if (spd <= 400)
@@ -99,20 +83,20 @@ float Fitting_AccCurr_R2(float spd)
 float Fitting_Spd_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
-        return 0.6 * dist_cm +
-               485 + spd_offset;
-    else if (dist_cm <= 400)
-        return 0.6 * dist_cm +
-               485 + spd_offset;
-    else if (dist_cm <= 500)
         return 0.55 * dist_cm +
                505 + spd_offset;
+    else if (dist_cm <= 400)
+        return 0.6 * dist_cm +
+               490 + spd_offset;
+    else if (dist_cm <= 500)
+        return 0.55 * dist_cm +
+               510 + spd_offset;
     else if (dist_cm <= 600)
         return 0.5 * dist_cm +
-               530 + spd_offset;
+               535 + spd_offset;
     else
         return 0.5 * dist_cm +
-               530 + spd_offset;
+               535 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
@@ -164,7 +148,6 @@ bool VESC_Stall(void)
     return false;
 }
 
-static float brake_trigger_time;
 void Brake_Trigger(void)
 {
     if (state_R.brake)
@@ -174,7 +157,7 @@ void Brake_Trigger(void)
     state_W.ball = state_R.spd_ctrl = 0;
     state_R.brake = 1;
 
-    *(float *)&R1_Data[9] = VESC[PUSHSHOT_arrID].fdbk.spd;
+    *(float *)&R1_Data[9] = end_spd = VESC[PUSHSHOT_arrID].fdbk.spd;
     *(float *)&R1_Data[13] = brake_trigger_time;
 }
 
@@ -399,8 +382,7 @@ void State(void)
                 VESC_param.shot.spd = 0;
             VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.shot.spd;
 
-            VESC_param.shot.acc_curr = state_W.aim_R2 ? Fitting_AccCurr_R2(VESC_param.shot.spd)
-                                                      : Fitting_AccCurr_Basket(VESC_param.shot.spd);
+            VESC_param.shot.acc_curr = Fitting_AccCurr(VESC_param.shot.spd);
             LIMIT(VESC_param.shot.acc_curr, PUSHSHOT_MOTOR.curr_max);
             VESC[PUSHSHOT_arrID].ctrl.curr = VESC_param.shot.acc_curr;
 
