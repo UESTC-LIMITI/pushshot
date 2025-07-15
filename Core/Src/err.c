@@ -52,7 +52,7 @@ void Err(void)
 
     {
         static unsigned char intvl_ms_cnt;
-        if (intvl_ms_cnt++ == ERR_CODE_INTVL_ms)
+        if (++intvl_ms_cnt == ERR_CODE_INTVL_ms)
         {
             FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 1);
             intvl_ms_cnt = 0;

@@ -51,9 +51,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/IRQHandler.c"
     "Core/Src/state.c"
 
-    "/home/chosen/Desktop/software_engineering/lib/algorithm/fltr.c"
-    "/home/chosen/Desktop/software_engineering/lib/periph/VESC.c"
-    "/home/chosen/Desktop/software_engineering/lib/periph/HighTorque.c"
+    "/home/chosen/Desktop/lib/algorithm/fltr.c"
+    "/home/chosen/Desktop/lib/periph/VESC.c"
+    "/home/chosen/Desktop/lib/periph/HighTorque.c"
 )
 
 # Add include paths
@@ -61,10 +61,10 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     "Core/Inc"
 
-    "/home/chosen/Desktop/software_engineering/lib/hw"
-    "/home/chosen/Desktop/software_engineering/lib/algorithm"
-    "/home/chosen/Desktop/software_engineering/lib/periph"
-    "/home/chosen/Desktop/software_engineering/CMSIS-DSP/1.16.2/Include"
+    "/home/chosen/Desktop/lib/hw"
+    "/home/chosen/Desktop/lib/algorithm"
+    "/home/chosen/Desktop/lib/periph"
+    "/home/chosen/Desktop/CMSIS-DSP/1.16.2/Include"
 )
 
 # Add project symbols (macros)

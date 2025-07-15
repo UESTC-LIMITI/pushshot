@@ -152,12 +152,9 @@ void PeriphInit(void)
     TIMsw_Init();
     UART5_Init();
 
-    {
-        TIMsw_t *init_time = malloc(sizeof(TIMsw_t));
-        while (!TIMsw_CheckTimeout(init_time, 1))
-            ;
-        free(init_time);
-    }
+    TIMsw_t init_time = TIMsw_InitStruct;
+    while (!TIMsw_CheckTimeout(&init_time, 1))
+        ;
 }
 
 void Scheduler(void)
