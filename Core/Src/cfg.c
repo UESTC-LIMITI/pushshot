@@ -4,9 +4,9 @@
 HighTorque_t HighTorque[HIGHTORQUE_NUM + 1] = {
     {
         .ID = 1,
-        .ctrl.pos = (YAW_MAX + YAW_MIN) / 2,
-        .ctrl.Kp = 2,
-        .ctrl.Kd = 1,
+        .ctrl.pos = GIMBAL_0,
+        .ctrl.Kp = 0.125,
+        .ctrl.Kd = 0.25,
     },
     {.ID = HIGHTORQUE_ID_BCAST},
 };
@@ -159,6 +159,7 @@ void PeriphInit(void)
 
 void Scheduler(void)
 {
+    CYL2_PORT->ODR |= CYL2_PIN; // fan for HighTorque
     CYL3_PORT->ODR |= CYL3_PIN; // fan for lidar
 
     TIM6_Init();

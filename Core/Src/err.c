@@ -46,9 +46,9 @@ void Err(void)
             timeout_ms_cnt = 0;
     }
 
-    err.yaw_lim_exceed = HighTorque[GIMBAL_arrID].ctrl.pos == YAW_MAX || HighTorque[GIMBAL_arrID].ctrl.pos == YAW_MIN;
+    err.yaw_lim_exceed = HighTorque[GIMBAL_arrID].ctrl.pos == GIMBAL_MAX || HighTorque[GIMBAL_arrID].ctrl.pos == GIMBAL_MIN;
 
-    err.UV = VESC[PUSHSHOT_arrID].fdbk.volt < 24.3; // under voltage
+    err.UV = VESC[PUSHSHOT_arrID].fdbk.volt < 24; // under voltage
 
     {
         static unsigned char intvl_ms_cnt;

@@ -51,11 +51,10 @@ struct
 
 struct
 {
-    const float pos0, basket_offset, R2_offset;
+    const float basket_offset, R2_offset;
 } HighTorque_param = {
-    .pos0 = (YAW_MAX + YAW_MIN) / 2,
-    .basket_offset = 7,
-    .R2_offset = -4,
+    .basket_offset = 5,
+    .R2_offset = 0,
 };
 
 static float brake_trigger_time;
@@ -67,36 +66,36 @@ float Fitting_AccCurr(float spd)
     if (spd <= 400)
         return 10;
     // 15A, 500RPM
-    // 20A, 600RPM
-    else if (spd <= 600)
-        return (spd - 200) * 0.05;
-    // 30A, 700RPM
-    // 40A, 800RPM
+    else if (spd <= 500)
+        return spd * 0.05 - 10;
+    // 25A, 600RPM
+    // 35A, 700RPM
+    // 45A, 800RPM
     else if (spd <= 800)
-        return (spd - 400) * 0.1;
-    // 50A, 850RPM
-    // 60A, 900RPM
+        return spd * 0.1 - 35;
+    // 55A, 850RPM
+    // 65A, 900RPM
     else
-        return (spd - 600) * 0.2;
+        return spd * 0.2 - 115;
 }
 
 float Fitting_Spd_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
         return 0.55 * dist_cm +
-               505 + spd_offset;
+               500 + spd_offset;
     else if (dist_cm <= 400)
         return 0.6 * dist_cm +
-               490 + spd_offset;
+               485 + spd_offset;
     else if (dist_cm <= 500)
         return 0.55 * dist_cm +
-               510 + spd_offset;
+               505 + spd_offset;
     else if (dist_cm <= 600)
         return 0.5 * dist_cm +
-               535 + spd_offset;
+               530 + spd_offset;
     else
         return 0.5 * dist_cm +
-               535 + spd_offset;
+               530 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
@@ -401,13 +400,13 @@ void State(void)
     {
         // aim at R2
         if (state_W.aim_R2 && R2_info.dist_cm <= 900)
-            HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0 + HighTorque_param.R2_offset +
+            HighTorque[GIMBAL_arrID].ctrl.pos = GIMBAL_0 + HighTorque_param.R2_offset +
                                                 (R2_yaw_prev + (R2_info.yaw - R2_yaw_prev) * TIMsw_GetRatio(&R2_yaw_time, R2_msg_intvl.intvl)) * GIMBAL_GR;
         // aim at basket
         else if (!state_W.aim_R2 && basket_info.dist_cm <= 900)
-            HighTorque[GIMBAL_arrID].ctrl.pos = HighTorque_param.pos0 + HighTorque_param.basket_offset +
+            HighTorque[GIMBAL_arrID].ctrl.pos = GIMBAL_0 + HighTorque_param.basket_offset +
                                                 basket_info.yaw * GIMBAL_GR;
-        LIMIT_RANGE(HighTorque[GIMBAL_arrID].ctrl.pos, YAW_MIN, YAW_MAX); // gimbal limit
+        LIMIT_RANGE(HighTorque[GIMBAL_arrID].ctrl.pos, GIMBAL_MIN, GIMBAL_MAX); // gimbal limit
     }
 
     // control

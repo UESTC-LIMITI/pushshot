@@ -118,10 +118,11 @@ extern char spd_offset;
 
 extern unsigned char R1_Data[19];
 
-#define GIMBAL_GR (507/23.f)
+#define GIMBAL_MIN -209
+#define GIMBAL_MAX 202
 
-#define YAW_MIN -127
-#define YAW_MAX 135
+#define GIMBAL_0 ((GIMBAL_MAX + GIMBAL_MIN) / 2)
+#define GIMBAL_GR (507 / 23.f)
 
 void PeriphInit(void); // call after initialization function created by CubeMX
 void Scheduler(void);  // call in loop in main.c
