@@ -10,10 +10,10 @@ void Err(void)
             R1_pos,
             R2_pos;
     } timeout_ms = {
-        .VESC = 2,
-        .HighTorque = 4,
+        .VESC = 1,
+        .HighTorque = 1,
         .basket_pos = 125,
-        .R1_pos = 2,
+        .R1_pos = 1,
         .R2_pos = 40,
     };
 

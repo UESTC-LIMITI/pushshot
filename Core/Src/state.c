@@ -35,7 +35,7 @@ struct
     .OC_curr = 30.1,
     .OC_time = 0.125,
 
-    .mid.time = 1,
+    .mid.time = 0.375,
 
     .init.high_spd_time = 0.375,
     .init.decelerate_time = 0.25,
@@ -212,7 +212,14 @@ void State(void)
         // state initialization
         if (state != state_last)
         {
-            state_last = state;
+            if (state_last != MID)
+                state_last = state;
+        }
+
+        if (state_last != MID && PG_TOP)
+        {
+            state = MID;
+            break;
         }
 
         VESC[PUSHSHOT_arrID].ctrl.curr = 0;
@@ -226,8 +233,6 @@ void State(void)
     // stay at middle
     case MID:
     {
-        static bool revert;
-
         // state initialization
         if (state != state_last)
         {
@@ -235,7 +240,6 @@ void State(void)
 
             VESC_Stall_Init();
             TIMsw_Clear(&runtime);
-            revert = false;
         }
 
         // stall protection
@@ -250,15 +254,12 @@ void State(void)
             state = LOCK;
             break;
         }
-
-        if (PG_BTM)
+        else if (PG_TOP)
         {
             TIMsw_Clear(&runtime);
-            revert = true;
         }
 
-        VESC[PUSHSHOT_arrID].ctrl.spd = revert ? -VESC_param.low_spd
-                                               : VESC_param.low_spd;
+        VESC[PUSHSHOT_arrID].ctrl.spd = VESC_param.low_spd;
 
         // control
         {
@@ -285,11 +286,14 @@ void State(void)
             break;
         }
 
-        // bottom photogate
         if (PG_BTM)
         {
             state = LOCK;
             break;
+        }
+        else if (PG_TOP)
+        {
+            TIMsw_Clear(&runtime);
         }
 
         // low speed initialization
@@ -347,18 +351,15 @@ void State(void)
     // stay at position
     case LOCK:
     {
-        static bool stay_mid;
-
         // state initialization
         if (state != state_last)
         {
-            stay_mid = state_last == MID;
-
-            state_last = state;
+            if (state_last != MID)
+                state_last = state;
         }
 
         // ball plate go up
-        if (!stay_mid && !PG_BTM)
+        if (state_last != MID && !PG_BTM)
         {
             state = INIT_SLOW;
             break;
