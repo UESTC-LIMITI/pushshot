@@ -74,7 +74,6 @@ extern struct STATE_R state_R;
 struct STATE_W
 {
     unsigned char ball : 1,
-        gimbal : 1,
         aim_R2 : 1,
         R2_NetUp : 1;
 };
@@ -119,10 +118,12 @@ extern char spd_offset;
 extern unsigned char R1_Data[19];
 
 #define GIMBAL_MIN -209
-#define GIMBAL_MAX 202
+#define GIMBAL_MAX 203
 
 #define GIMBAL_0 ((GIMBAL_MAX + GIMBAL_MIN) / 2)
 #define GIMBAL_GR (507 / 23.f)
+
+#define HIGHTORQUE_TEMP_LIM 60
 
 void PeriphInit(void); // call after initialization function created by CubeMX
 void Scheduler(void);  // call in loop in main.c

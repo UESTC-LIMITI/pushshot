@@ -109,12 +109,16 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0xA6: // enable gimbal
         {
-            state_W.gimbal = 1;
+            if (HighTorque[GIMBAL_arrID].fdbk.temp <= HIGHTORQUE_TEMP_LIM)
+            {
+                HighTorque[GIMBAL_arrID].ctrl.Kp = 0.125,
+                HighTorque[GIMBAL_arrID].ctrl.Kd = 0.25;
+            }
             break;
         }
         case 0xA7: // disable gimbal
         {
-            state_W.gimbal = 0;
+            HighTorque[GIMBAL_arrID].ctrl.Kd = HighTorque[GIMBAL_arrID].ctrl.Kp = 0;
             break;
         }
         // reset
@@ -149,8 +153,7 @@ void FDCAN3_IT0_IRQHandler(void)
                                                         : HighTorque[GIMBAL_arrID].fdbk.pos - GIMBAL_MIN) /
                            ((GIMBAL_MAX - GIMBAL_MIN) * 0.25);
             // gimbal feedforward velocity opposed to angular velocity of chassis
-            HighTorque[GIMBAL_arrID].ctrl.spd = state_W.gimbal ? -*(float *)&RxData[20] * GIMBAL_GR * LIMIT(factor, 1)
-                                                               : 0;
+            HighTorque[GIMBAL_arrID].ctrl.spd = -*(float *)&RxData[20] * GIMBAL_GR * LIMIT(factor, 1);
 
             float dist_x = basket_pos.x - R1_pos.x,
                   dist_y = basket_pos.y - R1_pos.y;

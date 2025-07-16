@@ -53,7 +53,7 @@ struct
 {
     const float basket_offset, R2_offset;
 } HighTorque_param = {
-    .basket_offset = 5,
+    .basket_offset = 0,
     .R2_offset = 0,
 };
 
@@ -82,8 +82,8 @@ float Fitting_AccCurr(float spd)
 float Fitting_Spd_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
-        return 0.55 * dist_cm +
-               500 + spd_offset;
+        return 0.6 * dist_cm +
+               485 + spd_offset;
     else if (dist_cm <= 400)
         return 0.6 * dist_cm +
                485 + spd_offset;
@@ -396,7 +396,7 @@ void State(void)
     }
     }
 
-    if (state_W.gimbal) // gimbal enabled
+    // gimbal
     {
         // aim at R2
         if (state_W.aim_R2 && R2_info.dist_cm <= 900)
@@ -407,10 +407,10 @@ void State(void)
             HighTorque[GIMBAL_arrID].ctrl.pos = GIMBAL_0 + HighTorque_param.basket_offset +
                                                 basket_info.yaw * GIMBAL_GR;
         LIMIT_RANGE(HighTorque[GIMBAL_arrID].ctrl.pos, GIMBAL_MIN, GIMBAL_MAX); // gimbal limit
-    }
 
-    // control
-    {
-        HighTorque_SetMixParam_f(&hfdcan1, GIMBAL_arrID);
+        // control
+        {
+            HighTorque_SetMixParam_f(&hfdcan1, GIMBAL_arrID);
+        }
     }
 }

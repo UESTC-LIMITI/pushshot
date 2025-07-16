@@ -29,7 +29,7 @@ void FDCAN1_IT0_IRQHandler(void)
         if (HighTorque[GIMBAL_arrID].fdbk.temp <= 55)
             err_cnt.HighTorque = 0; // clear error flag
         // gimbal over heat
-        else if (HighTorque[GIMBAL_arrID].fdbk.temp >= 60)
+        else if (HighTorque[GIMBAL_arrID].fdbk.temp > HIGHTORQUE_TEMP_LIM)
             HighTorque[GIMBAL_arrID].ctrl.Kd = HighTorque[GIMBAL_arrID].ctrl.Kp = 0;
     }
 }

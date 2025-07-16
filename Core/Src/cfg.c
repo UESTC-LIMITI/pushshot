@@ -5,8 +5,6 @@ HighTorque_t HighTorque[HIGHTORQUE_NUM + 1] = {
     {
         .ID = 1,
         .ctrl.pos = GIMBAL_0,
-        .ctrl.Kp = 0.125,
-        .ctrl.Kd = 0.25,
     },
     {.ID = HIGHTORQUE_ID_BCAST},
 };
