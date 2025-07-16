@@ -31,7 +31,6 @@ extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 #define GIMBAL_arrID 0
 
 #define PG_BTM (GPIOE->IDR & GPIO_PIN_2)
-// #define PG_MID (GPIO->IDR & GPIO_PIN)
 #define PG_TOP (GPIOF->IDR & GPIO_PIN_1)
 
 #define CYL1_PORT GPIOD

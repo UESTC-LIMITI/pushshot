@@ -100,7 +100,7 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0xA5: // skill competition: automatic initialization
         {
-            if (state == IDLE && PG_TOP)
+            if (state == IDLE && PG_TOP || state == MID)
             {
                 state_W.ball = 1;
                 state = INIT_FAST;

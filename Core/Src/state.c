@@ -33,7 +33,7 @@ struct
     .high_spd = -300,
     .low_spd = -150,
     .OC_curr = 30.1,
-    .OC_time = 0.125,
+    .OC_time = 0.25,
 
     .mid.time = 0.375,
 
@@ -53,7 +53,7 @@ struct
 {
     const float basket_offset, R2_offset;
 } HighTorque_param = {
-    .basket_offset = 0,
+    .basket_offset = 5,
     .R2_offset = 0,
 };
 
