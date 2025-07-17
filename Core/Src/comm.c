@@ -110,6 +110,11 @@ void FDCAN3_IT0_IRQHandler(void)
                 state_W.ball = 1;
                 state = INIT_FAST;
             }
+            else if (state == LOCK)
+            {
+                state_W.ball = 1;
+                state = INIT_SLOW;
+            }
             break;
         }
         case 0xA6: // enable gimbal
