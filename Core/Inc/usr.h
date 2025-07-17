@@ -74,7 +74,8 @@ struct STATE_W
 {
     unsigned char ball : 1,
         aim_R2 : 1,
-        R2_NetUp : 1;
+        R2_NetUp : 1,
+        shot_ready : 1;
 };
 extern struct STATE_W state_W;
 
@@ -117,9 +118,9 @@ extern char spd_offset;
 extern unsigned char R1_Data[19];
 
 #define GIMBAL_MIN -209
-#define GIMBAL_MAX 203
+#define GIMBAL_MAX 204
 
-#define GIMBAL_0 ((GIMBAL_MAX + GIMBAL_MIN) / 2)
+#define GIMBAL_0 ((GIMBAL_MAX + GIMBAL_MIN) / 2.f)
 #define GIMBAL_GR (507 / 23.f)
 
 #define HIGHTORQUE_TEMP_LIM 60

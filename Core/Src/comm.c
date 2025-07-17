@@ -98,6 +98,11 @@ void FDCAN3_IT0_IRQHandler(void)
             spd_offset = *(float *)RxData;
             break;
         }
+        case 0xA4: // skill competition: ready to shoot
+        {
+            state_W.shot_ready = 1;
+            break;
+        }
         case 0xA5: // skill competition: automatic initialization
         {
             if (state == IDLE && PG_TOP || state == MID)
@@ -151,7 +156,7 @@ void FDCAN3_IT0_IRQHandler(void)
             // gimbal feedforward gain factor
             float factor = (-*(float *)&RxData[20] >= 0 ? GIMBAL_MAX - HighTorque[GIMBAL_arrID].fdbk.pos
                                                         : HighTorque[GIMBAL_arrID].fdbk.pos - GIMBAL_MIN) /
-                           ((GIMBAL_MAX - GIMBAL_MIN) * 0.25);
+                           ((GIMBAL_MAX - GIMBAL_MIN) * 0.5);
             // gimbal feedforward velocity opposed to angular velocity of chassis
             HighTorque[GIMBAL_arrID].ctrl.spd = -*(float *)&RxData[20] * GIMBAL_GR * LIMIT(factor, 1);
 
@@ -199,7 +204,16 @@ void UART5_IRQHandler(void)
 
             err.coor_unmatch = ABS(basket_pos.x - basket_pos_R2.x) >= 0.07;
 
-            state_W.R2_NetUp = RxData[17];
+            state_W.R2_NetUp = RxData[17] & 0x1;
+
+            // shot request
+            if (RxData[17] & 0x10 && state_W.shot_ready &&
+                state == LOCK && state_W.ball &&
+                state_W.aim_R2 && R2_info.dist_cm <= 800)
+            {
+                state_W.shot_ready = 0;
+                state = SHOT;
+            }
 
             R2_Pos_Process();
         }

@@ -53,7 +53,7 @@ struct
 {
     const float basket_offset, R2_offset;
 } HighTorque_param = {
-    .basket_offset = 5,
+    .basket_offset = 11,
     .R2_offset = 0,
 };
 
@@ -82,11 +82,11 @@ float Fitting_AccCurr(float spd)
 float Fitting_Spd_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
-        return 0.6 * dist_cm +
-               485 + spd_offset;
+        return 0.55 * dist_cm +
+               495 + spd_offset;
     else if (dist_cm <= 400)
-        return 0.6 * dist_cm +
-               485 + spd_offset;
+        return 0.65 * dist_cm +
+               465 + spd_offset;
     else if (dist_cm <= 500)
         return 0.55 * dist_cm +
                505 + spd_offset;
@@ -144,20 +144,40 @@ float Fitting_Spd_R2_NetDown(float dist_cm)
 
 float Fitting_Spd_R2_NetUp(float dist_cm)
 {
-    if (dist_cm >= 425)
-        return -5.251303860070305e-10 * pow(dist_cm, 5) +
-               0.0000013456466172456771 * pow(dist_cm, 4) +
-               -0.0013608635085802234 * pow(dist_cm, 3) +
-               0.6785576650872827 * pow(dist_cm, 2) +
-               -166.35306251049042 * dist_cm +
-               16712.07294531602 + spd_offset;
+    if (dist_cm <= 275)
+        return 0.66 * dist_cm + 435 + spd_offset;
+    else if (dist_cm <= 300)
+        return 0.8 * dist_cm + 395 + spd_offset;
+    else if (dist_cm <= 325)
+        return 0.6 * dist_cm + 455 + spd_offset;
+    else if (dist_cm <= 350)
+        return 0.6 * dist_cm + 455 + spd_offset;
+    else if (dist_cm <= 375)
+        return 0.68 * dist_cm + 427 + spd_offset;
+    else if (dist_cm <= 400)
+        return 0.68 * dist_cm + 427 + spd_offset;
+    else if (dist_cm <= 425)
+        return 0.68 * dist_cm + 427 + spd_offset;
+    else if (dist_cm <= 450)
+        return 0.68 * dist_cm + 427 + spd_offset;
+    else if (dist_cm <= 475)
+        return 0.76 * dist_cm + 391 + spd_offset;
+    else if (dist_cm <= 500)
+        return 0.76 * dist_cm + 391 + spd_offset;
+    else if (dist_cm <= 525)
+        return 0.44 * dist_cm + 551 + spd_offset;
+    else if (dist_cm <= 550)
+        return 0.44 * dist_cm + 551 + spd_offset;
+    else if (dist_cm <= 575)
+        return 0.44 * dist_cm + 551 + spd_offset;
+    else if (dist_cm <= 600)
+        return 0.44 * dist_cm + 551 + spd_offset;
+    else if (dist_cm <= 625)
+        return 0.44 * dist_cm + 551 + spd_offset;
+    else if (dist_cm <= 650)
+        return 0.44 * dist_cm + 551 + spd_offset;
     else
-        return -5.251303860070305e-10 * pow(dist_cm, 5) +
-               0.0000013456466172456771 * pow(dist_cm, 4) +
-               -0.0013608635085802234 * pow(dist_cm, 3) +
-               0.6785576650872827 * pow(dist_cm, 2) +
-               -166.35306251049042 * dist_cm +
-               16702.07294531602 + spd_offset;
+        return 0.44 * dist_cm + 551 + spd_offset;
 }
 
 void VESC_Stall_Init(void)
