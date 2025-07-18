@@ -46,13 +46,15 @@ __attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[19] = {0x
 
 void FDCAN1_Init(void)
 {
-    FDCAN_FilterTypeDef FDCAN_Filter;
+    FDCAN_FilterTypeDef FDCAN_Filter = {
+        .FilterType = FDCAN_FILTER_MASK,
+        .FilterIndex = 0,
+        .FilterConfig = FDCAN_FILTER_TO_RXFIFO0,
+        .FilterID1 = 0,
+        .FilterID2 = 0,
+    };
+
     FDCAN_Filter.IdType = FDCAN_STANDARD_ID;
-    FDCAN_Filter.FilterIndex = 0;
-    FDCAN_Filter.FilterType = FDCAN_FILTER_MASK;
-    FDCAN_Filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    FDCAN_Filter.FilterID1 = 0;
-    FDCAN_Filter.FilterID2 = 0;
     HAL_FDCAN_ConfigFilter(&hfdcan1, &FDCAN_Filter);
 
     FDCAN_Filter.IdType = FDCAN_EXTENDED_ID;
@@ -64,13 +66,15 @@ void FDCAN1_Init(void)
 
 void FDCAN2_Init(void)
 {
-    FDCAN_FilterTypeDef FDCAN_Filter;
+    FDCAN_FilterTypeDef FDCAN_Filter = {
+        .FilterType = FDCAN_FILTER_MASK,
+        .FilterIndex = 0,
+        .FilterConfig = FDCAN_FILTER_TO_RXFIFO0,
+        .FilterID1 = 0,
+        .FilterID2 = 0,
+    };
+
     FDCAN_Filter.IdType = FDCAN_STANDARD_ID;
-    FDCAN_Filter.FilterIndex = 0;
-    FDCAN_Filter.FilterType = FDCAN_FILTER_MASK;
-    FDCAN_Filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    FDCAN_Filter.FilterID1 = 0;
-    FDCAN_Filter.FilterID2 = 0;
     HAL_FDCAN_ConfigFilter(&hfdcan2, &FDCAN_Filter);
 
     FDCAN_Filter.IdType = FDCAN_EXTENDED_ID;
@@ -82,11 +86,13 @@ void FDCAN2_Init(void)
 
 void FDCAN3_Init(void)
 {
-    FDCAN_FilterTypeDef FDCAN_Filter;
-    FDCAN_Filter.IdType = FDCAN_STANDARD_ID;
+    FDCAN_FilterTypeDef FDCAN_Filter = {
+        .IdType = FDCAN_STANDARD_ID,
+        .FilterConfig = FDCAN_FILTER_TO_RXFIFO0,
+    };
+
     FDCAN_Filter.FilterIndex = 0;
     FDCAN_Filter.FilterType = FDCAN_FILTER_RANGE;
-    FDCAN_Filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
     FDCAN_Filter.FilterID1 = 0xA;
     FDCAN_Filter.FilterID2 = 0xC;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
