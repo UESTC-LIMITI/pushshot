@@ -42,7 +42,14 @@ float R2_yaw_prev;
 
 char spd_offset;
 
-__attribute__((section(".ARM.__at_0x24000000"))) unsigned char R1_Data[19] = {0xA5};
+#if defined(__clang__) && defined(__ARMCC_VERSION)
+__attribute__((section(".ARM.__at_0x24000000")))
+#elif defined __GNUC__
+__attribute__((section(".DMA")))
+#else
+#error "Unsupported compiler"
+#endif
+unsigned char R1_data[19] = {0xA5};
 
 void FDCAN1_Init(void)
 {

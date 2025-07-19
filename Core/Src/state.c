@@ -208,8 +208,8 @@ void Brake_Trigger(void)
     state_W.ball = state_R.spd_ctrl = 0;
     state_R.brake = 1;
 
-    *(float *)&R1_Data[9] = end_spd = VESC[PUSHSHOT_arrID].fdbk.spd;
-    *(float *)&R1_Data[13] = brake_trigger_time;
+    *(float *)&R1_data[9] = end_spd = VESC[PUSHSHOT_arrID].fdbk.spd;
+    *(float *)&R1_data[13] = brake_trigger_time;
 }
 
 void State(void)

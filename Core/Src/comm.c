@@ -31,11 +31,11 @@ void Comm(void)
 
     // dual robot communication
     float temp;
-    *(float *)&R1_Data[1] = temp = R1_pos.x + 0.24 * cos(R1_pos.yaw / R2D),     // offset required by R2
-        *(float *)&R1_Data[5] = temp = R1_pos.y + 0.24 * sin(R1_pos.yaw / R2D); // offset required by R2
-    R1_Data[17] = state_W.aim_R2 && state_R.brake,
-    R1_Data[sizeof(R1_Data) - 1] = CheckSum_1B(R1_Data, sizeof(R1_Data));
-    UART_SendArray(&UART5_handle, R1_Data, sizeof(R1_Data));
+    *(float *)&R1_data[1] = temp = R1_pos.x + 0.24 * cos(R1_pos.yaw / R2D),     // offset required by R2
+        *(float *)&R1_data[5] = temp = R1_pos.y + 0.24 * sin(R1_pos.yaw / R2D); // offset required by R2
+    R1_data[17] = state_W.aim_R2 && state_R.brake,
+    R1_data[sizeof(R1_data) - 1] = CheckSum_1B(R1_data, sizeof(R1_data));
+    UART_SendArray(&UART5_handle, R1_data, sizeof(R1_data));
 }
 
 void FDCAN3_IT0_IRQHandler(void)

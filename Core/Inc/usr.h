@@ -115,12 +115,13 @@ extern float R2_yaw_prev;
 
 extern char spd_offset;
 
-extern unsigned char R1_Data[19];
+extern unsigned char R1_data[19];
 
-#define GIMBAL_MIN -207
-#define GIMBAL_MAX 207
+#define GIMBAL_0 1.5f
 
-#define GIMBAL_0 ((GIMBAL_MAX + GIMBAL_MIN) / 2.f)
+#define GIMBAL_MIN (GIMBAL_0 + -207)
+#define GIMBAL_MAX (GIMBAL_0 + 207)
+
 #define GIMBAL_GR (507 / 23.f)
 
 #define HIGHTORQUE_TEMP_LIM 60
