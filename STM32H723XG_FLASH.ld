@@ -123,35 +123,6 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
-  .preinit_array (READONLY) : /* The "READONLY" keyword is only supported in GCC11 and later, remove it if using GCC10 or earlier. */
-  {
-    . = ALIGN(4);
-    PROVIDE_HIDDEN (__preinit_array_start = .);
-    KEEP (*(.preinit_array*))
-    PROVIDE_HIDDEN (__preinit_array_end = .);
-    . = ALIGN(4);
-  } >FLASH
-
-  .init_array (READONLY) : /* The "READONLY" keyword is only supported in GCC11 and later, remove it if using GCC10 or earlier. */
-  {
-    . = ALIGN(4);
-    PROVIDE_HIDDEN (__init_array_start = .);
-    KEEP (*(SORT(.init_array.*)))
-    KEEP (*(.init_array*))
-    PROVIDE_HIDDEN (__init_array_end = .);
-    . = ALIGN(4);
-  } >FLASH
-
-  .fini_array (READONLY) : /* The "READONLY" keyword is only supported in GCC11 and later, remove it if using GCC10 or earlier. */
-  {
-    . = ALIGN(4);
-    PROVIDE_HIDDEN (__fini_array_start = .);
-    KEEP (*(SORT(.fini_array.*)))
-    KEEP (*(.fini_array*))
-    PROVIDE_HIDDEN (__fini_array_end = .);
-    . = ALIGN(4);
-  } >FLASH
-
   /* used by the startup to initialize data */
   _sidata = LOADADDR(.data);
 
@@ -240,6 +211,15 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >DTCMRAM
+
+  _sidmadata = LOADADDR(.dmadata); /* address of .dmadata section in flash */
+
+  .dmadata : ALIGN(4)
+  {
+    _sdmadata = .; /* start address of .DMA section in RAM_D1 */
+    *(.DMA)
+    _edmadata = .; /* end address of .DMA section in RAM_D1 */
+  } >RAM_D1 AT> FLASH
 
 
 

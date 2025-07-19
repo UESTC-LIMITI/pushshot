@@ -45,6 +45,11 @@ defined in linker script */
 .word  _ebss
 /* stack used for SystemInit_ExtMemCtl; always internal RAM used */
 
+// DMA data initialization, in RAM_D1
+.word _sidmadata // address for initialization value of .DMA section in linker script
+.word _sdamdata // start address of .DMA section in linker script
+.word _edmadata // end address of .DMA section in linker script
+
 /**
  * @brief  This is the code that gets called when the processor first
  *          starts execution following a reset event. Only the absolutely
@@ -70,7 +75,15 @@ Reset_Handler:
   ldr r1, =_edata
   ldr r2, =_sidata
   movs r3, #0
-  b LoopCopyDataInit
+  BL LoopCopyDataInit
+
+// copy DMA data to RAM_D1
+  LDR r0, =_sdmadata // load start address of .DMA section
+  LDR r1, =_edmadata // load end address of .DMA section
+  LDR r2, =_sidmadata // load address for initialization value of .DMA section
+  MOVS r3, #0 // set offset to 0
+  BL LoopCopyDataInit
+  B CoverZeroDataInit
 
 CopyDataInit:
   ldr r4, [r2, r3]
@@ -81,7 +94,10 @@ LoopCopyDataInit:
   adds r4, r0, r3
   cmp r4, r1
   bcc CopyDataInit
+  BX LR
+
 /* Zero fill the bss segment. */
+CoverZeroDataInit:
   ldr r2, =_sbss
   ldr r4, =_ebss
   movs r3, #0
@@ -95,8 +111,6 @@ LoopFillZerobss:
   cmp r2, r4
   bcc FillZerobss
 
-/* Call static constructors */
-    bl __libc_init_array
 /* Call the application's entry point.*/
   bl  main
   bx  lr
