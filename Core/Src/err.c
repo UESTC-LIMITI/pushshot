@@ -33,7 +33,7 @@ void Err(void)
     {
         static unsigned char timeout_ms_cnt;
         if (err.R1_pos && timeout_ms_cnt++ == timeout_ms.R1_pos)
-            HighTorque[GIMBAL_arrID].ctrl.spd = 0;
+            HighTorque[GIMBAL_idx].ctrl.spd = 0;
         else
             timeout_ms_cnt = 0;
     }
@@ -46,9 +46,9 @@ void Err(void)
             timeout_ms_cnt = 0;
     }
 
-    err.yaw_lim_exceed = HighTorque[GIMBAL_arrID].ctrl.pos == GIMBAL_MAX || HighTorque[GIMBAL_arrID].ctrl.pos == GIMBAL_MIN;
+    err.yaw_lim_exceed = HighTorque[GIMBAL_idx].ctrl.Kp && (HighTorque[GIMBAL_idx].ctrl.pos == GIMBAL_MAX || HighTorque[GIMBAL_idx].ctrl.pos == GIMBAL_MIN);
 
-    err.UV = VESC[PUSHSHOT_arrID].fdbk.volt < 24; // under voltage
+    err.UV = VESC[PUSHSHOT_idx].fdbk.volt < 24; // under voltage
 
     {
         static unsigned char intvl_ms_cnt;

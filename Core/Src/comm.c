@@ -119,16 +119,16 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0xA6: // enable gimbal
         {
-            if (HighTorque[GIMBAL_arrID].fdbk.temp <= HIGHTORQUE_TEMP_LIM)
+            if (HighTorque[GIMBAL_idx].fdbk.temp <= HIGHTORQUE_TEMP_LIM)
             {
-                HighTorque[GIMBAL_arrID].ctrl.Kp = 0.125,
-                HighTorque[GIMBAL_arrID].ctrl.Kd = 0.25;
+                HighTorque[GIMBAL_idx].ctrl.Kp = 0.125,
+                HighTorque[GIMBAL_idx].ctrl.Kd = 0.25;
             }
             break;
         }
         case 0xA7: // disable gimbal
         {
-            HighTorque[GIMBAL_arrID].ctrl.Kd = HighTorque[GIMBAL_arrID].ctrl.Kp = 0;
+            HighTorque[GIMBAL_idx].ctrl.Kd = HighTorque[GIMBAL_idx].ctrl.Kp = 0;
             break;
         }
         // reset
@@ -159,11 +159,11 @@ void FDCAN3_IT0_IRQHandler(void)
             R1_pos.yaw = *(float *)&RxData[16];
 
             // gimbal feedforward gain factor
-            float factor = (-*(float *)&RxData[20] >= 0 ? GIMBAL_MAX - HighTorque[GIMBAL_arrID].fdbk.pos
-                                                        : HighTorque[GIMBAL_arrID].fdbk.pos - GIMBAL_MIN) /
+            float factor = (-*(float *)&RxData[20] >= 0 ? GIMBAL_MAX - HighTorque[GIMBAL_idx].fdbk.pos
+                                                        : HighTorque[GIMBAL_idx].fdbk.pos - GIMBAL_MIN) /
                            ((GIMBAL_MAX - GIMBAL_MIN) * 0.5);
             // gimbal feedforward velocity opposed to angular velocity of chassis
-            HighTorque[GIMBAL_arrID].ctrl.spd = -*(float *)&RxData[20] * GIMBAL_GR * LIMIT(factor, 1);
+            HighTorque[GIMBAL_idx].ctrl.spd = -*(float *)&RxData[20] * GIMBAL_GR * LIMIT(factor, 1);
 
             float dist_x = basket_pos.x - R1_pos.x,
                   dist_y = basket_pos.y - R1_pos.y;

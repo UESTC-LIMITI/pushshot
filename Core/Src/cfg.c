@@ -44,7 +44,7 @@ char spd_offset;
 
 #if defined(__clang__) && defined(__ARMCC_VERSION)
 __attribute__((section(".ARM.__at_0x24000000")))
-#elif defined __GNUC__
+#elif defined(__GNUC__)
 __attribute__((section(".DMA")))
 #else
 #error "Unsupported compiler"

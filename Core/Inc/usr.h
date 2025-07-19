@@ -26,9 +26,9 @@ extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 #define VESC_NUM 1
 #include "VESC.h"
 
-#define PUSHSHOT_arrID 0
+#define PUSHSHOT_idx 0
 #define PUSHSHOT_MOTOR CUBEMARS_R100_KV90
-#define GIMBAL_arrID 0
+#define GIMBAL_idx 0
 
 #define PG_BTM (GPIOE->IDR & 0x4)
 #define PG_TOP (GPIOF->IDR & 0x2)
