@@ -30,15 +30,15 @@ extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 #define PUSHSHOT_MOTOR CUBEMARS_R100_KV90
 #define GIMBAL_arrID 0
 
-#define PG_BTM (GPIOE->IDR & GPIO_PIN_2)
-#define PG_TOP (GPIOF->IDR & GPIO_PIN_1)
+#define PG_BTM (GPIOE->IDR & 0x4)
+#define PG_TOP (GPIOF->IDR & 0x2)
 
 #define CYL1_PORT GPIOD
-#define CYL1_PIN GPIO_PIN_7
+#define CYL1_PIN 0x80
 #define CYL2_PORT GPIOG
-#define CYL2_PIN GPIO_PIN_9
+#define CYL2_PIN 0x200
 #define CYL3_PORT GPIOG
-#define CYL3_PIN GPIO_PIN_10
+#define CYL3_PIN 0x400
 
 // following variable and function at Core/Src/cfg.c
 
