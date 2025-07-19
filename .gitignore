@@ -15,5 +15,5 @@ build
 CMakePresets.json
 Core/Src/syscalls.c
 Core/Src/sysmem.c
-cmake
+cmake/stm32cubemx
 .vscode/c_cpp_properties.json
