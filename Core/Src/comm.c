@@ -119,7 +119,7 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0xA6: // enable gimbal
         {
-            if (HighTorque[GIMBAL_idx].fdbk.temp <= HIGHTORQUE_TEMP_LIM)
+            if (!err.startup && HighTorque[GIMBAL_idx].fdbk.temp <= HIGHTORQUE_TEMP_LIM)
             {
                 HighTorque[GIMBAL_idx].ctrl.Kp = 0.125,
                 HighTorque[GIMBAL_idx].ctrl.Kd = 0.25;

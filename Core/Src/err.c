@@ -10,11 +10,11 @@ void Err(void)
             R1_pos,
             R2_pos;
     } timeout_ms = {
-        .VESC = 1,
-        .HighTorque = 2,
-        .basket_pos = 125,
-        .R1_pos = 2,
-        .R2_pos = 40,
+        .VESC = VESC_TIMEOUT_ms,
+        .HighTorque = HIGHTORQUE_TIMEOUT_ms,
+        .basket_pos = BASKET_POS_TIMEOUT_ms,
+        .R1_pos = R1_POS_TIMEOUT_ms,
+        .R2_pos = R2_POS_TIMEOUT_ms,
     };
 
     for (unsigned char cnt = 0; cnt < 5; cnt++) // 5 timeout error
@@ -30,13 +30,8 @@ void Err(void)
         }
     }
 
-    {
-        static unsigned char timeout_ms_cnt;
-        if (err.R1_pos && timeout_ms_cnt++ == timeout_ms.R1_pos)
-            HighTorque[GIMBAL_idx].ctrl.spd = 0;
-        else
-            timeout_ms_cnt = 0;
-    }
+    if (err.R1_pos)
+        HighTorque[GIMBAL_idx].ctrl.spd = 0;
 
     {
         static unsigned char timeout_ms_cnt;
@@ -51,10 +46,20 @@ void Err(void)
     err.UV = VESC[PUSHSHOT_idx].fdbk.volt < 24; // under voltage
 
     {
-        static unsigned char intvl_ms_cnt;
-        if (++intvl_ms_cnt == ERR_CODE_INTVL_ms)
+        static bool check;
+        if (!check && !err.HighTorque)
         {
-            FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 1);
+            check = true;
+
+            err.startup = HighTorque[GIMBAL_idx].fdbk.pos > 360 - GIMBAL_MAX - 9 || HighTorque[GIMBAL_idx].fdbk.pos < -360 - GIMBAL_MIN + 9;
+        }
+    }
+
+    {
+        static unsigned char intvl_ms_cnt;
+        if (++intvl_ms_cnt == 10) // error code interval in ms
+        {
+            FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 2);
             intvl_ms_cnt = 0;
         }
     }

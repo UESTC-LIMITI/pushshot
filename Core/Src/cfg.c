@@ -32,9 +32,19 @@ struct ERR err = {
     .basket_pos = true,
     .R1_pos = true,
     .R2_pos = true,
+    .yaw_lim_exceed = true,
+    .coor_unmatch = true,
+    .UV = true,
+    .startup = true,
 };
 
-struct ERR_CNT err_cnt;
+struct ERR_CNT err_cnt = {
+    .VESC = VESC_TIMEOUT_ms,
+    .HighTorque = HIGHTORQUE_TIMEOUT_ms,
+    .basket_pos = BASKET_POS_TIMEOUT_ms,
+    .R1_pos = R1_POS_TIMEOUT_ms,
+    .R2_pos = R2_POS_TIMEOUT_ms,
+};
 
 TIMsw_t runtime, R2_yaw_time, R2_msg_intvl;
 
@@ -171,16 +181,16 @@ void Scheduler(void)
 
     while (1)
     {
-        if (task_intvl_ms_cnt_State == TASK_INTVL_ms_State)
-        {
-            task_intvl_ms_cnt_State = 0;
-            State();
-        }
-
         if (task_intvl_ms_cnt_Err == TASK_INTVL_ms_Err)
         {
             task_intvl_ms_cnt_Err = 0;
             Err();
+        }
+
+        if (task_intvl_ms_cnt_State == TASK_INTVL_ms_State)
+        {
+            task_intvl_ms_cnt_State = 0;
+            State();
         }
 
         if (task_intvl_ms_cnt_Comm == TASK_INTVL_ms_Comm)

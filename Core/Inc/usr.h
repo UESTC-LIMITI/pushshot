@@ -49,7 +49,11 @@ extern unsigned char task_intvl_ms_cnt_State, task_intvl_ms_cnt_Err, task_intvl_
 
 extern bool task_timeout;
 
-#define ERR_CODE_INTVL_ms 10
+#define VESC_TIMEOUT_ms 1
+#define HIGHTORQUE_TIMEOUT_ms 2
+#define BASKET_POS_TIMEOUT_ms 125
+#define R1_POS_TIMEOUT_ms 2
+#define R2_POS_TIMEOUT_ms 40
 
 enum STATE
 {
@@ -95,7 +99,8 @@ struct ERR
         R2_pos : 1,
         yaw_lim_exceed : 1,
         coor_unmatch : 1,
-        UV : 1;
+        UV : 1,
+        startup : 1;
 };
 extern struct ERR err;
 
