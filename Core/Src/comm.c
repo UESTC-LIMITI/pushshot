@@ -61,13 +61,13 @@ void FDCAN3_IT0_IRQHandler(void)
         case 0xB: // switch target to basket
         {
             if (state != SHOT)
-                state_W.aim_R2 = 0;
+                state_W.aim_R2 = false;
             break;
         }
         case 0xC: // switch target to R2
         {
             if (state != SHOT)
-                state_W.aim_R2 = 1;
+                state_W.aim_R2 = true;
             break;
         }
         case 0xE: // dribble end
@@ -81,14 +81,14 @@ void FDCAN3_IT0_IRQHandler(void)
         case 0xF: // pass ball
         {
             if (PG_BTM)
-                state_W.ball = 1;
+                state_W.ball = true;
             break;
         }
         case 0x14: // manual initialization
         {
             if (state != SHOT)
             {
-                state_W.ball = 1;
+                state_W.ball = true;
                 state = INIT_SLOW;
             }
             break;
@@ -100,19 +100,19 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0xA4: // skill competition: ready to shoot
         {
-            state_W.shot_ready = 1;
+            state_W.shot_ready = true;
             break;
         }
         case 0xA5: // skill competition: automatic initialization
         {
             if (state == IDLE && PG_TOP || state == MID)
             {
-                state_W.ball = 1;
+                state_W.ball = true;
                 state = INIT_FAST;
             }
             else if (state == LOCK)
             {
-                state_W.ball = 1;
+                state_W.ball = true;
                 state = INIT_SLOW;
             }
             break;
@@ -133,11 +133,10 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         // reset
         case 0xDF:
-        case 0x21F:
         {
             if (state != SHOT)
             {
-                state_W.ball = 0;
+                state_W.ball = false;
                 state = IDLE;
             }
             break;
@@ -216,7 +215,7 @@ void UART5_IRQHandler(void)
                 state == LOCK && state_W.ball &&
                 state_W.aim_R2 && R2_info.dist_cm <= 800)
             {
-                state_W.shot_ready = 0;
+                state_W.shot_ready = false;
                 state = SHOT;
             }
 

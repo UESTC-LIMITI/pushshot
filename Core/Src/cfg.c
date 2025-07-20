@@ -19,7 +19,7 @@ bool task_timeout;
 
 enum STATE volatile state;
 
-struct STATE_R state_R = {.fitting = 1}; // internal-change state
+struct STATE_R state_R = {.fitting = true}; // internal-change state
 
 struct STATE_W state_W; // external-change state
 
@@ -27,11 +27,11 @@ struct target_info basket_info = {.dist_fltr.size = 16, .yaw_fltr.size = 16},
                    R2_info = {.dist_fltr.size = 4, .yaw_fltr.size = 4};
 
 struct ERR err = {
-    .VESC = 1,
-    .HighTorque = 1,
-    .basket_pos = 1,
-    .R1_pos = 1,
-    .R2_pos = 1,
+    .VESC = true,
+    .HighTorque = true,
+    .basket_pos = true,
+    .R1_pos = true,
+    .R2_pos = true,
 };
 
 struct ERR_CNT err_cnt;
@@ -127,11 +127,6 @@ void FDCAN3_Init(void)
     FDCAN_Filter.FilterID2 = 0x201;
     HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
 
-    FDCAN_Filter.FilterIndex = 5;
-    FDCAN_Filter.FilterID1 = 0x21F;
-    FDCAN_Filter.FilterID2 = 0;
-    HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN_Filter);
-
     FDCAN3->GFC = 0x3F;
 
     HAL_FDCAN_ActivateNotification(&hfdcan3, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
@@ -170,7 +165,6 @@ void PeriphInit(void)
 
 void Scheduler(void)
 {
-    CYL2_PORT->ODR |= CYL2_PIN; // fan for HighTorque
     CYL3_PORT->ODR |= CYL3_PIN; // fan for lidar
 
     TIM6_Init();

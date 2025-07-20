@@ -205,8 +205,8 @@ void Brake_Trigger(void)
         return;
 
     brake_trigger_time = runtime.intvl;
-    state_W.ball = state_R.spd_ctrl = 0;
-    state_R.brake = 1;
+    state_W.ball = state_R.spd_ctrl = false;
+    state_R.brake = true;
 
     *(float *)&R1_data[9] = end_spd = VESC[PUSHSHOT_idx].fdbk.spd;
     *(float *)&R1_data[13] = brake_trigger_time;
@@ -414,7 +414,7 @@ void State(void)
 
             if (runtime.intvl >= brake_trigger_time + VESC_param.shot.brake_time) // total duration
             {
-                state_R.brake = 0;
+                state_R.brake = false;
                 state = IDLE;
                 break;
             }
