@@ -34,8 +34,9 @@ struct ERR err = {
     .R2_pos = true,
     .yaw_lim_exceed = true,
     .coor_unmatch = true,
-    .UV = true,
-    .startup = true,
+    .VESC_UV = true,
+    .HighTorque_startup = true,
+    .HighTorque_OH = true,
 };
 
 struct ERR_CNT err_cnt = {

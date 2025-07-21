@@ -23,14 +23,9 @@ void FDCAN1_IT0_IRQHandler(void)
             HighTorque[GIMBAL_idx].fdbk.spd = *(float *)&RxData[6] * 360;
             HighTorque[GIMBAL_idx].fdbk.trq = *(float *)&RxData[10];
             HighTorque[GIMBAL_idx].fdbk.temp = *(float *)&RxData[16];
-        }
 
-        // gimbal not over heat
-        if (HighTorque[GIMBAL_idx].fdbk.temp <= 55)
             err_cnt.HighTorque = 0; // clear error flag
-        // gimbal over heat
-        else if (HighTorque[GIMBAL_idx].fdbk.temp > HIGHTORQUE_TEMP_LIM)
-            HighTorque[GIMBAL_idx].ctrl.Kd = HighTorque[GIMBAL_idx].ctrl.Kp = 0;
+        }
     }
 }
 

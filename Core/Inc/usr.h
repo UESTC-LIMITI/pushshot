@@ -40,8 +40,6 @@ extern FDCAN_HandleTypeDef hfdcan1, hfdcan2, hfdcan3;
 #define CYL3_PORT GPIOG
 #define CYL3_PIN 0x400
 
-// following variable and function at Core/Src/cfg.c
-
 extern unsigned char task_intvl_ms_cnt_State, task_intvl_ms_cnt_Err, task_intvl_ms_cnt_Comm;
 #define TASK_INTVL_ms_State 1
 #define TASK_INTVL_ms_Err 1
@@ -54,6 +52,8 @@ extern bool task_timeout;
 #define BASKET_POS_TIMEOUT_ms 125
 #define R1_POS_TIMEOUT_ms 2
 #define R2_POS_TIMEOUT_ms 40
+
+#define ERR_CODE_INTVL_ms 10
 
 enum STATE
 {
@@ -99,8 +99,9 @@ struct ERR
         R2_pos : 1,
         yaw_lim_exceed : 1,
         coor_unmatch : 1,
-        UV : 1,
-        startup : 1;
+        VESC_UV : 1,
+        HighTorque_startup : 1,
+        HighTorque_OH : 1;
 };
 extern struct ERR err;
 
@@ -129,7 +130,9 @@ extern unsigned char R1_data[19];
 
 #define GIMBAL_GR (507 / 23.f)
 
+#define HIGHTORQUE_TEMP_WARNING 50
 #define HIGHTORQUE_TEMP_LIM 60
+#define VESC_VOLTAGE_LIM_MIN 24
 
 void PeriphInit(void); // call after initialization function created by CubeMX
 void Scheduler(void);  // call in loop in main.c
@@ -139,8 +142,8 @@ void State(void);
 void Err(void);
 void Comm(void);
 
-void R2_Pos_Process(void); // at Core/Src/comm.c
+void R2_Pos_Process(void);
 
-void Brake_Trigger(void); // at Core/Src/state.c
+void Brake_Trigger(void);
 
 #endif

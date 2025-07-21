@@ -11,9 +11,9 @@ struct
 struct
 {
     float x, y;
-} R2_pos = {.x = 12.5, .y = -4},
-  basket_pos = {.x = 14, .y = -4},
-  basket_pos_R2;
+} R2_pos,
+    basket_pos = {.x = 14, .y = -4},
+    basket_pos_R2;
 
 unsigned char CheckSum_1B(unsigned char *data, unsigned char len)
 {
@@ -119,7 +119,7 @@ void FDCAN3_IT0_IRQHandler(void)
         }
         case 0xA6: // enable gimbal
         {
-            if (!err.startup && HighTorque[GIMBAL_idx].fdbk.temp <= HIGHTORQUE_TEMP_LIM)
+            if (!err.HighTorque_startup && !err.HighTorque_OH)
             {
                 HighTorque[GIMBAL_idx].ctrl.Kp = 0.125,
                 HighTorque[GIMBAL_idx].ctrl.Kd = 0.25;
@@ -219,6 +219,8 @@ void UART5_IRQHandler(void)
                 state = SHOT;
             }
 
+            FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA1, (unsigned char *)&R2_pos, 8);
+
             R2_Pos_Process();
         }
     }
@@ -248,6 +250,4 @@ void R2_Pos_Process(void)
         R2_info.yaw += 360;
 
     R2_info.yaw = MovAvgFltr(&R2_info.yaw_fltr, R2_info.yaw);
-
-    FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA1, (unsigned char *)&R2_pos, 8);
 }

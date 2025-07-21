@@ -33,17 +33,12 @@ void Err(void)
     if (err.R1_pos)
         HighTorque[GIMBAL_idx].ctrl.spd = 0;
 
-    {
-        static unsigned char timeout_ms_cnt;
-        if (err.R2_pos && timeout_ms_cnt++ == timeout_ms.R2_pos)
-            R2_Pos_Process();
-        else
-            timeout_ms_cnt = 0;
-    }
+    if (err.R2_pos)
+        R2_Pos_Process();
 
     err.yaw_lim_exceed = HighTorque[GIMBAL_idx].ctrl.Kp && (HighTorque[GIMBAL_idx].ctrl.pos == GIMBAL_MAX || HighTorque[GIMBAL_idx].ctrl.pos == GIMBAL_MIN);
 
-    err.UV = VESC[PUSHSHOT_idx].fdbk.volt < 24; // under voltage
+    err.VESC_UV = VESC[PUSHSHOT_idx].fdbk.volt < VESC_VOLTAGE_LIM_MIN; // under voltage
 
     {
         static bool check;
@@ -51,15 +46,23 @@ void Err(void)
         {
             check = true;
 
-            err.startup = HighTorque[GIMBAL_idx].fdbk.pos > 360 - GIMBAL_MAX - 9 || HighTorque[GIMBAL_idx].fdbk.pos < -360 - GIMBAL_MIN + 9;
+            err.HighTorque_startup = HighTorque[GIMBAL_idx].fdbk.pos > 360 - GIMBAL_MAX - 9 || HighTorque[GIMBAL_idx].fdbk.pos < -360 - GIMBAL_MIN + 9;
         }
+        if (check && err.HighTorque_startup)
+            err.HighTorque = true;
     }
+
+    // gimbal over heat
+    if (HighTorque[GIMBAL_idx].fdbk.temp > HIGHTORQUE_TEMP_WARNING)
+        err.HighTorque = true;
+    if ((err.HighTorque_OH = HighTorque[GIMBAL_idx].fdbk.temp > HIGHTORQUE_TEMP_LIM))
+        HighTorque[GIMBAL_idx].ctrl.Kd = HighTorque[GIMBAL_idx].ctrl.Kp = 0;
 
     {
         static unsigned char intvl_ms_cnt;
-        if (++intvl_ms_cnt == 10) // error code interval in ms
+        if (++intvl_ms_cnt == ERR_CODE_INTVL_ms)
         {
-            FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 2);
+            FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA0, (unsigned char *)&err, 1);
             intvl_ms_cnt = 0;
         }
     }
