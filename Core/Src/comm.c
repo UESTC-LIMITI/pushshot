@@ -208,7 +208,8 @@ void UART5_IRQHandler(void)
 
             err.coor_unmatch = ABS(basket_pos.x - basket_pos_R2.x) >= 0.07;
 
-            state_W.R2_NetUp = RxData[17] & 0x1;
+            state_W.R2_AtPos = RxData[17] & 0x1;
+            state_W.R2_NetUp = (RxData[17] & 0x4) >> 2;
 
             // shot request
             if (RxData[17] & 0x10 && state_W.shot_ready &&
@@ -219,7 +220,11 @@ void UART5_IRQHandler(void)
                 state = SHOT;
             }
 
-            FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA1, (unsigned char *)&R2_pos, 8);
+            unsigned char R2_data[9];
+            *(float *)R2_data = R2_pos.x,
+                    *(float *)&R2_data[4] = R2_pos.y,
+                    R2_data[8] = state_W.R2_AtPos;
+            FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA1, R2_data, 9);
 
             R2_Pos_Process();
         }
