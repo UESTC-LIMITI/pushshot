@@ -46,7 +46,7 @@ void Err(void)
         {
             check = true;
 
-            err.HighTorque_startup = HighTorque[GIMBAL_idx].fdbk.pos > 360 - GIMBAL_MAX - 9 || HighTorque[GIMBAL_idx].fdbk.pos < -360 - GIMBAL_MIN + 9;
+            err.HighTorque_startup = HighTorque[GIMBAL_idx].fdbk.pos > GIMBAL_MIN + 360 - 9 || HighTorque[GIMBAL_idx].fdbk.pos < GIMBAL_MAX - 360 + 9;
         }
         if (check && err.HighTorque_startup)
             err.HighTorque = true;

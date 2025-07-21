@@ -93,6 +93,17 @@ void FDCAN3_IT0_IRQHandler(void)
             }
             break;
         }
+        // reset
+        case 0xA2:
+        case 0xDF:
+        {
+            if (state != SHOT)
+            {
+                state_W.ball = false;
+                state = IDLE;
+            }
+            break;
+        }
         case 0xA3: // speed offset
         {
             spd_offset = *(float *)RxData;
@@ -121,24 +132,14 @@ void FDCAN3_IT0_IRQHandler(void)
         {
             if (!err.HighTorque_startup && !err.HighTorque_OH)
             {
-                HighTorque[GIMBAL_idx].ctrl.Kp = 0.125,
-                HighTorque[GIMBAL_idx].ctrl.Kd = 0.25;
+                HighTorque[GIMBAL_idx].ctrl.Kp = 0.25,
+                HighTorque[GIMBAL_idx].ctrl.Kd = 0.75;
             }
             break;
         }
         case 0xA7: // disable gimbal
         {
             HighTorque[GIMBAL_idx].ctrl.Kd = HighTorque[GIMBAL_idx].ctrl.Kp = 0;
-            break;
-        }
-        // reset
-        case 0xDF:
-        {
-            if (state != SHOT)
-            {
-                state_W.ball = false;
-                state = IDLE;
-            }
             break;
         }
         case 0x105: // basket info from lidar
