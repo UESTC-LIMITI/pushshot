@@ -100,46 +100,80 @@ float Fitting_Spd_Basket(float dist_cm)
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
 {
-    if (dist_cm <= 181)
-        return 0.842 * dist_cm + 361.8 + spd_offset;
-    else if (dist_cm <= 206)
-        return 0.94 * dist_cm + 342.86 + spd_offset;
-    else if (dist_cm <= 231)
-        return 0.82 * dist_cm + 367.58 + spd_offset;
-    else if (dist_cm <= 256)
-        return 0.8 * dist_cm + 372.2 + spd_offset;
-    else if (dist_cm <= 281)
-        return 0.84 * dist_cm + 361.96 + spd_offset;
-    else if (dist_cm <= 306)
-        return 0.6 * dist_cm + 429.4 + spd_offset;
-    else if (dist_cm <= 331)
-        return 0.64 * dist_cm + 417.16 + spd_offset;
-    else if (dist_cm <= 356)
-        return 0.72 * dist_cm + 390.68 + spd_offset;
-    else if (dist_cm <= 381)
-        return 0.88 * dist_cm + 333.72 + spd_offset;
-    else if (dist_cm <= 406)
-        return 0.72 * dist_cm + 394.68 + spd_offset;
-    else if (dist_cm <= 431)
-        return 0.76 * dist_cm + 378.44 + spd_offset;
-    else if (dist_cm <= 456)
-        return 0.8 * dist_cm + 361.2 + spd_offset;
-    else if (dist_cm <= 481)
-        return 0.68 * dist_cm + 415.92 + spd_offset;
-    else if (dist_cm <= 506)
-        return 0.64 * dist_cm + 435.16 + spd_offset;
-    else if (dist_cm <= 531)
-        return 0.52 * dist_cm + 495.88 + spd_offset;
-    else if (dist_cm <= 556)
-        return 0.52 * dist_cm + 495.88 + spd_offset;
-    else if (dist_cm <= 581)
-        return 0.48 * dist_cm + 518.12 + spd_offset;
-    else if (dist_cm <= 606)
-        return 0.48 * dist_cm + 518.12 + spd_offset;
-    else if (dist_cm <= 631)
-        return 0.52 * dist_cm + 493.88 + spd_offset;
-    else
-        return 0.5006 * dist_cm + 506.10 + spd_offset;
+    if (dist_cm <= 160)
+    return 1.0 * dist_cm + 345.0 + spd_offset;
+else if (dist_cm <= 170)
+    return 1.0 * dist_cm + 345.0 + spd_offset;
+else if (dist_cm <= 180)
+    return 1.0 * dist_cm + 345.0 + spd_offset;
+else if (dist_cm <= 190)
+    return 1.0 * dist_cm + 345.0 + spd_offset;
+else if (dist_cm <= 200)
+    return 1.0 * dist_cm + 345.0 + spd_offset;
+else if (dist_cm <= 205)
+    return 0.2 * dist_cm + 505.0 + spd_offset;
+else if (dist_cm <= 210)
+    return 1.2 * dist_cm + 300.0 + spd_offset;
+else if (dist_cm <= 220)
+    return 0.7 * dist_cm + 405.0 + spd_offset;
+else if (dist_cm <= 230)
+    return 0.7 * dist_cm + 405.0 + spd_offset;
+else if (dist_cm <= 240)
+    return 0.7 * dist_cm + 405.0 + spd_offset;
+else if (dist_cm <= 250)
+    return 0.4 * dist_cm + 477.0 + spd_offset;
+else if (dist_cm <= 260)
+    return 0.5 * dist_cm + 452.0 + spd_offset;
+else if (dist_cm <= 270)
+    return 0.7 * dist_cm + 400.0 + spd_offset;
+else if (dist_cm <= 280)
+    return 0.7 * dist_cm + 400.0 + spd_offset;
+else if (dist_cm <= 290)
+    return 0.7 * dist_cm + 400.0 + spd_offset;
+else if (dist_cm <= 300)
+    return 0.7 * dist_cm + 400.0 + spd_offset;
+else if (dist_cm <= 320)
+    return 0.7 * dist_cm + 400.0 + spd_offset;
+else if (dist_cm <= 340)
+    return 0.7 * dist_cm + 400.0 + spd_offset;
+else if (dist_cm <= 360)
+    return 0.7 * dist_cm + 400.0 + spd_offset;
+else if (dist_cm <= 370)
+    return 1.2 * dist_cm + 220.0 + spd_offset;
+else if (dist_cm <= 380)
+    return 0.5 * dist_cm + 479.0 + spd_offset;
+else if (dist_cm <= 400)
+    return 0.85 * dist_cm + 346.0 + spd_offset;
+else if (dist_cm <= 420)
+    return 0.85 * dist_cm + 346.0 + spd_offset;
+else if (dist_cm <= 440)
+    return 0.85 * dist_cm + 346.0 + spd_offset;
+else if (dist_cm <= 460)
+    return 0.85 * dist_cm + 346.0 + spd_offset;
+else if (dist_cm <= 470)
+    return 0.5 * dist_cm + 507.0 + spd_offset;
+else if (dist_cm <= 480)
+    return 0.5 * dist_cm + 507.0 + spd_offset;
+else if (dist_cm <= 500)
+    return 0.25 * dist_cm + 627.0 + spd_offset;
+else if (dist_cm <= 520)
+    return 0.4 * dist_cm + 552.0 + spd_offset;
+else if (dist_cm <= 540)
+    return 0.6 * dist_cm + 448.0 + spd_offset;
+else if (dist_cm <= 560)
+    return 0.6 * dist_cm + 448.0 + spd_offset;
+else if (dist_cm <= 580)
+    return 0.7 * dist_cm + 392.0 + spd_offset;
+else if (dist_cm <= 605)
+    return 0.44 * dist_cm + 542.8 + spd_offset;
+else if (dist_cm <= 630)
+    return 0.52 * dist_cm + 494.4 + spd_offset;
+else if (dist_cm <= 640)
+    return 1.4 * dist_cm - 60 + spd_offset;
+else if (dist_cm <= 660)
+    return 0.8 * dist_cm + 324 + spd_offset;
+else
+    return 0.97 * dist_cm + 211 + dist_cm + spd_offset;
 }
 
 float Fitting_Spd_R2_NetUp(float dist_cm)
