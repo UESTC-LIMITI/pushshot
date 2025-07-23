@@ -131,8 +131,8 @@ extern unsigned char R1_data[19];
 
 #define GIMBAL_GR (507 / 23.f)
 
-#define HIGHTORQUE_TEMP_WARNING 50
-#define HIGHTORQUE_TEMP_LIM 60
+#define HIGHTORQUE_TEMP_WARNING 60
+#define HIGHTORQUE_TEMP_LIM 75
 #define VESC_VOLTAGE_LIM_MIN 24
 
 void PeriphInit(void); // call after initialization function created by CubeMX

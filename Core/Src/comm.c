@@ -163,7 +163,8 @@ void FDCAN3_IT0_IRQHandler(void)
                                                         : HighTorque[GIMBAL_idx].fdbk.pos - GIMBAL_MIN) /
                            ((GIMBAL_MAX - GIMBAL_MIN) * 0.5);
             // gimbal feedforward velocity opposed to angular velocity of chassis
-            HighTorque[GIMBAL_idx].ctrl.spd = -*(float *)&RxData[20] * GIMBAL_GR * LIMIT(factor, 1);
+            HighTorque[GIMBAL_idx].ctrl.spd = err.HighTorque_OH ? 0
+                                                                : -*(float *)&RxData[20] * GIMBAL_GR * LIMIT(factor, 1);
 
             float dist_x = basket_pos.x - R1_pos.x,
                   dist_y = basket_pos.y - R1_pos.y;
@@ -224,7 +225,7 @@ void UART5_IRQHandler(void)
             unsigned char R2_data[9];
             *(float *)R2_data = R2_pos.x,
                     *(float *)&R2_data[4] = R2_pos.y,
-                    R2_data[8] = state_W.R2_AtPos;
+                    R2_data[8] = !err.coor_unmatch && state_W.R2_AtPos;
             FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA1, R2_data, 9);
 
             R2_Pos_Process();
