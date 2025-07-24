@@ -9,7 +9,6 @@
             "type": "cortex-debug",
             "request": "launch",
             "servertype": "openocd",
-            "runToEntryPoint": "main",
             "liveWatch": {
                 "enabled": true,
                 "samplesPerSecond": 4
