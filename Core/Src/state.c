@@ -83,10 +83,10 @@ float Fitting_Spd_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
         return 0.55 * dist_cm +
-               495 + spd_offset;
+               505 + spd_offset;
     else if (dist_cm <= 400)
-        return 0.6 * dist_cm +
-               480 + spd_offset;
+        return 0.55 * dist_cm +
+               505 + spd_offset;
     else if (dist_cm <= 500)
         return 0.55 * dist_cm +
                505 + spd_offset;

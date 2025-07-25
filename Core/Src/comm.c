@@ -132,8 +132,8 @@ void FDCAN3_IT0_IRQHandler(void)
         {
             if (!err.HighTorque_startup && !err.HighTorque_OH)
             {
-                HighTorque[GIMBAL_idx].ctrl.Kp = 0.25,
-                HighTorque[GIMBAL_idx].ctrl.Kd = 0.75;
+                HighTorque[GIMBAL_idx].ctrl.Kp = 0.375,
+                HighTorque[GIMBAL_idx].ctrl.Kd = 0.5;
             }
             break;
         }
@@ -225,7 +225,7 @@ void UART5_IRQHandler(void)
             unsigned char R2_data[9];
             *(float *)R2_data = R2_pos.x,
                     *(float *)&R2_data[4] = R2_pos.y,
-                    R2_data[8] = !err.coor_unmatch && state_W.R2_AtPos;
+                    R2_data[8] = !err.coor_unmatch && state_W.aim_R2 && state_W.R2_AtPos;
             FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA1, R2_data, 9);
 
             R2_Pos_Process();
