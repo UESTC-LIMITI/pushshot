@@ -23,7 +23,7 @@ struct STATE_R state_R = {.fitting = true}; // internal-change state
 
 struct STATE_W state_W; // external-change state
 
-struct target_info basket_info = {.dist_fltr.size = 16, .yaw_fltr.size = 16},
+struct target_info basket_info = {.dist_fltr.size = 32, .yaw_fltr.size = 32},
                    R2_info = {.dist_fltr.size = 4, .yaw_fltr.size = 4};
 
 struct ERR err = {

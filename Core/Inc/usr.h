@@ -133,7 +133,7 @@ extern unsigned char R1_data[19];
 
 #define HIGHTORQUE_TEMP_WARNING 60
 #define HIGHTORQUE_TEMP_LIM 75
-#define VESC_VOLTAGE_LIM_MIN 24
+#define VESC_VOLTAGE_LIM_MIN 24.3f
 
 void PeriphInit(void); // call after initialization function created by CubeMX
 void Scheduler(void);  // call in loop in main.c

@@ -82,20 +82,17 @@ float Fitting_AccCurr(float spd)
 float Fitting_Spd_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
-        return 0.55 * dist_cm +
-               505 + spd_offset;
+        return 0.6 * dist_cm +
+               510 + spd_offset;
     else if (dist_cm <= 400)
-        return 0.55 * dist_cm +
-               505 + spd_offset;
+        return 0.725 * dist_cm +
+               473.5 + spd_offset;
     else if (dist_cm <= 500)
-        return 0.55 * dist_cm +
-               505 + spd_offset;
-    else if (dist_cm <= 600)
-        return 0.5 * dist_cm +
-               530 + spd_offset;
+        return 0.675 * dist_cm +
+               493.5 + spd_offset;
     else
-        return 0.5 * dist_cm +
-               530 + spd_offset;
+        return 0.65 * dist_cm +
+               506 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
@@ -268,12 +265,21 @@ void State(void)
         {
             if (state_last != MID)
                 state_last = state;
+
+            TIMsw_Clear(&runtime);
         }
 
-        if (state_last != MID && PG_TOP)
+        if (state_last != MID)
         {
-            state = MID;
-            break;
+            if (PG_TOP && TIMsw_CheckTimeout(&runtime, 0.125))
+            {
+                state = MID;
+                break;
+            }
+            else if (!PG_TOP)
+            {
+                TIMsw_Clear(&runtime);
+            }
         }
 
         VESC[PUSHSHOT_idx].ctrl.curr = 0;
