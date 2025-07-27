@@ -54,7 +54,7 @@ struct
     const float basket_offset, R2_offset;
 } HighTorque_param = {
     .basket_offset = 8,
-    .R2_offset = 0,
+    .R2_offset = 8,
 };
 
 static float brake_trigger_time;
@@ -91,86 +91,22 @@ float Fitting_Spd_Basket(float dist_cm)
         return 0.675 * dist_cm +
                493.5 + spd_offset;
     else
-        return 0.65 * dist_cm +
-               506 + spd_offset;
+        return 0.625 * dist_cm +
+               518.5 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
 {
-    if (dist_cm <= 160)
-        return 1.0 * dist_cm + 345.0 + spd_offset;
-    else if (dist_cm <= 170)
-        return 1.0 * dist_cm + 345.0 + spd_offset;
-    else if (dist_cm <= 180)
-        return 1.0 * dist_cm + 345.0 + spd_offset;
-    else if (dist_cm <= 190)
-        return 1.0 * dist_cm + 345.0 + spd_offset;
-    else if (dist_cm <= 200)
-        return 1.0 * dist_cm + 345.0 + spd_offset;
-    else if (dist_cm <= 205)
-        return 0.2 * dist_cm + 505.0 + spd_offset;
+    if (dist_cm <= 180)
+        return 1.0 * dist_cm + 365 + spd_offset;
     else if (dist_cm <= 210)
-        return 1.2 * dist_cm + 300.0 + spd_offset;
-    else if (dist_cm <= 220)
-        return 0.7 * dist_cm + 405.0 + spd_offset;
-    else if (dist_cm <= 230)
-        return 0.7 * dist_cm + 405.0 + spd_offset;
-    else if (dist_cm <= 240)
-        return 0.7 * dist_cm + 405.0 + spd_offset;
-    else if (dist_cm <= 250)
-        return 0.4 * dist_cm + 477.0 + spd_offset;
-    else if (dist_cm <= 260)
-        return 0.5 * dist_cm + 452.0 + spd_offset;
-    else if (dist_cm <= 270)
-        return 0.7 * dist_cm + 400.0 + spd_offset;
-    else if (dist_cm <= 280)
-        return 0.7 * dist_cm + 400.0 + spd_offset;
-    else if (dist_cm <= 290)
-        return 0.7 * dist_cm + 400.0 + spd_offset;
+        return 0.5 * dist_cm + 455 + spd_offset;
     else if (dist_cm <= 300)
-        return 0.7 * dist_cm + 400.0 + spd_offset;
-    else if (dist_cm <= 320)
-        return 0.7 * dist_cm + 400.0 + spd_offset;
-    else if (dist_cm <= 340)
-        return 0.7 * dist_cm + 400.0 + spd_offset;
-    else if (dist_cm <= 360)
-        return 0.7 * dist_cm + 400.0 + spd_offset;
-    else if (dist_cm <= 370)
-        return 1.2 * dist_cm + 220.0 + spd_offset;
-    else if (dist_cm <= 380)
-        return 0.5 * dist_cm + 479.0 + spd_offset;
-    else if (dist_cm <= 400)
-        return 0.85 * dist_cm + 346.0 + spd_offset;
-    else if (dist_cm <= 420)
-        return 0.85 * dist_cm + 346.0 + spd_offset;
-    else if (dist_cm <= 440)
-        return 0.85 * dist_cm + 346.0 + spd_offset;
-    else if (dist_cm <= 460)
-        return 0.85 * dist_cm + 346.0 + spd_offset;
-    else if (dist_cm <= 470)
-        return 0.5 * dist_cm + 507.0 + spd_offset;
-    else if (dist_cm <= 480)
-        return 0.5 * dist_cm + 507.0 + spd_offset;
-    else if (dist_cm <= 500)
-        return 0.25 * dist_cm + 627.0 + spd_offset;
-    else if (dist_cm <= 520)
-        return 0.4 * dist_cm + 552.0 + spd_offset;
+        return 0.9 * dist_cm + 371 + spd_offset;
     else if (dist_cm <= 540)
-        return 0.6 * dist_cm + 448.0 + spd_offset;
-    else if (dist_cm <= 560)
-        return 0.6 * dist_cm + 448.0 + spd_offset;
-    else if (dist_cm <= 580)
-        return 0.7 * dist_cm + 392.0 + spd_offset;
-    else if (dist_cm <= 605)
-        return 0.44 * dist_cm + 542.8 + spd_offset;
-    else if (dist_cm <= 630)
-        return 0.52 * dist_cm + 494.4 + spd_offset;
-    else if (dist_cm <= 640)
-        return 1.4 * dist_cm - 60 + spd_offset;
-    else if (dist_cm <= 660)
-        return 0.8 * dist_cm + 324 + spd_offset;
+        return 0.75 * dist_cm + 416 + spd_offset;
     else
-        return 0.97 * dist_cm + 211 + spd_offset;
+        return 0.5 * dist_cm + 551 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetUp(float dist_cm)
