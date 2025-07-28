@@ -112,39 +112,43 @@ float Fitting_Spd_R2_NetDown(float dist_cm)
 float Fitting_Spd_R2_NetUp(float dist_cm)
 {
     if (dist_cm <= 275)
-        return 0.66 * dist_cm + 438 + spd_offset;
+        return 0.66 * dist_cm + 458 + spd_offset;
     else if (dist_cm <= 300)
-        return 0.8 * dist_cm + 398 + spd_offset;
+        return 0.8 * dist_cm + 418 + spd_offset;
     else if (dist_cm <= 325)
-        return 0.6 * dist_cm + 458 + spd_offset;
+        return 0.6 * dist_cm + 478 + spd_offset;
     else if (dist_cm <= 350)
-        return 0.6 * dist_cm + 458 + spd_offset;
+        return 0.6 * dist_cm + 478 + spd_offset;
     else if (dist_cm <= 375)
-        return 0.68 * dist_cm + 430 + spd_offset;
+        return 0.68 * dist_cm + 450 + spd_offset;
     else if (dist_cm <= 400)
-        return 0.68 * dist_cm + 430 + spd_offset;
+        return 1.0 * dist_cm + 330 + spd_offset;
     else if (dist_cm <= 425)
-        return 0.68 * dist_cm + 430 + spd_offset;
+        return 0.68 * dist_cm + 458 + spd_offset;
     else if (dist_cm <= 450)
-        return 0.68 * dist_cm + 430 + spd_offset;
+        return 0.76 * dist_cm + 424 + spd_offset;
     else if (dist_cm <= 475)
-        return 0.76 * dist_cm + 394 + spd_offset;
+        return 1.16 * dist_cm + 244 + spd_offset;
     else if (dist_cm <= 500)
-        return 0.76 * dist_cm + 394 + spd_offset;
+        return 0.56 * dist_cm + 529 + spd_offset;
     else if (dist_cm <= 525)
-        return 0.44 * dist_cm + 394 + spd_offset;
+        return 0.24 * dist_cm + 689 + spd_offset;
     else if (dist_cm <= 550)
-        return 0.44 * dist_cm + 554 + spd_offset;
+        return 1.24 * dist_cm + 164 + spd_offset;
     else if (dist_cm <= 575)
-        return 0.44 * dist_cm + 554 + spd_offset;
+        return 0.56 * dist_cm + 538 + spd_offset;
     else if (dist_cm <= 600)
-        return 0.44 * dist_cm + 554 + spd_offset;
+        return 0.76 * dist_cm + 423 + spd_offset;
     else if (dist_cm <= 625)
-        return 0.44 * dist_cm + 554 + spd_offset;
+        return 0.52 * dist_cm + 567 + spd_offset;
     else if (dist_cm <= 650)
-        return 0.44 * dist_cm + 554 + spd_offset;
+        return 2.32 * dist_cm - 558 + spd_offset;
+    else if (dist_cm <= 675)
+        return 0.84 * dist_cm + 404 + spd_offset;
+    else if (dist_cm <= 700)
+        return 0.84 * dist_cm + 404 + spd_offset;
     else
-        return 0.44 * dist_cm + 554 + spd_offset;
+        return 0.84 * dist_cm + 404 + spd_offset;
 }
 
 void VESC_Stall_Init(void)
