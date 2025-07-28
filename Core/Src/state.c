@@ -82,17 +82,17 @@ float Fitting_AccCurr(float spd)
 float Fitting_Spd_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
-        return 0.6 * dist_cm +
-               510 + spd_offset;
+        return 0.575 * dist_cm +
+               516 + spd_offset;
     else if (dist_cm <= 400)
-        return 0.725 * dist_cm +
-               473.5 + spd_offset;
+        return 0.65 * dist_cm +
+               493.5 + spd_offset;
     else if (dist_cm <= 500)
         return 0.675 * dist_cm +
-               493.5 + spd_offset;
+               483.5 + spd_offset;
     else
-        return 0.625 * dist_cm +
-               518.5 + spd_offset;
+        return 0.675 * dist_cm +
+               483.5 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
