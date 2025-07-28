@@ -133,7 +133,7 @@ void FDCAN3_IT0_IRQHandler(void)
             if (!err.HighTorque_startup && !err.HighTorque_OH)
             {
                 HighTorque[GIMBAL_idx].ctrl.Kp = 1,
-                HighTorque[GIMBAL_idx].ctrl.Kd = 0.75;
+                HighTorque[GIMBAL_idx].ctrl.Kd = 2.5;
             }
             break;
         }

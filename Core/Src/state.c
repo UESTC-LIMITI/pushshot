@@ -79,20 +79,27 @@ float Fitting_AccCurr(float spd)
         return spd * 0.2 - 115;
 }
 
+#define SPD_BASKET_k(SEG_START, SEG_END) (float)(SPD_BASKET_##SEG_END - SPD_BASKET_##SEG_START) / (SEG_END - SEG_START)
+#define SPD_BASKET_b(SEG_START, SEG_END) (SPD_BASKET_##SEG_START - SPD_BASKET_k(SEG_START, SEG_END) * SEG_START)
+
+#define SPD_BASKET_LIN_CALC(SEG_START, SEG_END, dist_cm) SPD_BASKET_k(SEG_START, SEG_END) * dist_cm + SPD_BASKET_b(SEG_START, SEG_END)
+
+#define SPD_BASKET_200 621
+#define SPD_BASKET_300 688.5
+#define SPD_BASKET_400 753.5
+#define SPD_BASKET_500 821
+#define SPD_BASKET_600 888.5
+
 float Fitting_Spd_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
-        return 0.575 * dist_cm +
-               516 + spd_offset;
+        return SPD_BASKET_LIN_CALC(200, 300, dist_cm) + spd_offset;
     else if (dist_cm <= 400)
-        return 0.65 * dist_cm +
-               493.5 + spd_offset;
+        return SPD_BASKET_LIN_CALC(300, 400, dist_cm) + spd_offset;
     else if (dist_cm <= 500)
-        return 0.675 * dist_cm +
-               483.5 + spd_offset;
+        return SPD_BASKET_LIN_CALC(400, 500, dist_cm) + spd_offset;
     else
-        return 0.675 * dist_cm +
-               483.5 + spd_offset;
+        return SPD_BASKET_LIN_CALC(500, 600, dist_cm) + spd_offset;
 }
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
