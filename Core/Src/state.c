@@ -53,8 +53,8 @@ struct
 {
     const float basket_offset, R2_offset;
 } HighTorque_param = {
-    .basket_offset = 11,
-    .R2_offset = 11,
+    .basket_offset = 13,
+    .R2_offset = 13,
 };
 
 static float brake_trigger_time;
@@ -84,11 +84,11 @@ float Fitting_AccCurr(float spd)
 
 #define SPD_BASKET_LIN_CALC(SEG_START, SEG_END, dist_cm) SPD_BASKET_k(SEG_START, SEG_END) * dist_cm + SPD_BASKET_b(SEG_START, SEG_END)
 
-#define SPD_BASKET_200 621
-#define SPD_BASKET_300 683.5
-#define SPD_BASKET_400 748.5
-#define SPD_BASKET_500 816
-#define SPD_BASKET_600 883.5
+#define SPD_BASKET_200 623.5
+#define SPD_BASKET_300 688.5
+#define SPD_BASKET_400 761
+#define SPD_BASKET_500 833.5
+#define SPD_BASKET_600 896
 
 float Fitting_Spd_Basket(float dist_cm)
 {
@@ -139,7 +139,7 @@ float Fitting_Spd_Basket(float dist_cm)
 float Fitting_Spd_R2_NetDown(float dist_cm)
 {
     if (dist_cm <= 170)
-        return 1.0 * dist_cm + 372 + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(150, 170, dist_cm) + spd_offset;
     else if (dist_cm <= 190)
         return SPD_R2_NETDOWN_LIN_CALC(170, 190, dist_cm) + spd_offset;
     else if (dist_cm <= 205)
