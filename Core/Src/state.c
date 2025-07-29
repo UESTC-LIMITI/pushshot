@@ -53,8 +53,8 @@ struct
 {
     const float basket_offset, R2_offset;
 } HighTorque_param = {
-    .basket_offset = 8,
-    .R2_offset = 8,
+    .basket_offset = 11,
+    .R2_offset = 11,
 };
 
 static float brake_trigger_time;
@@ -85,10 +85,10 @@ float Fitting_AccCurr(float spd)
 #define SPD_BASKET_LIN_CALC(SEG_START, SEG_END, dist_cm) SPD_BASKET_k(SEG_START, SEG_END) * dist_cm + SPD_BASKET_b(SEG_START, SEG_END)
 
 #define SPD_BASKET_200 621
-#define SPD_BASKET_300 688.5
-#define SPD_BASKET_400 753.5
-#define SPD_BASKET_500 821
-#define SPD_BASKET_600 888.5
+#define SPD_BASKET_300 683.5
+#define SPD_BASKET_400 748.5
+#define SPD_BASKET_500 816
+#define SPD_BASKET_600 883.5
 
 float Fitting_Spd_Basket(float dist_cm)
 {
@@ -101,6 +101,17 @@ float Fitting_Spd_Basket(float dist_cm)
     else
         return SPD_BASKET_LIN_CALC(500, 600, dist_cm) + spd_offset;
 }
+
+#define SPD_R2_NETDOWN_k(SEG_START, SEG_END) (float)(SPD_R2_NETDOWN_##SEG_END - SPD_R2_NETDOWN_##SEG_START) / (SEG_END - SEG_START)
+#define SPD_R2_NETDOWN_b(SEG_START, SEG_END) (SPD_R2_NETDOWN_##SEG_START - SPD_R2_NETDOWN_k(SEG_START, SEG_END) * SEG_START)
+
+#define SPD_R2_NETDOWN_LIN_CALC(SEG_START, SEG_END, dist_cm) SPD_R2_NETDOWN_k(SEG_START, SEG_END) * dist_cm + SPD_R2_NETDOWN_b(SEG_START, SEG_END)
+
+#define SPD_R2_NETDOWN_200 621
+#define SPD_R2_NETDOWN_300 683.5
+#define SPD_R2_NETDOWN_400 748.5
+#define SPD_R2_NETDOWN_500 816
+#define SPD_R2_NETDOWN_600 883.5
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
 {
@@ -145,6 +156,17 @@ float Fitting_Spd_R2_NetDown(float dist_cm)
     else
         return 0.64 * dist_cm + 471.8 + spd_offset;
 }
+
+#define SPD_R2_NETUP_k(SEG_START, SEG_END) (float)(SPD_R2_NETUP_##SEG_END - SPD_R2_NETUP_##SEG_START) / (SEG_END - SEG_START)
+#define SPD_R2_NETUP_b(SEG_START, SEG_END) (SPD_R2_NETUP_##SEG_START - SPD_R2_NETUP_k(SEG_START, SEG_END) * SEG_START)
+
+#define SPD_R2_NETUP_LIN_CALC(SEG_START, SEG_END, dist_cm) SPD_R2_NETUP_k(SEG_START, SEG_END) * dist_cm + SPD_R2_NETUP_b(SEG_START, SEG_END)
+
+#define SPD_R2_NETUP_200 621
+#define SPD_R2_NETUP_300 683.5
+#define SPD_R2_NETUP_400 748.5
+#define SPD_R2_NETUP_500 816
+#define SPD_R2_NETUP_600 883.5
 
 float Fitting_Spd_R2_NetUp(float dist_cm)
 {
