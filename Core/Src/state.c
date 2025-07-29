@@ -104,18 +104,46 @@ float Fitting_Spd_Basket(float dist_cm)
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
 {
-    if (dist_cm <= 180)
-        return 1.0 * dist_cm + 367 + spd_offset;
-    else if (dist_cm <= 210)
-        return 0.5 * dist_cm + 457 + spd_offset;
+    if (dist_cm <= 170)
+        return 1.0 * dist_cm + 372 + spd_offset;
+    else if (dist_cm <= 190)
+        return 0.7 * dist_cm + 423 + spd_offset;
+    else if (dist_cm <= 205)
+        return 0.6 * dist_cm + 442 + spd_offset;
+    else if (dist_cm <= 220)
+        return 0.667 * dist_cm + 428 + spd_offset;
+    else if (dist_cm <= 240)
+        return 0.75 * dist_cm + 410 + spd_offset;
+    else if (dist_cm <= 260)
+        return 0.75 * dist_cm + 410 + spd_offset;
+    else if (dist_cm <= 280)
+        return 0.75 * dist_cm + 410 + spd_offset;
     else if (dist_cm <= 300)
-        return 0.9 * dist_cm + 373 + spd_offset;
-    else if (dist_cm <= 540)
-        return 0.75 * dist_cm + 419 + spd_offset;
+        return 0.75 * dist_cm + 410 + spd_offset;
+    else if (dist_cm <= 320)
+        return 0.75 * dist_cm + 410 + spd_offset;
+    else if (dist_cm <= 340)
+        return 0.6 * dist_cm + 458 + spd_offset;
+    else if (dist_cm <= 370)
+        return 0.6 * dist_cm + 458 + spd_offset;
+    else if (dist_cm <= 380)
+        return 1.0 * dist_cm + 310 + spd_offset;
+    else if (dist_cm <= 460)
+        return 0.8 * dist_cm + 386 + spd_offset;
+    else if (dist_cm <= 470)
+        return 0.6 * dist_cm + 478 + spd_offset;
+    else if (dist_cm <= 480)
+        return 0.5 * dist_cm + 525 + spd_offset;
+    else if (dist_cm <= 500)
+        return 0.55 * dist_cm + 501 + spd_offset;
+    else if (dist_cm <= 520)
+        return 0.6 * dist_cm + 476 + spd_offset;
+    else if (dist_cm <= 560)
+        return 1.0 * dist_cm + 268 + spd_offset;
     else if (dist_cm <= 580)
-        return 0.5 * dist_cm + 555 + spd_offset;
+        return 0.75 * dist_cm + 408 + spd_offset;
     else
-        return 0.5 * dist_cm + 556 + spd_offset;
+        return 0.64 * dist_cm + 471.8 + spd_offset;
 }
 
 float Fitting_Spd_R2_NetUp(float dist_cm)
