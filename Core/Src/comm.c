@@ -154,9 +154,9 @@ void FDCAN3_IT0_IRQHandler(void)
         {
             err_cnt.R1_pos = 0; // clear error flag
 
-            R1_pos.x = *(float *)RxData - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D),
-            R1_pos.y = *(float *)&RxData[4] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D),
-            R1_pos.yaw = *(float *)&RxData[16];
+            R1_pos.x = *(float *)&RxData[24] - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D),
+            R1_pos.y = *(float *)&RxData[28] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D),
+            R1_pos.yaw = *(float *)&RxData[32];
 
             // gimbal feedforward gain factor
             float factor = (-*(float *)&RxData[20] >= 0 ? GIMBAL_MAX - HighTorque[GIMBAL_idx].fdbk.pos
