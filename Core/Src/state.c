@@ -93,13 +93,13 @@ float Fitting_AccCurr(float spd)
 float Fitting_Spd_Basket(float dist_cm)
 {
     if (dist_cm <= 300)
-        return SPD_BASKET_LIN_CALC(200, 300, dist_cm) + spd_offset;
+        return SPD_BASKET_LIN_CALC(200, 300, dist_cm);
     else if (dist_cm <= 400)
-        return SPD_BASKET_LIN_CALC(300, 400, dist_cm) + spd_offset;
+        return SPD_BASKET_LIN_CALC(300, 400, dist_cm);
     else if (dist_cm <= 500)
-        return SPD_BASKET_LIN_CALC(400, 500, dist_cm) + spd_offset;
+        return SPD_BASKET_LIN_CALC(400, 500, dist_cm);
     else
-        return SPD_BASKET_LIN_CALC(500, 600, dist_cm) + spd_offset;
+        return SPD_BASKET_LIN_CALC(500, 600, dist_cm);
 }
 
 #define SPD_R2_NETDOWN_k(SEG_START, SEG_END) (float)(SPD_R2_NETDOWN_##SEG_END - SPD_R2_NETDOWN_##SEG_START) / (SEG_END - SEG_START)
@@ -139,59 +139,59 @@ float Fitting_Spd_Basket(float dist_cm)
 float Fitting_Spd_R2_NetDown(float dist_cm)
 {
     if (dist_cm <= 170)
-        return SPD_R2_NETDOWN_LIN_CALC(150, 170, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(150, 170, dist_cm);
     else if (dist_cm <= 190)
-        return SPD_R2_NETDOWN_LIN_CALC(170, 190, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(170, 190, dist_cm);
     else if (dist_cm <= 205)
-        return SPD_R2_NETDOWN_LIN_CALC(190, 205, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(190, 205, dist_cm);
     else if (dist_cm <= 220)
-        return SPD_R2_NETDOWN_LIN_CALC(205, 220, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(205, 220, dist_cm);
     else if (dist_cm <= 240)
-        return SPD_R2_NETDOWN_LIN_CALC(220, 240, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(220, 240, dist_cm);
     else if (dist_cm <= 260)
-        return SPD_R2_NETDOWN_LIN_CALC(240, 260, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(240, 260, dist_cm);
     else if (dist_cm <= 280)
-        return SPD_R2_NETDOWN_LIN_CALC(260, 280, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(260, 280, dist_cm);
     else if (dist_cm <= 300)
-        return SPD_R2_NETDOWN_LIN_CALC(280, 300, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(280, 300, dist_cm);
     else if (dist_cm <= 320)
-        return SPD_R2_NETDOWN_LIN_CALC(300, 320, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(300, 320, dist_cm);
     else if (dist_cm <= 340)
-        return SPD_R2_NETDOWN_LIN_CALC(320, 340, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(320, 340, dist_cm);
     else if (dist_cm <= 360)
-        return SPD_R2_NETDOWN_LIN_CALC(340, 360, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(340, 360, dist_cm);
     else if (dist_cm <= 370)
-        return SPD_R2_NETDOWN_LIN_CALC(360, 370, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(360, 370, dist_cm);
     else if (dist_cm <= 380)
-        return SPD_R2_NETDOWN_LIN_CALC(370, 380, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(370, 380, dist_cm);
     else if (dist_cm <= 400)
-        return SPD_R2_NETDOWN_LIN_CALC(380, 400, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(380, 400, dist_cm);
     else if (dist_cm <= 420)
-        return SPD_R2_NETDOWN_LIN_CALC(400, 420, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(400, 420, dist_cm);
     else if (dist_cm <= 440)
-        return SPD_R2_NETDOWN_LIN_CALC(420, 440, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(420, 440, dist_cm);
     else if (dist_cm <= 460)
-        return SPD_R2_NETDOWN_LIN_CALC(440, 460, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(440, 460, dist_cm);
     else if (dist_cm <= 470)
-        return SPD_R2_NETDOWN_LIN_CALC(460, 470, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(460, 470, dist_cm);
     else if (dist_cm <= 480)
-        return SPD_R2_NETDOWN_LIN_CALC(470, 480, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(470, 480, dist_cm);
     else if (dist_cm <= 500)
-        return SPD_R2_NETDOWN_LIN_CALC(480, 500, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(480, 500, dist_cm);
     else if (dist_cm <= 520)
-        return SPD_R2_NETDOWN_LIN_CALC(500, 520, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(500, 520, dist_cm);
     else if (dist_cm <= 540)
-        return SPD_R2_NETDOWN_LIN_CALC(520, 540, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(520, 540, dist_cm);
     else if (dist_cm <= 560)
-        return SPD_R2_NETDOWN_LIN_CALC(540, 560, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(540, 560, dist_cm);
     else if (dist_cm <= 580)
-        return SPD_R2_NETDOWN_LIN_CALC(560, 580, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(560, 580, dist_cm);
     else if (dist_cm <= 605)
-        return SPD_R2_NETDOWN_LIN_CALC(580, 605, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(580, 605, dist_cm);
     else if (dist_cm <= 630)
-        return SPD_R2_NETDOWN_LIN_CALC(605, 630, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(605, 630, dist_cm);
     else
-        return SPD_R2_NETDOWN_LIN_CALC(630, 650, dist_cm) + spd_offset;
+        return SPD_R2_NETDOWN_LIN_CALC(630, 650, dist_cm);
 }
 
 #define SPD_R2_NETUP_k(SEG_START, SEG_END) (float)(SPD_R2_NETUP_##SEG_END - SPD_R2_NETUP_##SEG_START) / (SEG_END - SEG_START)
@@ -222,41 +222,41 @@ float Fitting_Spd_R2_NetDown(float dist_cm)
 float Fitting_Spd_R2_NetUp(float dist_cm)
 {
     if (dist_cm <= 275)
-        return SPD_R2_NETUP_LIN_CALC(250, 275, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(250, 275, dist_cm);
     else if (dist_cm <= 300)
-        return SPD_R2_NETUP_LIN_CALC(275, 300, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(275, 300, dist_cm);
     else if (dist_cm <= 325)
-        return SPD_R2_NETUP_LIN_CALC(300, 325, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(300, 325, dist_cm);
     else if (dist_cm <= 350)
-        return SPD_R2_NETUP_LIN_CALC(325, 350, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(325, 350, dist_cm);
     else if (dist_cm <= 375)
-        return SPD_R2_NETUP_LIN_CALC(350, 375, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(350, 375, dist_cm);
     else if (dist_cm <= 400)
-        return SPD_R2_NETUP_LIN_CALC(375, 400, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(375, 400, dist_cm);
     else if (dist_cm <= 425)
-        return SPD_R2_NETUP_LIN_CALC(400, 425, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(400, 425, dist_cm);
     else if (dist_cm <= 450)
-        return SPD_R2_NETUP_LIN_CALC(425, 450, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(425, 450, dist_cm);
     else if (dist_cm <= 475)
-        return SPD_R2_NETUP_LIN_CALC(450, 475, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(450, 475, dist_cm);
     else if (dist_cm <= 500)
-        return SPD_R2_NETUP_LIN_CALC(475, 500, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(475, 500, dist_cm);
     else if (dist_cm <= 525)
-        return SPD_R2_NETUP_LIN_CALC(500, 525, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(500, 525, dist_cm);
     else if (dist_cm <= 550)
-        return SPD_R2_NETUP_LIN_CALC(525, 550, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(525, 550, dist_cm);
     else if (dist_cm <= 575)
-        return SPD_R2_NETUP_LIN_CALC(550, 575, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(550, 575, dist_cm);
     else if (dist_cm <= 600)
-        return SPD_R2_NETUP_LIN_CALC(575, 600, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(575, 600, dist_cm);
     else if (dist_cm <= 625)
-        return SPD_R2_NETUP_LIN_CALC(600, 625, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(600, 625, dist_cm);
     else if (dist_cm <= 650)
-        return SPD_R2_NETUP_LIN_CALC(625, 650, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(625, 650, dist_cm);
     else if (dist_cm <= 675)
-        return SPD_R2_NETUP_LIN_CALC(650, 675, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(650, 675, dist_cm);
     else
-        return SPD_R2_NETUP_LIN_CALC(675, 700, dist_cm) + spd_offset;
+        return SPD_R2_NETUP_LIN_CALC(675, 700, dist_cm);
 }
 
 void VESC_Stall_Init(void)
@@ -515,16 +515,19 @@ void State(void)
             VESC[PUSHSHOT_idx].ctrl.curr = VESC_param.shot.brake_curr;
         else if (!state_R.spd_ctrl)
         {
+            // speed <= 0
             if (state_R.fitting &&
-                (VESC_param.shot.spd = state_W.aim_R2 ? state_W.R2_NetUp ? Fitting_Spd_R2_NetUp(R2_info.dist_cm)
-                                                                         : Fitting_Spd_R2_NetDown(R2_info.dist_cm)
-                                                      : Fitting_Spd_Basket(basket_info.dist_cm)) < 0)
-                VESC_param.shot.spd = 0;
-            VESC[PUSHSHOT_idx].ctrl.spd = VESC_param.shot.spd;
+                    (VESC_param.shot.spd = state_W.aim_R2 ? state_W.R2_NetUp ? Fitting_Spd_R2_NetUp(R2_info.dist_cm)
+                                                                             : Fitting_Spd_R2_NetDown(R2_info.dist_cm)
+                                                          : Fitting_Spd_Basket(basket_info.dist_cm)) <= 0 ||
+                VESC_param.shot.spd <= 0)
+            {
+                state = IDLE;
+                break;
+            }
 
-            VESC_param.shot.acc_curr = Fitting_AccCurr(VESC_param.shot.spd);
-            LIMIT(VESC_param.shot.acc_curr, PUSHSHOT_MOTOR.curr_max);
-            VESC[PUSHSHOT_idx].ctrl.curr = VESC_param.shot.acc_curr;
+            VESC_param.shot.acc_curr = Fitting_AccCurr(VESC[PUSHSHOT_idx].ctrl.spd = VESC_param.shot.spd + spd_offset);
+            VESC[PUSHSHOT_idx].ctrl.curr = LIMIT(VESC_param.shot.acc_curr, PUSHSHOT_MOTOR.curr_max);
 
             state_R.spd_ctrl = VESC_param.shot.spd - VESC[PUSHSHOT_idx].fdbk.spd <= VESC_param.shot.spd_ctrl_err; // switch control mode
         }
