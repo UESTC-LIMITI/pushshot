@@ -87,8 +87,8 @@ float Fitting_AccCurr(float spd)
 #define SPD_BASKET_200 623.5
 #define SPD_BASKET_300 688.5
 #define SPD_BASKET_400 761
-#define SPD_BASKET_500 833.5
-#define SPD_BASKET_600 896
+#define SPD_BASKET_500 828.5
+#define SPD_BASKET_600 891
 
 float Fitting_Spd_Basket(float dist_cm)
 {
@@ -529,7 +529,7 @@ void State(void)
             VESC_param.shot.acc_curr = Fitting_AccCurr(VESC[PUSHSHOT_idx].ctrl.spd = VESC_param.shot.spd + spd_offset);
             VESC[PUSHSHOT_idx].ctrl.curr = LIMIT(VESC_param.shot.acc_curr, PUSHSHOT_MOTOR.curr_max);
 
-            state_R.spd_ctrl = VESC_param.shot.spd - VESC[PUSHSHOT_idx].fdbk.spd <= VESC_param.shot.spd_ctrl_err; // switch control mode
+            state_R.spd_ctrl = VESC[PUSHSHOT_idx].ctrl.spd - VESC[PUSHSHOT_idx].fdbk.spd <= VESC_param.shot.spd_ctrl_err; // switch control mode
         }
 
         // control
