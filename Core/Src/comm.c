@@ -133,7 +133,7 @@ void FDCAN3_IT0_IRQHandler(void)
             if (!err.HighTorque_startup && !err.HighTorque_OH)
             {
                 HighTorque[GIMBAL_idx].ctrl.Kp = 1,
-                HighTorque[GIMBAL_idx].ctrl.Kd = 2.5;
+                HighTorque[GIMBAL_idx].ctrl.Kd = 2;
             }
             break;
         }
@@ -156,15 +156,7 @@ void FDCAN3_IT0_IRQHandler(void)
 
             R1_pos.x = *(float *)&RxData[24] - CENTRE_OFFSET * cos(*(float *)&RxData[16] / R2D),
             R1_pos.y = *(float *)&RxData[28] - CENTRE_OFFSET * sin(*(float *)&RxData[16] / R2D),
-            R1_pos.yaw = *(float *)&RxData[32];
-
-            // gimbal feedforward gain factor
-            float factor = (-*(float *)&RxData[20] >= 0 ? GIMBAL_MAX - HighTorque[GIMBAL_idx].fdbk.pos
-                                                        : HighTorque[GIMBAL_idx].fdbk.pos - GIMBAL_MIN) /
-                           ((GIMBAL_MAX - GIMBAL_MIN) * 0.5);
-            // gimbal feedforward velocity opposed to angular velocity of chassis
-            HighTorque[GIMBAL_idx].ctrl.spd = err.HighTorque_OH ? 0
-                                                                : -*(float *)&RxData[20] * GIMBAL_GR * LIMIT(factor, 1);
+            R1_pos.yaw = *(float *)&RxData[16];
 
             float dist_x = basket_pos.x - R1_pos.x,
                   dist_y = basket_pos.y - R1_pos.y;

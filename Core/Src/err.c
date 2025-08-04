@@ -30,9 +30,6 @@ void Err(void)
         }
     }
 
-    if (err.R1_pos)
-        HighTorque[GIMBAL_idx].ctrl.spd = 0;
-
     if (err.R2_pos)
         R2_Pos_Process();
 

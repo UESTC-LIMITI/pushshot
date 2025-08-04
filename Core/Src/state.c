@@ -53,8 +53,8 @@ struct
 {
     const float basket_offset, R2_offset;
 } HighTorque_param = {
-    .basket_offset = 13,
-    .R2_offset = 13,
+    .basket_offset = 25,
+    .R2_offset = 15,
 };
 
 static float brake_trigger_time;
@@ -62,21 +62,20 @@ float end_spd;
 
 float Fitting_AccCurr(float spd)
 {
-    // 10A, 400RPM
+    // 400RPM, 10A
     if (spd <= 400)
         return 10;
-    // 15A, 500RPM
+    // 500RPM, 15A
     else if (spd <= 500)
         return spd * 0.05 - 10;
-    // 25A, 600RPM
-    // 35A, 700RPM
-    // 45A, 800RPM
-    else if (spd <= 800)
+    // 600RPM, 25A
+    // 700RPM, 35A
+    else if (spd <= 700)
         return spd * 0.1 - 35;
-    // 55A, 850RPM
-    // 65A, 900RPM
+    // 800RPM, 50A
+    // 900RPM, 65A
     else
-        return spd * 0.2 - 115;
+        return spd * 0.15 - 70;
 }
 
 #define SPD_BASKET_k(SEG_START, SEG_END) (float)(SPD_BASKET_##SEG_END - SPD_BASKET_##SEG_START) / (SEG_END - SEG_START)
@@ -84,11 +83,11 @@ float Fitting_AccCurr(float spd)
 
 #define SPD_BASKET_LIN_CALC(SEG_START, SEG_END, dist_cm) SPD_BASKET_k(SEG_START, SEG_END) * dist_cm + SPD_BASKET_b(SEG_START, SEG_END)
 
-#define SPD_BASKET_200 623.5
-#define SPD_BASKET_300 688.5
-#define SPD_BASKET_400 761
-#define SPD_BASKET_500 828.5
-#define SPD_BASKET_600 891
+#define SPD_BASKET_200 620
+#define SPD_BASKET_300 682
+#define SPD_BASKET_400 750
+#define SPD_BASKET_500 827
+#define SPD_BASKET_600 890
 
 float Fitting_Spd_Basket(float dist_cm)
 {
@@ -107,45 +106,48 @@ float Fitting_Spd_Basket(float dist_cm)
 
 #define SPD_R2_NETDOWN_LIN_CALC(SEG_START, SEG_END, dist_cm) SPD_R2_NETDOWN_k(SEG_START, SEG_END) * dist_cm + SPD_R2_NETDOWN_b(SEG_START, SEG_END)
 
-#define SPD_R2_NETDOWN_150 522
-#define SPD_R2_NETDOWN_170 541
-#define SPD_R2_NETDOWN_190 555
-#define SPD_R2_NETDOWN_205 564
-#define SPD_R2_NETDOWN_220 574
-#define SPD_R2_NETDOWN_240 590
-#define SPD_R2_NETDOWN_260 606
-#define SPD_R2_NETDOWN_280 622
-#define SPD_R2_NETDOWN_300 637
+#define SPD_R2_NETDOWN_150 509
+#define SPD_R2_NETDOWN_160 516.5
+#define SPD_R2_NETDOWN_170 525
+#define SPD_R2_NETDOWN_180 534.5
+#define SPD_R2_NETDOWN_190 541.5
+#define SPD_R2_NETDOWN_200 551
+#define SPD_R2_NETDOWN_220 567
+#define SPD_R2_NETDOWN_240 580
+#define SPD_R2_NETDOWN_260 596
+#define SPD_R2_NETDOWN_280 613
+#define SPD_R2_NETDOWN_300 632
 #define SPD_R2_NETDOWN_320 652
-#define SPD_R2_NETDOWN_340 664
-#define SPD_R2_NETDOWN_360 677
-#define SPD_R2_NETDOWN_370 683
-#define SPD_R2_NETDOWN_380 693
-#define SPD_R2_NETDOWN_400 709
-#define SPD_R2_NETDOWN_420 727
-#define SPD_R2_NETDOWN_440 745
-#define SPD_R2_NETDOWN_460 763
-#define SPD_R2_NETDOWN_470 769
-#define SPD_R2_NETDOWN_480 776
-#define SPD_R2_NETDOWN_500 788
-#define SPD_R2_NETDOWN_520 797
-#define SPD_R2_NETDOWN_540 817
-#define SPD_R2_NETDOWN_560 831
-#define SPD_R2_NETDOWN_580 846
-#define SPD_R2_NETDOWN_605 864
-#define SPD_R2_NETDOWN_630 880
-#define SPD_R2_NETDOWN_650 895
+#define SPD_R2_NETDOWN_340 669
+#define SPD_R2_NETDOWN_360 685.5
+#define SPD_R2_NETDOWN_380 702.5
+#define SPD_R2_NETDOWN_400 716.5
+#define SPD_R2_NETDOWN_425 737
+#define SPD_R2_NETDOWN_450 757
+#define SPD_R2_NETDOWN_475 776
+#define SPD_R2_NETDOWN_500 786
+#define SPD_R2_NETDOWN_525 798.5
+#define SPD_R2_NETDOWN_550 814
+#define SPD_R2_NETDOWN_575 832
+#define SPD_R2_NETDOWN_600 844
+#define SPD_R2_NETDOWN_625 866
+#define SPD_R2_NETDOWN_650 880
+#define SPD_R2_NETDOWN_675 914
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
 {
-    if (dist_cm <= 170)
-        return SPD_R2_NETDOWN_LIN_CALC(150, 170, dist_cm);
+    if (dist_cm <= 160)
+        return SPD_R2_NETDOWN_LIN_CALC(150, 160, dist_cm);
+    else if (dist_cm <= 170)
+        return SPD_R2_NETDOWN_LIN_CALC(160, 170, dist_cm);
+    else if (dist_cm <= 180)
+        return SPD_R2_NETDOWN_LIN_CALC(170, 180, dist_cm);
     else if (dist_cm <= 190)
-        return SPD_R2_NETDOWN_LIN_CALC(170, 190, dist_cm);
-    else if (dist_cm <= 205)
-        return SPD_R2_NETDOWN_LIN_CALC(190, 205, dist_cm);
+        return SPD_R2_NETDOWN_LIN_CALC(180, 190, dist_cm);
+    else if (dist_cm <= 200)
+        return SPD_R2_NETDOWN_LIN_CALC(190, 200, dist_cm);
     else if (dist_cm <= 220)
-        return SPD_R2_NETDOWN_LIN_CALC(205, 220, dist_cm);
+        return SPD_R2_NETDOWN_LIN_CALC(200, 220, dist_cm);
     else if (dist_cm <= 240)
         return SPD_R2_NETDOWN_LIN_CALC(220, 240, dist_cm);
     else if (dist_cm <= 260)
@@ -160,38 +162,32 @@ float Fitting_Spd_R2_NetDown(float dist_cm)
         return SPD_R2_NETDOWN_LIN_CALC(320, 340, dist_cm);
     else if (dist_cm <= 360)
         return SPD_R2_NETDOWN_LIN_CALC(340, 360, dist_cm);
-    else if (dist_cm <= 370)
-        return SPD_R2_NETDOWN_LIN_CALC(360, 370, dist_cm);
     else if (dist_cm <= 380)
-        return SPD_R2_NETDOWN_LIN_CALC(370, 380, dist_cm);
+        return SPD_R2_NETDOWN_LIN_CALC(360, 380, dist_cm);
     else if (dist_cm <= 400)
         return SPD_R2_NETDOWN_LIN_CALC(380, 400, dist_cm);
-    else if (dist_cm <= 420)
-        return SPD_R2_NETDOWN_LIN_CALC(400, 420, dist_cm);
-    else if (dist_cm <= 440)
-        return SPD_R2_NETDOWN_LIN_CALC(420, 440, dist_cm);
-    else if (dist_cm <= 460)
-        return SPD_R2_NETDOWN_LIN_CALC(440, 460, dist_cm);
-    else if (dist_cm <= 470)
-        return SPD_R2_NETDOWN_LIN_CALC(460, 470, dist_cm);
-    else if (dist_cm <= 480)
-        return SPD_R2_NETDOWN_LIN_CALC(470, 480, dist_cm);
+    else if (dist_cm <= 425)
+        return SPD_R2_NETDOWN_LIN_CALC(400, 425, dist_cm);
+    else if (dist_cm <= 450)
+        return SPD_R2_NETDOWN_LIN_CALC(425, 450, dist_cm);
+    else if (dist_cm <= 475)
+        return SPD_R2_NETDOWN_LIN_CALC(450, 475, dist_cm);
     else if (dist_cm <= 500)
-        return SPD_R2_NETDOWN_LIN_CALC(480, 500, dist_cm);
-    else if (dist_cm <= 520)
-        return SPD_R2_NETDOWN_LIN_CALC(500, 520, dist_cm);
-    else if (dist_cm <= 540)
-        return SPD_R2_NETDOWN_LIN_CALC(520, 540, dist_cm);
-    else if (dist_cm <= 560)
-        return SPD_R2_NETDOWN_LIN_CALC(540, 560, dist_cm);
-    else if (dist_cm <= 580)
-        return SPD_R2_NETDOWN_LIN_CALC(560, 580, dist_cm);
-    else if (dist_cm <= 605)
-        return SPD_R2_NETDOWN_LIN_CALC(580, 605, dist_cm);
-    else if (dist_cm <= 630)
-        return SPD_R2_NETDOWN_LIN_CALC(605, 630, dist_cm);
+        return SPD_R2_NETDOWN_LIN_CALC(475, 500, dist_cm);
+    else if (dist_cm <= 525)
+        return SPD_R2_NETDOWN_LIN_CALC(500, 525, dist_cm);
+    else if (dist_cm <= 550)
+        return SPD_R2_NETDOWN_LIN_CALC(525, 550, dist_cm);
+    else if (dist_cm <= 575)
+        return SPD_R2_NETDOWN_LIN_CALC(550, 575, dist_cm);
+    else if (dist_cm <= 600)
+        return SPD_R2_NETDOWN_LIN_CALC(575, 600, dist_cm);
+    else if (dist_cm <= 625)
+        return SPD_R2_NETDOWN_LIN_CALC(600, 625, dist_cm);
+    else if (dist_cm <= 650)
+        return SPD_R2_NETDOWN_LIN_CALC(625, 650, dist_cm);
     else
-        return SPD_R2_NETDOWN_LIN_CALC(630, 650, dist_cm);
+        return SPD_R2_NETDOWN_LIN_CALC(650, 675, dist_cm);
 }
 
 #define SPD_R2_NETUP_k(SEG_START, SEG_END) (float)(SPD_R2_NETUP_##SEG_END - SPD_R2_NETUP_##SEG_START) / (SEG_END - SEG_START)
@@ -199,25 +195,25 @@ float Fitting_Spd_R2_NetDown(float dist_cm)
 
 #define SPD_R2_NETUP_LIN_CALC(SEG_START, SEG_END, dist_cm) SPD_R2_NETUP_k(SEG_START, SEG_END) * dist_cm + SPD_R2_NETUP_b(SEG_START, SEG_END)
 
-#define SPD_R2_NETUP_250 621
-#define SPD_R2_NETUP_275 639.5
-#define SPD_R2_NETUP_300 658
-#define SPD_R2_NETUP_325 673
-#define SPD_R2_NETUP_350 688
-#define SPD_R2_NETUP_375 705
-#define SPD_R2_NETUP_400 730
-#define SPD_R2_NETUP_425 747
-#define SPD_R2_NETUP_450 766
-#define SPD_R2_NETUP_475 794
-#define SPD_R2_NETUP_500 809
-#define SPD_R2_NETUP_525 815
-#define SPD_R2_NETUP_550 846
-#define SPD_R2_NETUP_575 860
-#define SPD_R2_NETUP_600 879
-#define SPD_R2_NETUP_625 892
-#define SPD_R2_NETUP_650 950
-#define SPD_R2_NETUP_675 971
-#define SPD_R2_NETUP_700 992
+#define SPD_R2_NETUP_250 628
+#define SPD_R2_NETUP_275 646.5
+#define SPD_R2_NETUP_300 665
+#define SPD_R2_NETUP_325 680
+#define SPD_R2_NETUP_350 695
+#define SPD_R2_NETUP_375 712
+#define SPD_R2_NETUP_400 737
+#define SPD_R2_NETUP_425 754
+#define SPD_R2_NETUP_450 773
+#define SPD_R2_NETUP_475 801
+#define SPD_R2_NETUP_500 816
+#define SPD_R2_NETUP_525 822
+#define SPD_R2_NETUP_550 853
+#define SPD_R2_NETUP_575 867
+#define SPD_R2_NETUP_600 886
+#define SPD_R2_NETUP_625 899
+#define SPD_R2_NETUP_650 957
+#define SPD_R2_NETUP_675 978
+#define SPD_R2_NETUP_700 999
 
 float Fitting_Spd_R2_NetUp(float dist_cm)
 {
