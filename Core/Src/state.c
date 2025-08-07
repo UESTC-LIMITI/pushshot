@@ -60,24 +60,30 @@ struct
 static float brake_trigger_time;
 float end_spd;
 
+#define ACC_CURR_k(SEG_START, SEG_END) (float)(ACC_CURR_##SEG_END - ACC_CURR_##SEG_START) / (SEG_END - SEG_START)
+#define ACC_CURR_b(SEG_START, SEG_END) (ACC_CURR_##SEG_START - ACC_CURR_k(SEG_START, SEG_END) * SEG_START)
+
+#define ACC_CURR_LIN_CALC(SEG_START, SEG_END, spd) ACC_CURR_k(SEG_START, SEG_END) * spd + ACC_CURR_b(SEG_START, SEG_END)
+
+#define ACC_CURR_400 10
+#define ACC_CURR_500 15
+#define ACC_CURR_600 25
+#define ACC_CURR_700 35
+#define ACC_CURR_800 50
+#define ACC_CURR_900 70
+
 float Fitting_AccCurr(float spd)
 {
-    // 400RPM, 10A
     if (spd <= 400)
-        return 10;
-    // 500RPM, 15A
+        return ACC_CURR_400;
     else if (spd <= 500)
-        return spd * 0.05 - 10;
-    // 600RPM, 25A
-    // 700RPM, 35A
+        return ACC_CURR_LIN_CALC(400, 500, spd);
     else if (spd <= 700)
-        return spd * 0.1 - 35;
-    // 800RPM, 50A
+        return ACC_CURR_LIN_CALC(500, 700, spd);
     else if (spd <= 800)
-        return spd * 0.15 - 70;
-    // 900RPM, 70A
+        return ACC_CURR_LIN_CALC(700, 800, spd);
     else
-        return spd * 0.2 - 110;
+        return ACC_CURR_LIN_CALC(800, 900, spd);
 }
 
 #define SPD_BASKET_k(SEG_START, SEG_END) (float)(SPD_BASKET_##SEG_END - SPD_BASKET_##SEG_START) / (SEG_END - SEG_START)
@@ -87,9 +93,9 @@ float Fitting_AccCurr(float spd)
 
 #define SPD_BASKET_200 635
 #define SPD_BASKET_300 700
-#define SPD_BASKET_400 765
-#define SPD_BASKET_500 827.5
-#define SPD_BASKET_600 900
+#define SPD_BASKET_400 762
+#define SPD_BASKET_500 822
+#define SPD_BASKET_600 896
 
 float Fitting_Spd_Basket(float dist_cm)
 {
