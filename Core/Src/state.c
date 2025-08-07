@@ -53,7 +53,7 @@ struct
 {
     const float basket_offset, R2_offset;
 } HighTorque_param = {
-    .basket_offset = 15,
+    .basket_offset = 6,
     .R2_offset = 15,
 };
 
@@ -73,9 +73,11 @@ float Fitting_AccCurr(float spd)
     else if (spd <= 700)
         return spd * 0.1 - 35;
     // 800RPM, 50A
-    // 900RPM, 65A
-    else
+    else if (spd <= 800)
         return spd * 0.15 - 70;
+    // 900RPM, 70A
+    else
+        return spd * 0.2 - 110;
 }
 
 #define SPD_BASKET_k(SEG_START, SEG_END) (float)(SPD_BASKET_##SEG_END - SPD_BASKET_##SEG_START) / (SEG_END - SEG_START)
@@ -83,11 +85,11 @@ float Fitting_AccCurr(float spd)
 
 #define SPD_BASKET_LIN_CALC(SEG_START, SEG_END, dist_cm) SPD_BASKET_k(SEG_START, SEG_END) * dist_cm + SPD_BASKET_b(SEG_START, SEG_END)
 
-#define SPD_BASKET_200 630
-#define SPD_BASKET_300 695
-#define SPD_BASKET_400 760
-#define SPD_BASKET_500 827
-#define SPD_BASKET_600 890
+#define SPD_BASKET_200 635
+#define SPD_BASKET_300 700
+#define SPD_BASKET_400 765
+#define SPD_BASKET_500 827.5
+#define SPD_BASKET_600 900
 
 float Fitting_Spd_Basket(float dist_cm)
 {
@@ -128,11 +130,11 @@ float Fitting_Spd_Basket(float dist_cm)
 #define SPD_R2_NETDOWN_500 790
 #define SPD_R2_NETDOWN_525 809.5
 #define SPD_R2_NETDOWN_550 825
-#define SPD_R2_NETDOWN_575 846
-#define SPD_R2_NETDOWN_600 854
-#define SPD_R2_NETDOWN_625 877.5
-#define SPD_R2_NETDOWN_650 935
-#define SPD_R2_NETDOWN_675 965
+#define SPD_R2_NETDOWN_575 851
+#define SPD_R2_NETDOWN_600 859
+#define SPD_R2_NETDOWN_625 883
+#define SPD_R2_NETDOWN_650 940
+#define SPD_R2_NETDOWN_675 970
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
 {
