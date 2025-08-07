@@ -35,7 +35,7 @@ void Err(void)
 
     err.yaw_lim_exceed = HighTorque[GIMBAL_idx].ctrl.Kp && (HighTorque[GIMBAL_idx].ctrl.pos == GIMBAL_MAX || HighTorque[GIMBAL_idx].ctrl.pos == GIMBAL_MIN);
 
-    err.VESC_UV = VESC[PUSHSHOT_idx].fdbk.volt < VESC_VOLTAGE_LIM_MIN; // under voltage
+    err.VESC_UV = VESC[PUSHSHOT_idx].fdbk.volt <= VESC_VOLTAGE_LIM_MIN; // under voltage
 
     {
         static bool check;
