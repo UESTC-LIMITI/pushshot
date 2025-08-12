@@ -12,7 +12,7 @@ struct
 {
     float x, y;
 } R2_pos,
-    basket_pos = {.x = 14, .y = -4},
+    basket_pos = {.x = 14.05, .y = -4},
     basket_pos_R2;
 
 unsigned char CheckSum_1B(unsigned char *data, unsigned char len)
@@ -200,7 +200,14 @@ void UART5_IRQHandler(void)
             basket_pos_R2.x = *(float *)&RxData[9] / 1000,
             basket_pos_R2.y = *(float *)&RxData[13] / 1000;
 
-            err.coor_unmatch = ABS(basket_pos.x - basket_pos_R2.x) >= 0.07;
+            if (err.basket_pos)
+            {
+                basket_pos.x = basket_pos_R2.x;
+                basket_pos.y = basket_pos_R2.y;
+            }
+            else if (basket_pos.x != basket_pos_R2.x ||
+                     basket_pos.y != basket_pos_R2.y)
+                err.coor_unmatch = ABS(basket_pos.x - basket_pos_R2.x) >= 0.07;
 
             state_W.R2_AtPos = RxData[17] & 0x1;
             state_W.R2_NetUp = (RxData[17] & 0x4) >> 2;
@@ -219,6 +226,7 @@ void UART5_IRQHandler(void)
                     *(float *)&R2_data[4] = R2_pos.y,
                     R2_data[8] = !err.coor_unmatch && state_W.aim_R2 && state_W.R2_AtPos;
             FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xA1, R2_data, 9);
+            FDCAN_BRS_SendData(&hfdcan3, FDCAN_STANDARD_ID, 0xAA, (unsigned char *)&basket_pos_R2, 8);
 
             R2_Pos_Process();
         }

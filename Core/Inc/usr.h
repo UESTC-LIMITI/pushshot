@@ -124,8 +124,8 @@ extern char spd_offset;
 
 extern unsigned char R1_data[19];
 
-#define GIMBAL_MIN -208
-#define GIMBAL_MAX 206
+#define GIMBAL_MIN -216
+#define GIMBAL_MAX 201
 
 #define GIMBAL_0 (GIMBAL_MAX + GIMBAL_MIN) / 2.f
 #define GIMBAL_GR (507 / 23.f)

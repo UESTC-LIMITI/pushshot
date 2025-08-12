@@ -54,7 +54,7 @@ struct
     const float basket_offset, R2_offset;
 } HighTorque_param = {
     .basket_offset = 6,
-    .R2_offset = 15,
+    .R2_offset = 10,
 };
 
 static float brake_trigger_time;
@@ -91,11 +91,11 @@ float Fitting_AccCurr(float spd)
 
 #define SPD_BASKET_LIN_CALC(SEG_START, SEG_END, dist_cm) SPD_BASKET_k(SEG_START, SEG_END) * dist_cm + SPD_BASKET_b(SEG_START, SEG_END)
 
-#define SPD_BASKET_200 635
-#define SPD_BASKET_300 700
-#define SPD_BASKET_400 762
-#define SPD_BASKET_500 822
-#define SPD_BASKET_600 896
+#define SPD_BASKET_200 630
+#define SPD_BASKET_300 690
+#define SPD_BASKET_400 750
+#define SPD_BASKET_500 820
+#define SPD_BASKET_600 885
 
 float Fitting_Spd_Basket(float dist_cm)
 {
@@ -114,33 +114,33 @@ float Fitting_Spd_Basket(float dist_cm)
 
 #define SPD_R2_NETDOWN_LIN_CALC(SEG_START, SEG_END, dist_cm) SPD_R2_NETDOWN_k(SEG_START, SEG_END) * dist_cm + SPD_R2_NETDOWN_b(SEG_START, SEG_END)
 
-#define SPD_R2_NETDOWN_150 512
-#define SPD_R2_NETDOWN_160 519.5
-#define SPD_R2_NETDOWN_170 528.5
-#define SPD_R2_NETDOWN_180 538.5
-#define SPD_R2_NETDOWN_190 545.5
-#define SPD_R2_NETDOWN_200 555
-#define SPD_R2_NETDOWN_220 572
-#define SPD_R2_NETDOWN_240 586
-#define SPD_R2_NETDOWN_260 603
-#define SPD_R2_NETDOWN_280 620
-#define SPD_R2_NETDOWN_300 638
-#define SPD_R2_NETDOWN_320 658
-#define SPD_R2_NETDOWN_340 672.5
-#define SPD_R2_NETDOWN_360 687.5
+#define SPD_R2_NETDOWN_150 517
+#define SPD_R2_NETDOWN_160 524.5
+#define SPD_R2_NETDOWN_170 533
+#define SPD_R2_NETDOWN_180 542.5
+#define SPD_R2_NETDOWN_190 550
+#define SPD_R2_NETDOWN_200 559
+#define SPD_R2_NETDOWN_220 576
+#define SPD_R2_NETDOWN_240 590
+#define SPD_R2_NETDOWN_260 607
+#define SPD_R2_NETDOWN_280 624
+#define SPD_R2_NETDOWN_300 642
+#define SPD_R2_NETDOWN_320 662
+#define SPD_R2_NETDOWN_340 675.5
+#define SPD_R2_NETDOWN_360 688.5
 #define SPD_R2_NETDOWN_380 704.5
 #define SPD_R2_NETDOWN_400 719.5
-#define SPD_R2_NETDOWN_425 741
-#define SPD_R2_NETDOWN_450 760
-#define SPD_R2_NETDOWN_475 779
-#define SPD_R2_NETDOWN_500 790
-#define SPD_R2_NETDOWN_525 809.5
-#define SPD_R2_NETDOWN_550 825
-#define SPD_R2_NETDOWN_575 851
-#define SPD_R2_NETDOWN_600 859
-#define SPD_R2_NETDOWN_625 883
-#define SPD_R2_NETDOWN_650 940
-#define SPD_R2_NETDOWN_675 970
+#define SPD_R2_NETDOWN_425 738
+#define SPD_R2_NETDOWN_450 751
+#define SPD_R2_NETDOWN_475 769
+#define SPD_R2_NETDOWN_500 785
+#define SPD_R2_NETDOWN_525 804.5
+#define SPD_R2_NETDOWN_550 814
+#define SPD_R2_NETDOWN_575 828
+#define SPD_R2_NETDOWN_600 834
+#define SPD_R2_NETDOWN_625 855
+#define SPD_R2_NETDOWN_650 910
+#define SPD_R2_NETDOWN_675 938
 
 float Fitting_Spd_R2_NetDown(float dist_cm)
 {
@@ -203,25 +203,25 @@ float Fitting_Spd_R2_NetDown(float dist_cm)
 
 #define SPD_R2_NETUP_LIN_CALC(SEG_START, SEG_END, dist_cm) SPD_R2_NETUP_k(SEG_START, SEG_END) * dist_cm + SPD_R2_NETUP_b(SEG_START, SEG_END)
 
-#define SPD_R2_NETUP_250 628
-#define SPD_R2_NETUP_275 646.5
-#define SPD_R2_NETUP_300 665
-#define SPD_R2_NETUP_325 680
-#define SPD_R2_NETUP_350 695
-#define SPD_R2_NETUP_375 712
-#define SPD_R2_NETUP_400 737
-#define SPD_R2_NETUP_425 754
-#define SPD_R2_NETUP_450 773
-#define SPD_R2_NETUP_475 801
-#define SPD_R2_NETUP_500 816
-#define SPD_R2_NETUP_525 822
-#define SPD_R2_NETUP_550 853
-#define SPD_R2_NETUP_575 867
-#define SPD_R2_NETUP_600 886
-#define SPD_R2_NETUP_625 899
-#define SPD_R2_NETUP_650 957
-#define SPD_R2_NETUP_675 978
-#define SPD_R2_NETUP_700 999
+#define SPD_R2_NETUP_250 626
+#define SPD_R2_NETUP_275 644.5
+#define SPD_R2_NETUP_300 661
+#define SPD_R2_NETUP_325 674
+#define SPD_R2_NETUP_350 688
+#define SPD_R2_NETUP_375 705
+#define SPD_R2_NETUP_400 731
+#define SPD_R2_NETUP_425 747
+#define SPD_R2_NETUP_450 765
+#define SPD_R2_NETUP_475 784
+#define SPD_R2_NETUP_500 797
+#define SPD_R2_NETUP_525 803
+#define SPD_R2_NETUP_550 831
+#define SPD_R2_NETUP_575 845
+#define SPD_R2_NETUP_600 864
+#define SPD_R2_NETUP_625 877
+#define SPD_R2_NETUP_650 937
+#define SPD_R2_NETUP_675 957
+#define SPD_R2_NETUP_700 977
 
 float Fitting_Spd_R2_NetUp(float dist_cm)
 {
@@ -530,7 +530,7 @@ void State(void)
                 break;
             }
 
-            VESC_param.shot.acc_curr = Fitting_AccCurr(VESC[PUSHSHOT_idx].ctrl.spd = VESC_param.shot.spd + spd_offset);
+            VESC_param.shot.acc_curr = Fitting_AccCurr(VESC[PUSHSHOT_idx].ctrl.spd = VESC_param.shot.spd + spd_offset) + (VESC[PUSHSHOT_idx].ctrl.spd - VESC_param.shot.spd_ctrl_err - VESC[PUSHSHOT_idx].fdbk.spd) * 0.01;
             VESC[PUSHSHOT_idx].ctrl.curr = LIMIT(VESC_param.shot.acc_curr, PUSHSHOT_MOTOR.curr_max);
 
             state_R.spd_ctrl = VESC[PUSHSHOT_idx].ctrl.spd - VESC[PUSHSHOT_idx].fdbk.spd <= VESC_param.shot.spd_ctrl_err; // switch control mode
